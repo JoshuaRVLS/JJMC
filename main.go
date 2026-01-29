@@ -1,0 +1,454 @@
+package main
+
+import (
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"strconv"
+	"strings"
+
+	"jjmc/server"
+
+	"github.com/gofiber/contrib/websocket"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+)
+
+func main() {
+	app := fiber.New()
+
+	app.Use(cors.New())
+
+	// Initialize Instance Manager
+	instanceManager := server.NewInstanceManager("./instances")
+	// No global versions manager, we create one per instance or pass instance to it?
+	// Actually VersionsManager just needs options to install.
+	// We can keep a global helper for downloading/installing to a directory.
+
+	// API Routes for Instances
+	app.Get("/api/instances", func(c *fiber.Ctx) error {
+		return c.JSON(instanceManager.ListInstances())
+	})
+
+	app.Get("/api/versions/game", func(c *fiber.Ctx) error {
+		resp, err := http.Get("https://api.modrinth.com/v2/tag/game_version")
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch versions"})
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Failed to read versions"})
+		}
+
+		c.Set("Content-Type", "application/json")
+		return c.Send(body)
+	})
+
+	app.Get("/api/versions/loader", func(c *fiber.Ctx) error {
+		resp, err := http.Get("https://api.modrinth.com/v2/tag/loader")
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch loaders"})
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Failed to read loaders"})
+		}
+
+		c.Set("Content-Type", "application/json")
+		return c.Send(body)
+	})
+
+	app.Post("/api/instances", func(c *fiber.Ctx) error {
+		var payload struct {
+			ID      string `json:"id"`
+			Name    string `json:"name"`
+			Type    string `json:"type"`
+			Version string `json:"version"`
+		}
+		if err := c.BodyParser(&payload); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
+		}
+		inst, err := instanceManager.CreateInstance(payload.ID, payload.Name, payload.Type, payload.Version)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(inst)
+	})
+
+	app.Delete("/api/instances/:id", func(c *fiber.Ctx) error {
+		id := c.Params("id")
+		if err := instanceManager.DeleteInstance(id); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(fiber.Map{"status": "deleted"})
+	})
+
+	app.Get("/api/instances/:id", func(c *fiber.Ctx) error {
+		inst, err := instanceManager.GetInstance(c.Params("id"))
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+		}
+		return c.JSON(inst)
+	})
+
+	app.Patch("/api/instances/:id", func(c *fiber.Ctx) error {
+		id := c.Params("id")
+		var payload struct {
+			MaxMemory int    `json:"maxMemory"`
+			JavaArgs  string `json:"javaArgs"`
+		}
+		if err := c.BodyParser(&payload); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
+		}
+
+		if err := instanceManager.UpdateSettings(id, payload.MaxMemory, payload.JavaArgs); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(fiber.Map{"status": "updated"})
+	})
+
+	// Instance Control Routes
+	app.Post("/api/instances/:id/start", func(c *fiber.Ctx) error {
+		inst, err := instanceManager.GetInstance(c.Params("id"))
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+		}
+		if err := inst.Start(); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(fiber.Map{"status": "started"})
+	})
+
+	app.Post("/api/instances/:id/stop", func(c *fiber.Ctx) error {
+		inst, err := instanceManager.GetInstance(c.Params("id"))
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+		}
+		if err := inst.Stop(); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(fiber.Map{"status": "stopped"})
+	})
+
+	app.Post("/api/instances/:id/restart", func(c *fiber.Ctx) error {
+		inst, err := instanceManager.GetInstance(c.Params("id"))
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+		}
+		if err := inst.Restart(); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(fiber.Map{"status": "restarting"})
+	})
+
+	app.Post("/api/instances/:id/command", func(c *fiber.Ctx) error {
+		inst, err := instanceManager.GetInstance(c.Params("id"))
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+		}
+		var payload struct {
+			Command string `json:"command"`
+		}
+		if err := c.BodyParser(&payload); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
+		}
+		if err := inst.WriteCommand(payload.Command); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(fiber.Map{"status": "sent"})
+	})
+
+	app.Post("/api/instances/:id/install", func(c *fiber.Ctx) error {
+		inst, err := instanceManager.GetInstance(c.Params("id"))
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+		}
+
+		var payload struct {
+			Version string `json:"version"`
+			Type    string `json:"type"`
+		}
+		if err := c.BodyParser(&payload); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
+		}
+
+		// Create temporary version manager for this instance
+		// We could refactor VersionsManager to take an *Instance or *Manager
+		// Assuming VersionsManager currently takes *Manager
+		vm := server.NewVersionsManager(inst.Manager)
+
+		if payload.Type == "fabric" {
+			// ... existing fabric logic ...
+			// We need to support workDir in InstallFabric or context
+			// InstallFabric in version.go likely assumes CWD or needs update.
+			// Let's check server/versions.go content first.
+			// For now, assuming we will fix it.
+			if err := vm.InstallFabric(payload.Version); err != nil {
+				return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+			}
+			inst.SetJar("fabric.jar")
+			return c.JSON(fiber.Map{"status": "installed", "jar": "fabric.jar"})
+		}
+
+		if payload.Type == "quilt" {
+			if err := vm.InstallQuilt(payload.Version); err != nil {
+				return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+			}
+			inst.SetJar("quilt.jar")
+			return c.JSON(fiber.Map{"status": "installed", "jar": "quilt.jar"})
+		}
+
+		if payload.Type == "forge" {
+			if err := vm.InstallForge(payload.Version); err != nil {
+				return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+			}
+			inst.SetJar("forge.jar")
+			return c.JSON(fiber.Map{"status": "installed", "jar": "forge.jar"})
+		}
+
+		if payload.Type == "neoforge" {
+			if err := vm.InstallNeoForge(payload.Version); err != nil {
+				return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+			}
+			inst.SetJar("neoforge.jar")
+			return c.JSON(fiber.Map{"status": "installed", "jar": "neoforge.jar"})
+		}
+
+		return c.Status(400).JSON(fiber.Map{"error": "Unsupported version type"})
+	})
+
+	// File Management Routes
+	app.Get("/api/instances/:id/files", func(c *fiber.Ctx) error {
+		inst, err := instanceManager.GetInstance(c.Params("id"))
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+		}
+		path := c.Query("path", ".") // Default to root
+		files, err := inst.ListFiles(path)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(files)
+	})
+
+	app.Get("/api/instances/:id/files/content", func(c *fiber.Ctx) error {
+		inst, err := instanceManager.GetInstance(c.Params("id"))
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+		}
+		path := c.Query("path")
+		if path == "" {
+			return c.Status(400).JSON(fiber.Map{"error": "Path required"})
+		}
+		content, err := inst.ReadFile(path)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		// Return text content
+		return c.SendString(string(content))
+	})
+
+	app.Put("/api/instances/:id/files/content", func(c *fiber.Ctx) error {
+		inst, err := instanceManager.GetInstance(c.Params("id"))
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+		}
+
+		var payload struct {
+			Path    string `json:"path"`
+			Content string `json:"content"`
+		}
+		if err := c.BodyParser(&payload); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
+		}
+
+		if err := inst.WriteFile(payload.Path, []byte(payload.Content)); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(fiber.Map{"status": "saved"})
+	})
+
+	app.Post("/api/instances/:id/files/upload", func(c *fiber.Ctx) error {
+		inst, err := instanceManager.GetInstance(c.Params("id"))
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+		}
+
+		path := c.Query("path", ".")
+		form, err := c.MultipartForm()
+		if err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid form"})
+		}
+
+		files := form.File["files"]
+		for _, file := range files {
+			if err := inst.HandleUpload(path, file); err != nil {
+				return c.Status(500).JSON(fiber.Map{"error": fmt.Sprintf("Failed to upload %s: %v", file.Filename, err)})
+			}
+		}
+
+		return c.JSON(fiber.Map{"status": "uploaded", "count": len(files)})
+	})
+
+	app.Delete("/api/instances/:id/files", func(c *fiber.Ctx) error {
+		inst, err := instanceManager.GetInstance(c.Params("id"))
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+		}
+		path := c.Query("path")
+		if path == "" {
+			return c.Status(400).JSON(fiber.Map{"error": "Path required"})
+		}
+		if err := inst.DeleteFile(path); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(fiber.Map{"status": "deleted"})
+	})
+
+	app.Post("/api/instances/:id/files/mkdir", func(c *fiber.Ctx) error {
+		inst, err := instanceManager.GetInstance(c.Params("id"))
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+		}
+		var payload struct {
+			Path string `json:"path"`
+		}
+		if err := c.BodyParser(&payload); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
+		}
+		if err := inst.Mkdir(payload.Path); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(fiber.Map{"status": "created"})
+	})
+
+	// Mods Management Cache
+	// TODO: Implement cache for search queries?
+
+	app.Get("/api/instances/:id/mods/search", func(c *fiber.Ctx) error {
+		inst, err := instanceManager.GetInstance(c.Params("id"))
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+		}
+
+		query := c.Query("query")
+		typeFilter := c.Query("type", "mod") // "mod" or "modpack"
+		isModpack := typeFilter == "modpack"
+		offset, _ := strconv.Atoi(c.Query("offset", "0"))
+		sort := c.Query("sort", "")
+		sides := c.Query("sides", "")
+		sidesList := []string{}
+		if sides != "" {
+			sidesList = strings.Split(sides, ",")
+		}
+
+		results, err := inst.SearchMods(query, isModpack, offset, sort, sidesList)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(results)
+	})
+
+	app.Get("/api/instances/:id/mods", func(c *fiber.Ctx) error {
+		inst, err := instanceManager.GetInstance(c.Params("id"))
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+		}
+
+		ids, err := inst.GetInstalledMods()
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(ids)
+	})
+
+	app.Post("/api/instances/:id/mods", func(c *fiber.Ctx) error {
+		inst, err := instanceManager.GetInstance(c.Params("id"))
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+		}
+
+		var payload struct {
+			ProjectID string `json:"projectId"`
+		}
+		if err := c.BodyParser(&payload); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
+		}
+
+		if err := inst.InstallMod(payload.ProjectID); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(fiber.Map{"status": "installed"})
+	})
+
+	app.Post("/api/instances/:id/modpacks", func(c *fiber.Ctx) error {
+		inst, err := instanceManager.GetInstance(c.Params("id"))
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+		}
+
+		var payload struct {
+			ProjectID string `json:"projectId"`
+		}
+		if err := c.BodyParser(&payload); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
+		}
+
+		// Run in background as it might take time?
+		// But for now, blocking to report error is safer for MVP, or use websocket for progress.
+		// InstallModpack broadcasts progress, so we can return immediately or wait.
+		// Let's return immediate Success and let WS handle it?
+		// Or better, blocking so the UI loader spins until at least the process starts clearly.
+		// Since InstallModpack does heavy IO, let's run it async and client watches console.
+
+		go func() {
+			if err := inst.InstallModpack(payload.ProjectID); err != nil {
+				inst.Manager.Broadcast(fmt.Sprintf("Error installing modpack: %v", err))
+			}
+		}()
+
+		return c.JSON(fiber.Map{"status": "installing"})
+	})
+
+	// WebSocket for Console
+	app.Use("/ws", func(c *fiber.Ctx) error {
+		if websocket.IsWebSocketUpgrade(c) {
+			c.Locals("allowed", true)
+			return c.Next()
+		}
+		return fiber.ErrUpgradeRequired
+	})
+
+	app.Get("/ws/instances/:id/console", websocket.New(func(c *websocket.Conn) {
+		id := c.Params("id")
+		inst, err := instanceManager.GetInstance(id)
+		if err != nil {
+			c.Close()
+			return
+		}
+
+		inst.RegisterClient(c)
+		defer inst.UnregisterClient(c)
+
+		for {
+			if _, _, err := c.ReadMessage(); err != nil {
+				break
+			}
+		}
+	}))
+
+	// Serve Static Files (Frontend)
+	app.Static("/", "./build")
+
+	// SPA Fallback: Serve index.html for unknown routes
+	app.Get("*", func(c *fiber.Ctx) error {
+		return c.SendFile("./build/index.html")
+	})
+
+	log.Fatal(app.Listen(":3000"))
+}
