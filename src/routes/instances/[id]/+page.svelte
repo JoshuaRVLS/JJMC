@@ -9,6 +9,7 @@
     import Controls from "$lib/Controls.svelte";
     import Settings from "$lib/Settings.svelte";
     import Mods from "$lib/Mods.svelte";
+    import ModConfigs from "$lib/ModConfigs.svelte";
 
     // Get instance ID from route params
     $: instanceId = $page.params.id;
@@ -167,6 +168,8 @@
             <Settings {instanceId} />
         {:else if activeTab === "mods"}
             <Mods {instanceId} />
+        {:else if activeTab === "configs"}
+            <ModConfigs {instanceId} />
         {/if}
     </div>
 </div>
