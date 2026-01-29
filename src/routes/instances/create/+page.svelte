@@ -4,6 +4,7 @@
     import Select from "$lib/components/Select.svelte";
     import { onMount } from "svelte";
     import { addToast } from "$lib/stores/toast";
+    import DirectoryPicker from "$lib/components/DirectoryPicker.svelte";
 
     let step = 1;
     let name = "";
@@ -117,6 +118,7 @@
     }
 
     let importMode = false;
+    let showDirPicker = false;
     let sourcePath = "";
 
     async function create() {
@@ -229,6 +231,12 @@
     });
 </script>
 
+<DirectoryPicker
+    bind:open={showDirPicker}
+    on:select={(e) => (sourcePath = e.detail)}
+    on:close={() => (showDirPicker = false)}
+/>
+
 <div class="h-full flex flex-col items-center justify-center p-6 bg-gray-950">
     <div
         class="w-full max-w-xl bg-gray-900 rounded-lg border border-gray-800 shadow-xl overflow-hidden"
@@ -325,7 +333,7 @@
                                     class="block text-xs font-medium text-gray-400 mb-1.5"
                                     for="source-path">Server Folder Path</label
                                 >
-                                <div class="relative">
+                                <div class="relative flex gap-2">
                                     <input
                                         id="source-path"
                                         type="text"
@@ -333,11 +341,13 @@
                                         class="w-full bg-gray-800 border border-gray-700 rounded-md p-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
                                         placeholder="/path/to/existing/server"
                                     />
-                                    <div
-                                        class="absolute right-3 top-3 text-gray-500 pointer-events-none"
+                                    <button
+                                        on:click={() => (showDirPicker = true)}
+                                        class="bg-gray-700 hover:bg-gray-600 text-white px-3 rounded-md border border-gray-600 transition-colors"
+                                        title="Browse"
                                     >
                                         <svg
-                                            class="w-4 h-4"
+                                            class="w-5 h-5"
                                             fill="none"
                                             stroke="currentColor"
                                             viewBox="0 0 24 24"
@@ -345,10 +355,10 @@
                                                 stroke-linecap="round"
                                                 stroke-linejoin="round"
                                                 stroke-width="2"
-                                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                                                d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"
                                             ></path></svg
                                         >
-                                    </div>
+                                    </button>
                                 </div>
                                 <p class="text-[10px] text-gray-500 mt-2">
                                     Files will be copied from this location to

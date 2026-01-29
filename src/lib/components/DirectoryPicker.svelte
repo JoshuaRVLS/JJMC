@@ -7,6 +7,7 @@
     const dispatch = createEventDispatcher();
 
     let currentPath = "";
+    let selectedPath = "";
     /** @type {Array<{name: string, path: string, isDir: boolean}>} */
     let files = [];
     let loading = false;
@@ -15,6 +16,7 @@
     async function loadPath(path = "") {
         loading = true;
         error = "";
+        selectedPath = ""; // Reset selection on navigation
         try {
             const res = await fetch(
                 `/api/system/files?path=${encodeURIComponent(path)}`,
@@ -36,13 +38,19 @@
     }
 
     function select() {
-        dispatch("select", currentPath);
+        dispatch("select", selectedPath || currentPath);
         close();
     }
 
     function close() {
         dispatch("close");
         open = false;
+    }
+
+    function handleKeydown(e) {
+        if (e.key === "Enter" && selectedPath) {
+            loadPath(selectedPath);
+        }
     }
 
     onMount(() => {
@@ -134,10 +142,18 @@
                     <div class="grid grid-cols-1 gap-1">
                         {#each files as file}
                             <button
-                                class="flex items-center gap-3 p-2 hover:bg-gray-800 rounded text-left group"
-                                on:click={() => loadPath(file.path)}
+                                class="flex items-center gap-3 p-2 rounded text-left group transition-all {selectedPath ===
+                                file.path
+                                    ? 'bg-blue-600/20 ring-1 ring-blue-500 text-white'
+                                    : 'hover:bg-gray-800 text-gray-300'}"
+                                on:click={() => (selectedPath = file.path)}
+                                on:dblclick={() => loadPath(file.path)}
                             >
-                                <div class="text-yellow-500">
+                                <div
+                                    class={selectedPath === file.path
+                                        ? "text-blue-400"
+                                        : "text-yellow-500"}
+                                >
                                     <svg
                                         class="w-6 h-6"
                                         fill="currentColor"
@@ -147,9 +163,7 @@
                                         ></path></svg
                                     >
                                 </div>
-                                <span
-                                    class="flex-1 text-gray-300 group-hover:text-white truncate font-medium"
-                                >
+                                <span class="flex-1 truncate font-medium">
                                     {file.name}
                                 </span>
                             </button>
@@ -176,7 +190,7 @@
                     on:click={select}
                     class="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 text-white shadow-lg transition-colors text-sm font-medium flex items-center gap-2"
                 >
-                    Select Current Folder
+                    Select {selectedPath ? "Highlight" : "Current Folder"}
                 </button>
             </div>
         </div>
