@@ -7,6 +7,14 @@
 
     let step = 1;
     let name = "";
+
+    /**
+     * @typedef {Object} Option
+     * @property {string} value
+     * @property {string} label
+     */
+
+    /** @type {Option[]} */
     let typeOptions = [];
     let loadingLoaders = false;
     let type = "";
@@ -14,6 +22,7 @@
     let creating = false;
     let status = "";
 
+    /** @type {Option[]} */
     let versionOptions = [];
     let loadingVersions = false;
 
@@ -30,8 +39,10 @@
                 const data = await res.json();
                 // Filter and map
                 const available = data
-                    .filter((l) => SUPPORTED_LOADERS.includes(l.name))
-                    .map((l) => ({
+                    .filter((/** @type {{name: string}} */ l) =>
+                        SUPPORTED_LOADERS.includes(l.name),
+                    )
+                    .map((/** @type {{name: string}} */ l) => ({
                         value: l.name,
                         label: l.name.charAt(0).toUpperCase() + l.name.slice(1), // Capitalize
                     }));
@@ -71,8 +82,15 @@
             if (res.ok) {
                 const data = await res.json();
                 versionOptions = data
-                    .filter((v) => v.version_type === "release")
-                    .map((v) => ({ value: v.version, label: v.version }));
+                    .filter(
+                        (
+                            /** @type {{version: string, version_type: string}} */ v,
+                        ) => v.version_type === "release",
+                    )
+                    .map((/** @type {{version: string}} */ v) => ({
+                        value: v.version,
+                        label: v.version,
+                    }));
 
                 if (!version && versionOptions.length > 0) {
                     version = versionOptions[0].value;
@@ -212,9 +230,10 @@
                         <div>
                             <label
                                 class="block text-xs font-medium text-gray-400 mb-1.5"
-                                >Instance Name</label
+                                for="instance-name">Instance Name</label
                             >
                             <input
+                                id="instance-name"
                                 type="text"
                                 bind:value={name}
                                 class="w-full bg-gray-800 border border-gray-700 rounded-md p-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"

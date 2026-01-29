@@ -4,16 +4,30 @@
     import { askConfirm } from "$lib/stores/confirm";
     import { askInput } from "$lib/stores/input";
 
+    /** @type {string} */
     export let instanceId;
 
+    /**
+     * @typedef {Object} FileEntry
+     * @property {string} name
+     * @property {number} size
+     * @property {boolean} isDir
+     * @property {number} modTime
+     * @property {string} [fullPath]
+     */
+
+    /** @type {FileEntry[]} */
     let files = [];
     let currentPath = ".";
     let loading = false;
+    /** @type {FileEntry | null} */
     let viewingFile = null;
     let fileContent = "";
     let isEditing = false;
+    /** @type {Array<{name: string, path: string}>} */
     let breadcrumbs = [];
 
+    /** @param {string} [path] */
     async function loadFiles(path = ".") {
         loading = true;
         try {
@@ -37,6 +51,7 @@
         }
     }
 
+    /** @param {string} path */
     function updateBreadcrumbs(path) {
         const parts = path === "." ? [] : path.split("/");
         let acc = "";
@@ -49,6 +64,7 @@
         });
     }
 
+    /** @param {string} path */
     function navigate(path) {
         loadFiles(path);
     }
@@ -61,6 +77,7 @@
         loadFiles(newPath);
     }
 
+    /** @param {number} bytes */
     function formatSize(bytes) {
         if (bytes === 0) return "0 B";
         const k = 1024;
@@ -69,10 +86,12 @@
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
     }
 
+    /** @param {number} ms */
     function formatDate(ms) {
         return new Date(ms).toLocaleString();
     }
 
+    /** @param {FileEntry} file */
     async function openFile(file) {
         if (file.isDir) {
             const newPath =
@@ -140,6 +159,7 @@
         }
     }
 
+    /** @param {FileEntry} file */
     async function deleteFile(file) {
         const confirmed = await askConfirm({
             title: "Delete File",
@@ -231,8 +251,10 @@
         }
     }
 
+    /** @param {Event} e */
     async function handleFileUpload(e) {
-        const fileList = e.target.files;
+        const target = /** @type {HTMLInputElement} */ (e.target);
+        const fileList = target.files;
         if (!fileList || fileList.length === 0) return;
 
         const formData = new FormData();
@@ -262,7 +284,7 @@
             addToast("Error uploading", "error");
         } finally {
             loading = false;
-            e.target.value = ""; // Reset input
+            if (target) target.value = ""; // Reset input
         }
     }
 

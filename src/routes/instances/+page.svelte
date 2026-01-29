@@ -5,8 +5,19 @@
 
     import { onDestroy } from "svelte";
 
+    /**
+     * @typedef {Object} Instance
+     * @property {string} id
+     * @property {string} name
+     * @property {string} type
+     * @property {string} version
+     * @property {string} status
+     */
+
+    /** @type {Instance[]} */
     let instances = [];
     let loading = true;
+    /** @type {ReturnType<typeof setInterval> | undefined} */
     let pollInterval;
 
     async function loadInstances() {
@@ -34,6 +45,7 @@
         if (pollInterval) clearInterval(pollInterval);
     });
 
+    /** @param {string} id */
     async function deleteInstance(id) {
         const confirmed = await askConfirm({
             title: "Delete Instance",
@@ -56,7 +68,10 @@
                 addToast("Failed to delete instance", "error");
             }
         } catch (e) {
-            addToast("Error deleting instance: " + e.message, "error");
+            addToast(
+                "Error deleting instance: " + /** @type {Error} */ (e).message,
+                "error",
+            );
         }
     }
 </script>

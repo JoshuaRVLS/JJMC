@@ -6,7 +6,17 @@
 	import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
 	import InputModal from "$lib/components/InputModal.svelte";
 
+	/**
+	 * @typedef {Object} Instance
+	 * @property {string} id
+	 * @property {string} name
+	 * @property {string} type
+	 * @property {string} status
+	 */
+
+	/** @type {Instance[]} */
 	let instances = [];
+	/** @type {ReturnType<typeof setInterval> | undefined} */
 	let pollInterval;
 
 	async function loadInstances() {
@@ -374,8 +384,9 @@
 						</div>
 						<a
 							href="/settings"
-							class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 {$page
-								.url.pathname === '/settings'
+							class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 {/** @type {string} */ (
+								$page.url.pathname
+							) === '/settings'
 								? 'bg-indigo-500/10 text-indigo-400 ring-1 ring-indigo-500/20'
 								: 'hover:bg-white/5 hover:text-white'}"
 						>

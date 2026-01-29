@@ -3,15 +3,28 @@
     import { addToast } from "$lib/stores/toast";
     import { askConfirm } from "$lib/stores/confirm";
 
+    /** @type {string} */
     export let instanceId;
 
+    /**
+     * @typedef {Object} ConfigFile
+     * @property {string} name
+     * @property {number} size
+     * @property {boolean} isDir
+     * @property {string} [fullPath]
+     */
+
+    /** @type {ConfigFile[]} */
     let files = [];
     let loading = false;
+    /** @type {ConfigFile | null} */
     let viewingFile = null;
     let fileContent = "";
+    /** @type {any} */
     let parsedData = null;
     let query = "";
     let isGuiMode = true;
+    /** @type {string | null} */
     let parseError = null;
 
     async function loadConfigs() {
@@ -35,6 +48,7 @@
         }
     }
 
+    /** @param {ConfigFile} file */
     async function openFile(file) {
         if (file.isDir) return; // Only files for now in configs view
 
@@ -60,20 +74,19 @@
     function attemptParse() {
         parseError = null;
         try {
-            // Try JSON first
             if (
-                viewingFile.name.endsWith(".json") ||
-                viewingFile.name.endsWith(".json5")
+                viewingFile &&
+                (viewingFile.name.endsWith(".json") ||
+                    viewingFile.name.endsWith(".json5"))
             ) {
                 parsedData = JSON.parse(fileContent);
                 isGuiMode = true;
             } else {
-                // For other files, maybe just treat as text for now or try simple KV
                 isGuiMode = false;
                 parsedData = null;
             }
         } catch (e) {
-            parseError = e.message;
+            parseError = /** @type {Error} */ (e).message;
             isGuiMode = false;
             parsedData = null;
         }
@@ -110,6 +123,7 @@
         }
     }
 
+    /** @param {number} bytes */
     function formatSize(bytes) {
         if (bytes === 0) return "0 B";
         const k = 1024;
@@ -133,12 +147,14 @@
     >
         <label
             class="text-[10px] font-bold text-gray-500 uppercase tracking-widest"
-            >{label}</label
+            for="field-{key}">{label}</label
         >
 
         {#if typeof value === "boolean"}
             <div class="flex items-center gap-3">
                 <button
+                    id="field-{key}"
+                    aria-label="Toggle {label}"
                     class="w-10 h-5 rounded-full relative transition-colors {value
                         ? 'bg-indigo-500'
                         : 'bg-gray-700'}"
@@ -154,12 +170,14 @@
             </div>
         {:else if typeof value === "number"}
             <input
+                id="field-{key}"
                 type="number"
                 bind:value={parent[key]}
                 class="bg-black/40 border border-white/10 rounded px-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-colors"
             />
         {:else if typeof value === "string"}
             <input
+                id="field-{key}"
                 type="text"
                 bind:value={parent[key]}
                 class="bg-black/40 border border-white/10 rounded px-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-colors"
@@ -206,6 +224,7 @@
                                     `Item ${i}`,
                                     item,
                                     value,
+                                    // @ts-ignore
                                     i,
                                 )}
                             {/each}
@@ -231,6 +250,7 @@
                     <button
                         on:click={() => (viewingFile = null)}
                         class="text-gray-400 hover:text-white transition-colors"
+                        aria-label="Back to file list"
                     >
                         <svg
                             class="w-5 h-5"

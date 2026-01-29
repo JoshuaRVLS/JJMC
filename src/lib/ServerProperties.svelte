@@ -2,15 +2,34 @@
     import { onMount } from "svelte";
     import { addToast } from "$lib/stores/toast";
 
+    /** @type {string} */
     export let instanceId;
 
+    /**
+     * @typedef {Object} Property
+     * @property {string} key
+     * @property {string} value
+     * @property {string} type
+     * @property {string} originalValue
+     */
+
+    /** @type {Property[]} */
     let properties = [];
     let loading = true;
 
     // Helper to determine input type
+    /**
+     * @param {string} key
+     * @param {string} value
+     */
     function getInputType(key, value) {
         if (value === "true" || value === "false") return "boolean";
-        if (!isNaN(value) && value.trim() !== "") return "number";
+        if (
+            !isNaN(parseFloat(value)) &&
+            isFinite(Number(value)) &&
+            value.trim() !== ""
+        )
+            return "number";
         return "text";
     }
 
@@ -39,8 +58,10 @@
         }
     }
 
+    /** @param {string} text */
     function parseProperties(text) {
         const lines = text.split("\n");
+        /** @type {Property[]} */
         const parsed = [];
 
         lines.forEach((line) => {

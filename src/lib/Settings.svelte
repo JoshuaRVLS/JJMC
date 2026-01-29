@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import { addToast } from "$lib/stores/toast";
 
+    /** @type {string} */
     export let instanceId;
 
     let maxMemory = 2048;
@@ -32,14 +33,17 @@
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    maxMemory: parseInt(maxMemory),
+                    maxMemory: parseInt(String(maxMemory)),
                     javaArgs: javaArgs,
                 }),
             });
             if (!res.ok) throw new Error(await res.text());
             addToast("Settings saved", "success");
         } catch (e) {
-            addToast("Failed to save settings: " + e.message, "error");
+            addToast(
+                "Failed to save settings: " + /** @type {Error} */ (e).message,
+                "error",
+            );
         } finally {
             saving = false;
         }

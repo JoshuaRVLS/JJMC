@@ -2,7 +2,13 @@
     import { slide } from "svelte/transition";
     import { createEventDispatcher } from "svelte";
 
+    /**
+     * @typedef {{value: any, label: string}} OptionObject
+     */
+
+    /** @type {any} */
     export let value;
+    /** @type {Array<OptionObject | string>} */
     export let options = []; // Array of { value, label } or strings
     export let label = "";
     export let placeholder = "Select an option";
@@ -23,20 +29,22 @@
         isOpen = !isOpen;
     }
 
+    /** @param {OptionObject | string} option */
     function select(option) {
         value = typeof option === "object" ? option.value : option;
         isOpen = false;
         dispatch("change", value);
     }
 
+    /** @param {HTMLElement} node */
     function clickOutside(node) {
-        const handleClick = (event) => {
+        const handleClick = (/** @type {MouseEvent} */ event) => {
             if (
                 node &&
-                !node.contains(event.target) &&
+                !node.contains(/** @type {Node} */ (event.target)) &&
                 !event.defaultPrevented
             ) {
-                node.dispatchEvent(new CustomEvent("click_outside", node));
+                node.dispatchEvent(new CustomEvent("click_outside"));
             }
         };
 

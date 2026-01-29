@@ -2,21 +2,27 @@
     import { onMount } from "svelte";
     import { addToast } from "$lib/stores/toast";
 
+    /** @type {string} */
     export let instanceId;
     export let type = "";
 
     let activeTab = "mod"; // 'mod' | 'modpack'
     let query = "";
+    /** @type {Array<any>} */
     let results = [];
+    /** @type {Set<string>} */
     let installedIds = new Set();
     let loading = false;
     let loadingMore = false;
+    /** @type {string | null} */
     let installingId = null;
     let offset = 0;
     let hasMore = true;
     let sortBy = "relevance"; // relevance, downloads, follows, newest, updated
 
+    /** @type {IntersectionObserver} */
     let observer;
+    /** @type {HTMLElement} */
     let sentinel;
 
     async function fetchInstalled() {
@@ -101,6 +107,7 @@
         };
     });
 
+    /** @param {string} projectId */
     async function installMod(projectId) {
         installingId = projectId;
         try {
@@ -120,12 +127,16 @@
                 );
             }
         } catch (e) {
-            addToast("Error installing: " + e.message, "error");
+            addToast(
+                "Error installing: " + /** @type {Error} */ (e).message,
+                "error",
+            );
         } finally {
             installingId = null;
         }
     }
 
+    /** @param {string} projectId */
     async function uninstallMod(projectId) {
         if (!confirm("Are you sure you want to uninstall this?")) return;
         installingId = projectId; // Re-using state var for loading
@@ -146,12 +157,16 @@
                 );
             }
         } catch (e) {
-            addToast("Error uninstalling: " + e.message, "error");
+            addToast(
+                "Error uninstalling: " + /** @type {Error} */ (e).message,
+                "error",
+            );
         } finally {
             installingId = null;
         }
     }
 
+    /** @param {string} projectId */
     async function installModpack(projectId) {
         if (
             !confirm(
@@ -181,16 +196,21 @@
                 );
             }
         } catch (e) {
-            addToast("Error installing: " + e.message, "error");
+            addToast(
+                "Error installing: " + /** @type {Error} */ (e).message,
+                "error",
+            );
         } finally {
             installingId = null;
         }
     }
 
+    /** @param {KeyboardEvent} e */
     function handleKeydown(e) {
         if (e.key === "Enter") search(true);
     }
 
+    /** @param {string} side */
     function getSideColor(side) {
         if (side === "required")
             return "bg-rose-500/20 text-rose-400 border-rose-500/30";

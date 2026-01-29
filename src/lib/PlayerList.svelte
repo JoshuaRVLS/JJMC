@@ -2,9 +2,11 @@
     import { onMount } from "svelte";
     import { addToast } from "$lib/stores/toast";
 
+    /** @type {string} */
     export let instanceId;
     export let type = "whitelist"; // 'whitelist' or 'ops'
 
+    /** @type {Array<{uuid: string, name: string}>} */
     let players = [];
     let loading = true;
     let newPlayerName = "";
@@ -64,22 +66,6 @@
     async function addPlayer() {
         if (!newPlayerName.trim()) return;
 
-        // Basic offline UUID generation or just name for now?
-        // Modern MC uses UUIDs. For simple management, we might need to fetch UUID from Mojang API if possible,
-        // OR just rely on name if the server supports it (it usually resolves matches).
-        // BUT editing json directly requires valid objects.
-        // { "uuid": "...", "name": "...", "level": 4 } for ops
-        // { "uuid": "...", "name": "..." } for whitelist
-
-        // Since we don't have an easy backend proxy for Mojang API yet,
-        // WE can try to execute the command 'whitelist add <name>' or 'op <name>' if the server is running.
-        // BUT the user asked for a "Tab" which usually implies file editing.
-        // Editing file offline is harder without UUIDs.
-
-        // Strategy: Try to find UUID via a public API or warn user.
-        // Actually, let's use a simple cors proxy or direct fetch if browser allows.
-        // Mojang API: https://api.mojang.com/users/profiles/minecraft/<username>
-
         try {
             const res = await fetch(
                 `https://api.ashcon.app/mojang/v2/user/${newPlayerName}`,
@@ -109,6 +95,7 @@
         }
     }
 
+    /** @param {string} uuid */
     function removePlayer(uuid) {
         players = players.filter((p) => p.uuid !== uuid);
         savePlayers();

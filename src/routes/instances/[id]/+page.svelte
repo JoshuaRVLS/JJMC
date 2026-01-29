@@ -12,15 +12,17 @@
     import ModConfigs from "$lib/ModConfigs.svelte";
 
     // Get instance ID from route params
-    $: instanceId = $page.params.id;
+    $: instanceId = $page.params.id || "";
 
     let status = "Offline";
     let type = "";
+    /** @type {ReturnType<typeof setInterval> | undefined} */
     let interval;
 
     // Sync activeTab with URL
     $: activeTab = $page.url.searchParams.get("tab") || "console";
 
+    /** @param {string} tab */
     function setTab(tab) {
         const url = new URL($page.url);
         url.searchParams.set("tab", tab);
@@ -63,6 +65,7 @@
         <div class="flex items-center gap-4">
             <a
                 href="/instances"
+                aria-label="Back to instances"
                 class="flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all border border-white/5"
             >
                 <svg

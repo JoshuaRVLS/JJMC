@@ -1,12 +1,16 @@
 <script>
     import { onMount, onDestroy } from "svelte";
 
+    /** @type {string} */
     export let instanceId;
     export let status = "Offline";
 
+    /** @type {string[]} */
     let logs = [];
     let command = "";
+    /** @type {WebSocket | undefined} */
     let socket;
+    /** @type {HTMLDivElement} */
     let consoleDiv;
     let connected = false;
 
@@ -25,7 +29,7 @@
             connected = true;
         };
 
-        socket.onmessage = (event) => {
+        socket.onmessage = (/** @type {MessageEvent} */ event) => {
             logs = [...logs, event.data];
             scrollToBottom();
         };
@@ -81,6 +85,7 @@
         }
     }
 
+    /** @param {KeyboardEvent} e */
     function handleKeydown(e) {
         if (e.key === "Enter") {
             sendCommand();
