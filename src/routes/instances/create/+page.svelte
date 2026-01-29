@@ -20,6 +20,8 @@
     // Loaders we currently support with automated installers
     const SUPPORTED_LOADERS = ["fabric", "quilt", "forge", "neoforge"];
 
+    const MANUAL_LOADERS = [{ value: "spigot", label: "Spigot" }];
+
     async function loadLoaders() {
         loadingLoaders = true;
         try {
@@ -36,6 +38,7 @@
 
                 typeOptions = [
                     ...available,
+                    ...MANUAL_LOADERS,
                     { value: "custom", label: "Custom Jar" },
                 ];
 
@@ -52,6 +55,7 @@
                 { value: "quilt", label: "Quilt" },
                 { value: "forge", label: "Forge" },
                 { value: "neoforge", label: "NeoForge" },
+                ...MANUAL_LOADERS,
                 { value: "custom", label: "Custom Jar" },
             ];
             if (!type) type = "fabric";

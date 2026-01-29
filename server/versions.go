@@ -433,6 +433,10 @@ func (v *VersionsManager) downloadFileWithProgress(filepath string, url string) 
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("server returned %s", resp.Status)
+	}
+
 	out, err := os.Create(filepath)
 	if err != nil {
 		return err
@@ -447,5 +451,24 @@ func (v *VersionsManager) downloadFileWithProgress(filepath string, url string) 
 	if _, err = io.Copy(out, io.TeeReader(resp.Body, counter)); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (v *VersionsManager) InstallSpigot(version string) error {
+	// Direct download from cdn.getbukkit.org as requested by user
+	downloadUrl := fmt.Sprintf("https://cdn.getbukkit.org/spigot/spigot-%s.jar", version)
+
+	workDir := v.manager.workDir
+	targetJarPath := filepath.Join(workDir, "server.jar")
+
+	v.manager.broadcast <- fmt.Sprintf("Downloading Spigot %s...", version)
+
+	// We download directly to spigot.jar.
+	// Note: using downloadFileWithProgress to show progress.
+	if err := v.downloadFileWithProgress(targetJarPath, downloadUrl); err != nil {
+		return fmt.Errorf("failed to download Spigot: %v. Please check if version %s exists on getbukkit.org", err, version)
+	}
+
+	v.manager.broadcast <- "Spigot installed successfully."
 	return nil
 }

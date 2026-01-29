@@ -57,8 +57,67 @@ type ProjectVersion struct {
 	} `json:"dependencies"`
 }
 
-// SearchMods queries Modrinth
+// SearchMods queries Modrinth or Spiget
+type InstalledPlugin struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Filename string `json:"filename"`
+}
+
 func (inst *Instance) SearchMods(query string, isModpack bool, offset int, sort string, sides []string) ([]interface{}, error) {
+	if inst.Type == "spigot" {
+		if isModpack {
+			return []interface{}{}, nil // Spigot doesn't support modpacks in the same way yet
+		}
+
+		client := NewSpigetClient()
+		// Page size 20, calculate page number from offset
+		page := (offset / 20) + 1
+
+		resources, err := client.SearchResources(query, 20, page)
+		if err != nil {
+			return nil, err
+		}
+
+		var hits []interface{}
+		for _, r := range resources {
+			// Map SpigetResource to frontend expected format
+			hit := map[string]interface{}{
+				"project_id":    fmt.Sprintf("%d", r.ID),
+				"title":         r.Name,
+				"description":   r.Tag,
+				"icon_url":      "",                             // Default empty
+				"author":        fmt.Sprintf("%d", r.Author.ID), // we only have ID initially
+				"downloads":     r.Downloads,
+				"date_modified": r.UpdateDate * 1000, // Unix timestamp to JS ms
+				"categories":    []string{"plugin"},  // generic category
+				"client_side":   "unsupported",
+				"server_side":   "required",
+			}
+
+			// Handle Icon
+			if r.Icon.Url != "" {
+				if !strings.HasPrefix(r.Icon.Url, "http") {
+					// Relative path, prepend spigotmc.org
+					// Handle cases like "data/..." or "/data/..."
+					hit["icon_url"] = "https://www.spigotmc.org/" + strings.TrimPrefix(r.Icon.Url, "/")
+				} else {
+					hit["icon_url"] = r.Icon.Url
+				}
+			} else if r.Icon.Data != "" {
+				hit["icon_url"] = "data:image/jpeg;base64," + r.Icon.Data
+			}
+
+			// Try to get icon if available in resource details? Too slow for list.
+			// Spiget resources have an icon base64 sometimes or external url.
+			// The search result `File` struct has `type` and `url` but not icon.
+			// `r.Icon.Url` exists in full details.
+
+			hits = append(hits, hit)
+		}
+		return hits, nil
+	}
+
 	loader := inst.Type
 	mcVersion := inst.Version
 
@@ -70,6 +129,7 @@ func (inst *Instance) SearchMods(query string, isModpack bool, offset int, sort 
 	u, _ := url.Parse("https://api.modrinth.com/v2/search")
 	q := u.Query()
 	q.Set("query", query)
+	// ... rest of Modrinth logic ...
 
 	// Modrinth facets: [["facet:value"], ["facet:value"]] for AND logic
 	var facetList []string
@@ -128,6 +188,69 @@ func (inst *Instance) SearchMods(query string, isModpack bool, offset int, sort 
 
 // InstallMod downloads the latest compatible version of a mod
 func (inst *Instance) InstallMod(projectId string) error {
+	if inst.Type == "spigot" {
+		client := NewSpigetClient()
+		var id int
+		if _, err := fmt.Sscanf(projectId, "%d", &id); err != nil {
+			return fmt.Errorf("invalid spiget resource id: %s", projectId)
+		}
+
+		res, err := client.GetResourceDetails(id)
+		if err != nil {
+			return fmt.Errorf("failed to get resource details: %v", err)
+		}
+
+		safeName := strings.ReplaceAll(res.Name, " ", "_")
+		// Remove other unsafe chars
+		safeName = strings.Map(func(r rune) rune {
+			if strings.ContainsRune(`\/:*?"<>|`, r) {
+				return -1
+			}
+			return r
+		}, safeName)
+
+		fileName := fmt.Sprintf("%s.jar", safeName)
+		pluginsDir := filepath.Join(inst.Directory, "plugins")
+		os.MkdirAll(pluginsDir, 0755)
+
+		targetPath := filepath.Join(pluginsDir, fileName)
+		inst.Manager.Broadcast(fmt.Sprintf("Downloading plugin %s...", fileName))
+
+		// Use inst.downloadFile to get progress
+		err = inst.downloadFile(targetPath, client.GetDownloadURL(id))
+		if err != nil {
+			return err
+		}
+
+		// Update installed_plugins.json
+		metaPath := filepath.Join(inst.Directory, "installed_plugins.json")
+		var plugins []InstalledPlugin
+		if data, err := os.ReadFile(metaPath); err == nil {
+			json.Unmarshal(data, &plugins)
+		}
+
+		// Check if already exists, update if so
+		found := false
+		for i, p := range plugins {
+			if p.ID == projectId {
+				plugins[i].Filename = fileName
+				plugins[i].Name = res.Name
+				found = true
+				break
+			}
+		}
+		if !found {
+			plugins = append(plugins, InstalledPlugin{
+				ID:       projectId,
+				Name:     res.Name,
+				Filename: fileName,
+			})
+		}
+
+		data, _ := json.MarshalIndent(plugins, "", "  ")
+		return os.WriteFile(metaPath, data, 0644)
+	}
+
 	ver, err := inst.getCompatibleVersion(projectId)
 	if err != nil {
 		return err
@@ -157,6 +280,74 @@ func (inst *Instance) InstallMod(projectId string) error {
 
 	return inst.downloadFile(targetPath, fileUrl)
 }
+
+func (inst *Instance) UninstallMod(projectId string) error {
+	if inst.Type == "spigot" {
+		metaPath := filepath.Join(inst.Directory, "installed_plugins.json")
+		var plugins []InstalledPlugin
+		if data, err := os.ReadFile(metaPath); err == nil {
+			json.Unmarshal(data, &plugins)
+		}
+
+		var newPlugins []InstalledPlugin
+		var filename string
+		for _, p := range plugins {
+			if p.ID == projectId {
+				filename = p.Filename
+			} else {
+				newPlugins = append(newPlugins, p)
+			}
+		}
+
+		if filename != "" {
+			// Remove file
+			os.Remove(filepath.Join(inst.Directory, "plugins", filename))
+
+			// Update metadata
+			data, _ := json.MarshalIndent(newPlugins, "", "  ")
+			os.WriteFile(metaPath, data, 0644)
+			return nil
+		}
+		return fmt.Errorf("plugin not found in metadata")
+	}
+
+	// Modrinth uninstall logic (future/stub)
+	// For now just error or ignored as user only asked for Spigot text
+	return fmt.Errorf("uninstall not supported for this type yet")
+}
+
+// Helper for download wrapper if needed, but SpigetClient takes io.Writer
+// My SpigetClient.DownloadResource takes io.Writer.
+// I need `wrapWriter`? No, I can just pass the file.
+// But I want a progress bar?
+// `client.DownloadResource` does `io.Copy(w, resp.Body)`.
+// If I pass the file, it works.
+// To support progress, I should use `inst.downloadFile`-like logic but `downloadFile` takes URL.
+// `SpigetClient.DownloadResource` takes ID and handles URL.
+// I should update SpigetClient to expose URL or use `inst.downloadFile` with the URL from Spiget.
+// SpigetClient has `GetDownloadURL`.
+// So I can use `inst.downloadFile`.
+
+/*
+	if inst.Type == "spigot" {
+		client := NewSpigetClient()
+		var id int
+		fmt.Sscanf(projectId, "%d", &id)
+
+		res, err := client.GetResourceDetails(id)
+		if err != nil { return err }
+
+		safeName := strings.ReplaceAll(res.Name, " ", "_")
+		fileName := fmt.Sprintf("%s.jar", safeName)
+		pluginsDir := filepath.Join(inst.Directory, "plugins")
+		os.MkdirAll(pluginsDir, 0755)
+		targetPath := filepath.Join(pluginsDir, fileName)
+
+		url := client.GetDownloadURL(id)
+		inst.Manager.Broadcast(fmt.Sprintf("Downloading plugin %s...", fileName))
+		return inst.downloadFile(targetPath, url)
+	}
+*/
 
 // InstallModpack downloads a modpack and installs its contents
 func (inst *Instance) InstallModpack(projectId string) error {
@@ -324,6 +515,19 @@ func (inst *Instance) downloadFile(path string, url string) error {
 }
 
 func (inst *Instance) GetInstalledMods() ([]string, error) {
+	if inst.Type == "spigot" {
+		metaPath := filepath.Join(inst.Directory, "installed_plugins.json")
+		var plugins []InstalledPlugin
+		if data, err := os.ReadFile(metaPath); err == nil {
+			json.Unmarshal(data, &plugins)
+		}
+		var ids []string
+		for _, p := range plugins {
+			ids = append(ids, p.ID)
+		}
+		return ids, nil
+	}
+
 	modsDir := filepath.Join(inst.Directory, "mods")
 	files, err := os.ReadDir(modsDir)
 	if err != nil {

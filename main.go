@@ -163,6 +163,25 @@ func main() {
 		return c.JSON(fiber.Map{"status": "sent"})
 	})
 
+	app.Delete("/api/instances/:id/mods", func(c *fiber.Ctx) error {
+		inst, err := instanceManager.GetInstance(c.Params("id"))
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+		}
+
+		var payload struct {
+			ProjectID string `json:"project_id"`
+		}
+		if err := c.BodyParser(&payload); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
+		}
+
+		if err := inst.UninstallMod(payload.ProjectID); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(fiber.Map{"status": "uninstalled"})
+	})
+
 	app.Post("/api/instances/:id/install", func(c *fiber.Ctx) error {
 		inst, err := instanceManager.GetInstance(c.Params("id"))
 		if err != nil {
@@ -217,6 +236,14 @@ func main() {
 			}
 			inst.SetJar("neoforge.jar")
 			return c.JSON(fiber.Map{"status": "installed", "jar": "neoforge.jar"})
+		}
+
+		if payload.Type == "spigot" {
+			if err := vm.InstallSpigot(payload.Version); err != nil {
+				return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+			}
+			inst.SetJar("server.jar")
+			return c.JSON(fiber.Map{"status": "installed", "jar": "server.jar"})
 		}
 
 		return c.Status(400).JSON(fiber.Map{"error": "Unsupported version type"})

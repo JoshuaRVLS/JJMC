@@ -15,6 +15,7 @@
     $: instanceId = $page.params.id;
 
     let status = "Offline";
+    let type = "";
     let interval;
 
     // Sync activeTab with URL
@@ -38,6 +39,7 @@
                 const data = await res.json();
                 console.log("Status Poll:", data.status);
                 status = data.status;
+                type = data.type;
             }
         } catch (e) {
             console.error("Status check failed", e);
@@ -108,8 +110,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Tabs -->
     </header>
 
     <!-- Main Grid -->
@@ -166,8 +166,8 @@
             <PlayerList {instanceId} type="ops" />
         {:else if activeTab === "settings"}
             <Settings {instanceId} />
-        {:else if activeTab === "mods"}
-            <Mods {instanceId} />
+        {:else if activeTab === "mods" || activeTab === "plugins"}
+            <Mods {instanceId} {type} />
         {:else if activeTab === "configs"}
             <ModConfigs {instanceId} />
         {/if}

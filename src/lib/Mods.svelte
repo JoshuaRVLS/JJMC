@@ -3,6 +3,7 @@
     import { addToast } from "$lib/stores/toast";
 
     export let instanceId;
+    export let type = "";
 
     let activeTab = "mod"; // 'mod' | 'modpack'
     let query = "";
@@ -125,6 +126,32 @@
         }
     }
 
+    async function uninstallMod(projectId) {
+        if (!confirm("Are you sure you want to uninstall this?")) return;
+        installingId = projectId; // Re-using state var for loading
+        try {
+            const res = await fetch(`/api/instances/${instanceId}/mods`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ project_id: projectId }),
+            });
+            if (res.ok) {
+                addToast("Uninstalled successfully", "success");
+                fetchInstalled();
+            } else {
+                const err = await res.json();
+                addToast(
+                    "Uninstall failed: " + (err.error || "Unknown error"),
+                    "error",
+                );
+            }
+        } catch (e) {
+            addToast("Error uninstalling: " + e.message, "error");
+        } finally {
+            installingId = null;
+        }
+    }
+
     async function installModpack(projectId) {
         if (
             !confirm(
@@ -188,19 +215,21 @@
                     activeTab = "mod";
                 }}
             >
-                Mods
+                {type === "spigot" ? "Plugins" : "Mods"}
             </button>
-            <button
-                class="px-4 py-1.5 rounded-md text-sm font-medium transition-all {activeTab ===
-                'modpack'
-                    ? 'bg-indigo-500 text-white shadow-lg'
-                    : 'text-gray-400 hover:text-white'}"
-                on:click={() => {
-                    activeTab = "modpack";
-                }}
-            >
-                Modpacks
-            </button>
+            {#if type !== "spigot"}
+                <button
+                    class="px-4 py-1.5 rounded-md text-sm font-medium transition-all {activeTab ===
+                    'modpack'
+                        ? 'bg-indigo-500 text-white shadow-lg'
+                        : 'text-gray-400 hover:text-white'}"
+                    on:click={() => {
+                        activeTab = "modpack";
+                    }}
+                >
+                    Modpacks
+                </button>
+            {/if}
         </div>
 
         <div class="flex items-center gap-2">
@@ -229,7 +258,9 @@
                 bind:value={query}
                 on:keydown={handleKeydown}
                 placeholder={activeTab === "mod"
-                    ? "Search for mods..."
+                    ? type === "spigot"
+                        ? "Search for plugins..."
+                        : "Search for mods..."
                     : "Search for modpacks..."}
                 class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 pl-11 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all"
             />
@@ -408,17 +439,23 @@
                                 ).toLocaleDateString()}</span
                             >
                             <button
-                                on:click={() =>
-                                    activeTab === "mod"
-                                        ? installMod(item.project_id)
-                                        : installModpack(item.project_id)}
+                                on:click={() => {
+                                    if (
+                                        activeTab === "mod" &&
+                                        installedIds.has(item.project_id)
+                                    ) {
+                                        uninstallMod(item.project_id);
+                                    } else if (activeTab === "mod") {
+                                        installMod(item.project_id);
+                                    } else {
+                                        installModpack(item.project_id);
+                                    }
+                                }}
                                 disabled={installingId === item.project_id ||
-                                    installingId !== null ||
-                                    (activeTab === "mod" &&
-                                        installedIds.has(item.project_id))}
+                                    installingId !== null}
                                 class="flex items-center gap-2 {activeTab ===
                                     'mod' && installedIds.has(item.project_id)
-                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                    ? 'bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20'
                                     : 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'} px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
                             >
                                 {#if installingId === item.project_id}
@@ -439,7 +476,7 @@
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                         ></path></svg
                                     >
-                                    Installing...
+                                    Processing...
                                 {:else if activeTab === "mod" && installedIds.has(item.project_id)}
                                     <svg
                                         class="w-3 h-3"
@@ -450,10 +487,10 @@
                                             stroke-linecap="round"
                                             stroke-linejoin="round"
                                             stroke-width="2"
-                                            d="M5 13l4 4L19 7"
-                                        /></svg
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                        ></path></svg
                                     >
-                                    Installed
+                                    Uninstall
                                 {:else}
                                     <svg
                                         class="w-3 h-3"
@@ -465,7 +502,7 @@
                                             stroke-linejoin="round"
                                             stroke-width="2"
                                             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                                        /></svg
+                                        ></path></svg
                                     >
                                     Install
                                 {/if}
