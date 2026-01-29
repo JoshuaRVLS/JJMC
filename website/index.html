@@ -89,6 +89,45 @@
         </div>
     </section>
 
+    <section id="platforms">
+        <h2>Interactive Compatibility Check</h2>
+        <p class="subtitle">Select a loader to see supported Minecraft versions</p>
+
+        <div class="platforms-grid" id="loader-grid">
+            <!-- Injected by JS -->
+        </div>
+
+        <div class="versions-display" id="versions-display">
+            <div class="version-header">
+                <span id="selected-loader">Select a loader</span>
+                <span class="badge" id="version-count"></span>
+            </div>
+            <div class="versions-grid" id="versions-grid">
+                <!-- Injected by JS -->
+            </div>
+        </div>
+    </section>
+
+    <section id="mod-manager">
+        <div class="showcase-container">
+            <div class="showcase-content">
+                <h2>Unified Mod & Plugin Manager</h2>
+                <p>Forget manually dragging JAR files. JJMC integrates directly with top repositories to make managing
+                    your content effortless.</p>
+                <ul class="feature-list">
+                    <li><i data-lucide="check"></i> <strong>Modrinth Integration</strong>: Search and install mods &
+                        modpacks.</li>
+                    <li><i data-lucide="check"></i> <strong>Spiget API</strong>: Direct access to thousands of Spigot
+                        plugins.</li>
+                    <li><i data-lucide="check"></i> <strong>One-Click Management</strong>: Install, update, and
+                        uninstall with a single click.</li>
+                    <li><i data-lucide="check"></i> <strong>Dependency Handling</strong>: Automatically resolves
+                        dependencies for Modrinth mods.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
     <section id="install">
         <h2>Install from Source</h2>
         <div class="install-container">
@@ -97,12 +136,26 @@
                     <i data-lucide="terminal"></i>
                     <h3>Linux / macOS</h3>
                 </div>
-                <div class="code-block">
-                    <span class="comment"># Clone the repository</span>
-                    <span class="cmd">git clone https://github.com/JoshuaRVLS/JJMC.git</span>
-                    <span class="cmd">cd JJMC</span>
-                    <span class="comment"># Run the setup script</span>
-                    <span class="cmd">./run.sh</span>
+
+                <div class="step">
+                    <span class="step-num">01</span>
+                    <div class="step-content">
+                        <p>Clone the repository</p>
+                        <div class="cmd-box">
+                            git clone https://github.com/JoshuaRVLS/JJMC.git<br>
+                            cd JJMC
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-num">02</span>
+                    <div class="step-content">
+                        <p>Run the setup script</p>
+                        <div class="cmd-box">
+                            ./run.sh
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -111,12 +164,26 @@
                     <i data-lucide="monitor"></i>
                     <h3>Windows</h3>
                 </div>
-                <div class="code-block">
-                    <span class="comment"># Clone the repository</span>
-                    <span class="cmd">git clone https://github.com/JoshuaRVLS/JJMC.git</span>
-                    <span class="cmd">cd JJMC</span>
-                    <span class="comment"># Run the setup script</span>
-                    <span class="cmd">.\run.bat</span>
+
+                <div class="step">
+                    <span class="step-num">01</span>
+                    <div class="step-content">
+                        <p>Clone the repository</p>
+                        <div class="cmd-box">
+                            git clone https://github.com/JoshuaRVLS/JJMC.git<br>
+                            cd JJMC
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-num">02</span>
+                    <div class="step-content">
+                        <p>Run the setup script</p>
+                        <div class="cmd-box">
+                            .\run.bat
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -128,6 +195,63 @@
 
     <script>
         lucide.createIcons();
+
+        const data = {
+            "Vanilla": { range: "1.8.8 - 1.21.4", versions: ["1.21.4", "1.21.x", "1.20.x", "1.19.x", "1.18.x", "1.17.x", "1.16.5", "1.12.2", "1.8.9"] },
+            "Paper / Spigot": { range: "1.8.8 - 1.21.4", versions: ["1.21.4", "1.21.x", "1.20.x", "1.19.x", "1.18.x", "1.16.5", "1.12.2", "1.8.8"] },
+            "Fabric": { range: "1.14 - 1.21.4", versions: ["1.21.4", "1.21.x", "1.20.1", "1.19.4", "1.19.2", "1.18.2", "1.17.1", "1.16.5", "1.14.4"] },
+            "Forge": { range: "1.8.9 - 1.21.x", versions: ["1.21.x", "1.20.1", "1.19.2", "1.18.2", "1.16.5", "1.12.2", "1.8.9", "1.7.10"] },
+            "NeoForge": { range: "1.20.1 - 1.21.x", versions: ["1.21.x", "1.20.6", "1.20.4", "1.20.1"] },
+            "Quilt": { range: "1.18.2 - 1.21.x", versions: ["1.21.x", "1.20.1", "1.19.2", "1.18.2"] }
+        };
+
+        const loaderGrid = document.getElementById('loader-grid');
+        const versionsGrid = document.getElementById('versions-grid');
+        const selectedLoaderText = document.getElementById('selected-loader');
+        const versionCount = document.getElementById('version-count');
+        const versionsDisplay = document.getElementById('versions-display');
+
+        let activeLoader = null;
+
+        // Init
+        Object.keys(data).forEach(loader => {
+            const btn = document.createElement('button');
+            btn.className = 'platform-chip';
+            btn.innerText = loader;
+            btn.onclick = () => selectLoader(loader, btn);
+            loaderGrid.appendChild(btn);
+        });
+
+        // Auto select first
+        setTimeout(() => selectLoader("Vanilla", loaderGrid.firstChild), 100);
+
+        function selectLoader(name, btnElement) {
+            if (activeLoader) activeLoader.classList.remove('active');
+            btnElement.classList.add('active');
+            activeLoader = btnElement;
+
+            // Animate out
+            versionsDisplay.style.opacity = '0.5';
+
+            setTimeout(() => {
+                renderVersions(name);
+                versionsDisplay.style.opacity = '1';
+            }, 100);
+        }
+
+        function renderVersions(name) {
+            selectedLoaderText.innerText = name;
+            const info = data[name];
+            versionCount.innerText = info.range;
+
+            versionsGrid.innerHTML = '';
+            info.versions.forEach(v => {
+                const div = document.createElement('div');
+                div.className = 'ver-chip';
+                div.innerText = v;
+                versionsGrid.appendChild(div);
+            });
+        }
     </script>
 </body>
 
