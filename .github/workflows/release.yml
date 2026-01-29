@@ -1,0 +1,56 @@
+name: Release Binaries
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build binaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build Frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build Backend (Linux)
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o jjmc-linux-amd64 main.go
+
+      - name: Build Backend (Windows)
+        run: |
+          GOOS=windows GOARCH=amd64 go build -o jjmc-windows-amd64.exe main.go
+
+      - name: Build Backend (macOS)
+        run: |
+          GOOS=darwin GOARCH=amd64 go build -o jjmc-macos-amd64 main.go
+          GOOS=darwin GOARCH=arm64 go build -o jjmc-macos-arm64 main.go
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            jjmc-linux-amd64
+            jjmc-windows-amd64.exe
+            jjmc-macos-amd64
+            jjmc-macos-arm64
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JJMC - Next Gen Minecraft Server Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="glow-bg"></div>
+    
+    <nav>
+        <div class="logo">
+            <i data-lucide="box"></i>
+            <span>JJMC</span>
+        </div>
+        <div class="links">
+            <a href="#features">Features</a>
+            <a href="https://github.com/JoshuaRVLS/JJMC" target="_blank">GitHub</a>
+        </div>
+    </nav>
+
+    <header>
+        <div class="hero-content">
+            <h1>Server Management <br><span class="gradient-text">Reimagined</span></h1>
+            <p>The specialized, lightweight, and modern manager for your Minecraft servers. Support for Spigot, Fabric, Modrinth, and more.</p>
+            <div class="cta-group">
+                <a href="https://github.com/JoshuaRVLS/JJMC/releases/latest" class="btn primary">
+                    <i data-lucide="download"></i> Download Details
+                </a>
+                <a href="#features" class="btn secondary">Learn More</a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="card glass">
+                <div class="card-header">
+                    <div class="dots">
+                        <div class="dot red"></div>
+                        <div class="dot yellow"></div>
+                        <div class="dot green"></div>
+                    </div>
+                    <span>instance-01</span>
+                </div>
+                <div class="card-body">
+                    <div class="stat-row">
+                        <span class="label">Status</span>
+                        <span class="value online">Online</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="label">Players</span>
+                        <span class="value">12/20</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="fill" style="width: 60%"></div>
+                    </div>
+                    <div class="log-output">
+                        <p>> Starting server...</p>
+                        <p>> Loading plugins...</p>
+                        <p>> Done (1.2s)!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section id="features">
+        <h2>Everything you need</h2>
+        <div class="grid">
+            <div class="feature-card">
+                <i data-lucide="zap"></i>
+                <h3>Blazing Fast</h3>
+                <p>Built with Go and Svelte for instant interactions and minimal resource usage.</p>
+            </div>
+            <div class="feature-card">
+                <i data-lucide="layers"></i>
+                <h3>Multi-Loader</h3>
+                <p>Native support for Vanilla, Fabric, Spigot, and more with one-click installs.</p>
+            </div>
+            <div class="feature-card">
+                <i data-lucide="puzzle"></i>
+                <h3>Plugin Manager</h3>
+                <p>Search, install, and update plugins directly from Modrinth and Spiget.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 JJMC Project. Open Source.</p>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
