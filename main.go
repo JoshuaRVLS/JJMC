@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"jjmc/server"
 
@@ -27,6 +29,86 @@ func main() {
 	app := fiber.New()
 
 	app.Use(cors.New())
+
+	// Initialize Database
+	server.ConnectDB()
+
+	// Initialize Auth Manager (Shared DB)
+	authManager := server.NewAuthManager(server.DB)
+
+	// Middleware
+	app.Use(authManager.Middleware())
+
+	// Auth Routes
+	app.Get("/api/auth/status", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"isSetup":       authManager.IsSetup(),
+			"authenticated": authManager.ValidateSession(c.Cookies("auth_token")),
+		})
+	})
+
+	app.Post("/api/auth/setup", func(c *fiber.Ctx) error {
+		if authManager.IsSetup() {
+			return c.Status(400).JSON(fiber.Map{"error": "Already setup"})
+		}
+		var payload struct {
+			Password string `json:"password"`
+		}
+		if err := c.BodyParser(&payload); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
+		}
+		if len(payload.Password) < 8 {
+			return c.Status(400).JSON(fiber.Map{"error": "Password must be at least 8 characters"})
+		}
+		if err := authManager.SetPassword(payload.Password); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+
+		// Auto login
+		token := authManager.CreateSession()
+		c.Cookie(&fiber.Cookie{
+			Name:     "auth_token",
+			Value:    token,
+			Expires:  time.Now().Add(24 * time.Hour),
+			HTTPOnly: true,
+			SameSite: "Strict",
+		})
+
+		return c.JSON(fiber.Map{"status": "setup_complete"})
+	})
+
+	app.Post("/api/auth/login", func(c *fiber.Ctx) error {
+		var payload struct {
+			Password string `json:"password"`
+		}
+		if err := c.BodyParser(&payload); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
+		}
+
+		if !authManager.VerifyPassword(payload.Password) {
+			return c.Status(401).JSON(fiber.Map{"error": "Invalid password"})
+		}
+
+		token := authManager.CreateSession()
+		c.Cookie(&fiber.Cookie{
+			Name:     "auth_token",
+			Value:    token,
+			Expires:  time.Now().Add(24 * time.Hour),
+			HTTPOnly: true,
+			SameSite: "Strict",
+		})
+
+		return c.JSON(fiber.Map{"status": "logged_in"})
+	})
+
+	app.Post("/api/auth/logout", func(c *fiber.Ctx) error {
+		token := c.Cookies("auth_token")
+		if token != "" {
+			authManager.RevokeSession(token)
+		}
+		c.ClearCookie("auth_token")
+		return c.JSON(fiber.Map{"status": "logged_out"})
+	})
 
 	// Initialize Instance Manager
 	instanceManager := server.NewInstanceManager("./instances")
@@ -545,5 +627,51 @@ func main() {
 		return c.SendFile("./build/index.html")
 	})
 
-	log.Fatal(app.Listen(":3000"))
+	// Network IP logging
+	if ifaces, err := net.Interfaces(); err == nil {
+		fmt.Println("Server available at:")
+		fmt.Println("  http://localhost:3000")
+
+		for _, i := range ifaces {
+			// Skip down or loopback interfaces
+			if i.Flags&net.FlagUp == 0 || i.Flags&net.FlagLoopback != 0 {
+				continue
+			}
+
+			// innovative heuristic filters
+			name := strings.ToLower(i.Name)
+			if strings.Contains(name, "docker") ||
+				strings.Contains(name, "veth") ||
+				strings.Contains(name, "br-") ||
+				strings.Contains(name, "virbr") ||
+				strings.Contains(name, "vmnet") ||
+				strings.Contains(name, "wsl") {
+				continue
+			}
+
+			addrs, err := i.Addrs()
+			if err != nil {
+				continue
+			}
+
+			for _, addr := range addrs {
+				var ip net.IP
+				switch v := addr.(type) {
+				case *net.IPNet:
+					ip = v.IP
+				case *net.IPAddr:
+					ip = v.IP
+				}
+
+				// Only support IPv4 for simplicity as requested
+				if ip == nil || ip.To4() == nil {
+					continue
+				}
+
+				fmt.Printf("  http://%s:3000\n", ip.String())
+			}
+		}
+	}
+
+	log.Fatal(app.Listen("0.0.0.0:3000"))
 }
