@@ -23,13 +23,21 @@
     /** @type {FileEntry | null} */
     let viewingFile = null;
     let fileContent = "";
-    let isEditing = false;
     /** @type {Array<{name: string, path: string}>} */
     let breadcrumbs = [];
+
+    // Bulk selection
+    /** @type {Set<string>} */
+    let selectedFiles = new Set();
+    let lastSelectedFile = null;
+
+    // Drag & Drop
+    let isDraggingOver = false;
 
     /** @param {string} [path] */
     async function loadFiles(path = ".") {
         loading = true;
+        selectedFiles = new Set(); // access cleared on Nav
         try {
             const res = await fetch(
                 `/api/instances/${instanceId}/files?path=${encodeURIComponent(
@@ -98,7 +106,7 @@
                 currentPath === "." ? file.name : `${currentPath}/${file.name}`;
             loadFiles(newPath);
         } else {
-            // Check if binary or too large? For now just try to read text
+            // Check if binary or too large
             if (file.size > 1024 * 1024) {
                 const proceed = await askConfirm({
                     title: "Large File",
@@ -124,7 +132,6 @@
                 if (res.ok) {
                     fileContent = await res.text();
                     viewingFile = { ...file, fullPath: path };
-                    isEditing = false;
                 } else {
                     addToast("Failed to read file", "error");
                 }
@@ -150,7 +157,6 @@
             );
             if (res.ok) {
                 addToast("File saved", "success");
-                isEditing = false;
             } else {
                 addToast("Failed to save file", "error");
             }
@@ -159,35 +165,71 @@
         }
     }
 
-    /** @param {FileEntry} file */
-    async function deleteFile(file) {
+    async function deleteSelected() {
+        const count = selectedFiles.size;
+        if (count === 0) return;
+
         const confirmed = await askConfirm({
-            title: "Delete File",
-            message: `Are you sure you want to delete ${file.name}?`,
+            title: "Delete Files",
+            message: `Are you sure you want to delete ${count} item${count > 1 ? "s" : ""}?`,
             confirmText: "Delete",
             dangerous: true,
         });
 
         if (!confirmed) return;
 
-        try {
-            const path =
-                currentPath === "." ? file.name : `${currentPath}/${file.name}`;
-            const res = await fetch(
-                `/api/instances/${instanceId}/files?path=${encodeURIComponent(
-                    path,
-                )}`,
-                { method: "DELETE" },
-            );
+        let successCount = 0;
+        let errors = 0;
 
-            if (res.ok) {
-                addToast("Deleted successfully", "success");
-                loadFiles(currentPath);
-            } else {
-                addToast("Failed to delete", "error");
+        for (const fileName of selectedFiles) {
+            try {
+                const path =
+                    currentPath === "."
+                        ? fileName
+                        : `${currentPath}/${fileName}`;
+                const res = await fetch(
+                    `/api/instances/${instanceId}/files?path=${encodeURIComponent(
+                        path,
+                    )}`,
+                    { method: "DELETE" },
+                );
+
+                if (res.ok) {
+                    successCount++;
+                } else {
+                    errors++;
+                }
+            } catch (e) {
+                errors++;
             }
-        } catch (e) {
-            addToast("Error deleting", "error");
+        }
+
+        if (successCount > 0)
+            addToast(`Deleted ${successCount} items`, "success");
+        if (errors > 0) addToast(`Failed to delete ${errors} items`, "error");
+
+        loadFiles(currentPath);
+    }
+
+    /**
+     * @param {FileEntry} file
+     * @param {Event} event
+     */
+    function toggleSelection(file, event) {
+        // Shift select logic could go here
+        if (selectedFiles.has(file.name)) {
+            selectedFiles.delete(file.name);
+        } else {
+            selectedFiles.add(file.name);
+        }
+        selectedFiles = selectedFiles; // refresh
+    }
+
+    function toggleAll() {
+        if (selectedFiles.size === files.length) {
+            selectedFiles = new Set();
+        } else {
+            selectedFiles = new Set(files.map((f) => f.name));
         }
     }
 
@@ -251,10 +293,8 @@
         }
     }
 
-    /** @param {Event} e */
-    async function handleFileUpload(e) {
-        const target = /** @type {HTMLInputElement} */ (e.target);
-        const fileList = target.files;
+    /** @param {FileList} fileList */
+    async function uploadFiles(fileList) {
         if (!fileList || fileList.length === 0) return;
 
         const formData = new FormData();
@@ -284,7 +324,35 @@
             addToast("Error uploading", "error");
         } finally {
             loading = false;
-            if (target) target.value = ""; // Reset input
+        }
+    }
+
+    /** @param {Event} e */
+    function handleFileUpload(e) {
+        const target = /** @type {HTMLInputElement} */ (e.target);
+        if (target.files) uploadFiles(target.files);
+        if (target) target.value = ""; // Reset input
+    }
+
+    // Drag and Drop Handlers
+    /** @param {DragEvent} e */
+    function onDragOver(e) {
+        e.preventDefault();
+        isDraggingOver = true;
+    }
+
+    /** @param {DragEvent} e */
+    function onDragLeave(e) {
+        e.preventDefault();
+        isDraggingOver = false;
+    }
+
+    /** @param {DragEvent} e */
+    function onDrop(e) {
+        e.preventDefault();
+        isDraggingOver = false;
+        if (e.dataTransfer && e.dataTransfer.files) {
+            uploadFiles(e.dataTransfer.files);
         }
     }
 
@@ -294,8 +362,35 @@
 </script>
 
 <div
-    class="h-full flex flex-col bg-gray-900/50 rounded-xl overflow-hidden border border-white/5"
+    class="h-full flex flex-col bg-gray-900/50 rounded-xl overflow-hidden border border-white/5 relative"
+    on:dragover={onDragOver}
+    on:dragleave={onDragLeave}
+    on:drop={onDrop}
+    role="region"
+    aria-label="File Browser"
 >
+    <!-- Drop Overlay -->
+    {#if isDraggingOver}
+        <div
+            class="absolute inset-0 z-50 bg-indigo-500/20 backdrop-blur-sm border-2 border-dashed border-indigo-400 flex flex-col items-center justify-center text-white pointer-events-none"
+        >
+            <svg
+                class="w-16 h-16 mb-4 text-indigo-300 animate-bounce"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                />
+            </svg>
+            <span class="text-xl font-bold">Drop files to upload</span>
+        </div>
+    {/if}
+
     {#if viewingFile}
         <div class="flex flex-col h-full">
             <div
@@ -382,6 +477,29 @@
             </div>
 
             <div class="flex items-center gap-2">
+                {#if selectedFiles.size > 0}
+                    <button
+                        on:click={deleteSelected}
+                        class="flex items-center gap-1 px-2 py-1 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-lg transition-colors text-xs font-bold mr-2"
+                    >
+                        <svg
+                            class="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                        </svg>
+                        Delete ({selectedFiles.size})
+                    </button>
+                    <div class="h-4 w-px bg-white/10 mx-1"></div>
+                {/if}
+
                 <button
                     on:click={createFile}
                     class="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
@@ -481,19 +599,40 @@
                         class="bg-white/5 text-xs uppercase text-gray-400 font-semibold sticky top-0 z-10 backdrop-blur-md"
                     >
                         <tr>
+                            <th class="px-4 py-3 w-8">
+                                <input
+                                    type="checkbox"
+                                    class="rounded bg-black/20 border-white/10 text-indigo-500 focus:ring-0 cursor-pointer"
+                                    checked={files.length > 0 &&
+                                        selectedFiles.size === files.length}
+                                    on:change={toggleAll}
+                                />
+                            </th>
                             <th class="px-4 py-3">Name</th>
                             <th class="px-4 py-3 w-32">Size</th>
                             <th class="px-4 py-3 w-48">Modified</th>
-                            <th class="px-4 py-3 w-20 text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody
                         class="divide-y divide-white/5 text-sm text-gray-300"
                     >
-                        {#each files as file}
+                        {#each files as file (file.name)}
                             <tr
-                                class="hover:bg-white/5 transition-colors group"
+                                class="hover:bg-white/5 transition-colors group {selectedFiles.has(
+                                    file.name,
+                                )
+                                    ? 'bg-indigo-500/10'
+                                    : ''}"
                             >
+                                <td class="px-4 py-2">
+                                    <input
+                                        type="checkbox"
+                                        class="rounded bg-black/20 border-white/10 text-indigo-500 focus:ring-0 cursor-pointer"
+                                        checked={selectedFiles.has(file.name)}
+                                        on:change={(e) =>
+                                            toggleSelection(file, e)}
+                                    />
+                                </td>
                                 <td class="px-4 py-2">
                                     <button
                                         class="flex items-center gap-3 hover:text-white w-full text-left truncate"
@@ -535,26 +674,6 @@
                                 <td class="px-4 py-2 text-gray-500 text-xs"
                                     >{formatDate(file.modTime)}</td
                                 >
-                                <td class="px-4 py-2 text-right">
-                                    <button
-                                        on:click={() => deleteFile(file)}
-                                        class="text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
-                                        title="Delete"
-                                    >
-                                        <svg
-                                            class="w-4 h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                            ><path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                            /></svg
-                                        >
-                                    </button>
-                                </td>
                             </tr>
                         {/each}
                     </tbody>

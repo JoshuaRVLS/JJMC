@@ -2,8 +2,11 @@ package server
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 )
@@ -68,6 +71,102 @@ func NewInstanceManager(baseDir string) *InstanceManager {
 	}
 
 	return im
+}
+
+func (im *InstanceManager) ImportInstance(id, name, sourcePath string) (*Instance, error) {
+	im.mu.Lock()
+	defer im.mu.Unlock()
+
+	if _, exists := im.instances[id]; exists {
+		return nil, fmt.Errorf("instance with id %s already exists", id)
+	}
+
+	dir := filepath.Join(im.baseDir, id)
+	// Check if source path exists
+	info, err := os.Stat(sourcePath)
+	if err != nil || !info.IsDir() {
+		return nil, fmt.Errorf("invalid source path: %s", sourcePath)
+	}
+
+	// Create dir
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return nil, err
+	}
+
+	// Copy files
+	if err := copyDir(sourcePath, dir); err != nil {
+		return nil, fmt.Errorf("failed to copy files: %v", err)
+	}
+
+	// Save to DB
+	// Try to detect type/version? For now, default to "imported" / "custom"
+	model := InstanceModel{
+		ID:        id,
+		Name:      name,
+		Type:      "custom",
+		Version:   "imported",
+		CreatedAt: time.Now().Unix(),
+		MaxMemory: 2048,
+	}
+	if err := DB.Create(&model).Error; err != nil {
+		return nil, fmt.Errorf("failed to save to db: %v", err)
+	}
+
+	manager := NewManager()
+	instance := &Instance{
+		Manager:   manager,
+		ID:        id,
+		Name:      name,
+		Directory: dir,
+		Type:      "custom",
+		Version:   "imported",
+		MaxMemory: 2048,
+	}
+	instance.Manager.SetWorkDir(dir)
+	// Try to find server jar?
+	jars, _ := filepath.Glob(filepath.Join(dir, "*.jar"))
+	if len(jars) > 0 {
+		instance.Manager.SetJar(filepath.Base(jars[0]))
+	} else {
+		instance.Manager.SetJar("server.jar")
+	}
+	instance.Manager.SetMaxMemory(2048)
+
+	im.instances[id] = instance
+	return instance, nil
+}
+
+func copyDir(src, dst string) error {
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		destPath := filepath.Join(dst, relPath)
+
+		if info.IsDir() {
+			return os.MkdirAll(destPath, info.Mode())
+		}
+
+		// Copy file
+		srcFile, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer srcFile.Close()
+
+		dstFile, err := os.Create(destPath)
+		if err != nil {
+			return err
+		}
+		defer dstFile.Close()
+
+		_, err = io.Copy(dstFile, srcFile)
+		return err
+	})
 }
 
 func (im *InstanceManager) CreateInstance(id, name, serverType, version string) (*Instance, error) {
@@ -177,6 +276,15 @@ func (im *InstanceManager) ListInstances() []*Instance {
 		}
 		list = append(list, inst)
 	}
+
+	// Sort by Name, then ID for stability
+	sort.Slice(list, func(i, j int) bool {
+		if list[i].Name != list[j].Name {
+			return strings.ToLower(list[i].Name) < strings.ToLower(list[j].Name)
+		}
+		return list[i].ID < list[j].ID
+	})
+
 	return list
 }
 

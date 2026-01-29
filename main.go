@@ -5,6 +5,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -14,6 +16,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )
+
+type SystemFile struct {
+	Name  string `json:"name"`
+	Path  string `json:"path"`
+	IsDir bool   `json:"isDir"`
+}
 
 func main() {
 	app := fiber.New()
@@ -29,6 +37,50 @@ func main() {
 	// API Routes for Instances
 	app.Get("/api/instances", func(c *fiber.Ctx) error {
 		return c.JSON(instanceManager.ListInstances())
+	})
+
+	app.Get("/api/system/files", func(c *fiber.Ctx) error {
+		dirPath := c.Query("path")
+		if dirPath == "" {
+			// Default to user home directory
+			home, err := os.UserHomeDir()
+			if err != nil {
+				return c.Status(500).JSON(fiber.Map{"error": "Failed to get home directory"})
+			}
+			dirPath = home
+		}
+
+		entries, err := os.ReadDir(dirPath)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": fmt.Sprintf("Failed to read directory: %v", err)})
+		}
+
+		var files []SystemFile
+		// potential parent directory
+		parent := filepath.Dir(dirPath)
+		if parent != dirPath {
+			files = append(files, SystemFile{
+				Name:  "..",
+				Path:  parent,
+				IsDir: true,
+			})
+		}
+
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				continue
+			}
+			files = append(files, SystemFile{
+				Name:  entry.Name(),
+				Path:  filepath.Join(dirPath, entry.Name()),
+				IsDir: entry.IsDir(),
+			})
+		}
+
+		return c.JSON(fiber.Map{
+			"path":  dirPath,
+			"files": files,
+		})
 	})
 
 	app.Get("/api/versions/game", func(c *fiber.Ctx) error {
@@ -61,6 +113,22 @@ func main() {
 
 		c.Set("Content-Type", "application/json")
 		return c.Send(body)
+	})
+
+	app.Post("/api/instances/import", func(c *fiber.Ctx) error {
+		var payload struct {
+			ID         string `json:"id"`
+			Name       string `json:"name"`
+			SourcePath string `json:"sourcePath"`
+		}
+		if err := c.BodyParser(&payload); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
+		}
+		inst, err := instanceManager.ImportInstance(payload.ID, payload.Name, payload.SourcePath)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(inst)
 	})
 
 	app.Post("/api/instances", func(c *fiber.Ctx) error {

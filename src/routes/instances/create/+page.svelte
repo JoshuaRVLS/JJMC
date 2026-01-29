@@ -116,8 +116,45 @@
         }
     }
 
+    let importMode = false;
+    let sourcePath = "";
+
     async function create() {
         if (!name) return addToast("Name is required", "error");
+
+        if (importMode) {
+            if (!sourcePath)
+                return addToast("Source path is required", "error");
+            creating = true;
+            status = "Importing instance...";
+            try {
+                const id = createId();
+                const res = await fetch("/api/instances/import", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        id,
+                        name,
+                        sourcePath,
+                    }),
+                });
+                if (res.ok) {
+                    addToast("Instance imported successfully!", "success");
+                    await goto(`/instances/${id}`);
+                } else {
+                    const err = await res.text();
+                    addToast(`Import failed: ${err}`, "error");
+                }
+            } catch (e) {
+                console.error("Import failed", e);
+                addToast("Failed to import instance", "error");
+            } finally {
+                creating = false;
+                status = "";
+            }
+            return;
+        }
+
         if (!type) return addToast("Server type is required", "error");
 
         creating = true;
@@ -200,7 +237,28 @@
         <div
             class="px-6 py-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/50"
         >
-            <h2 class="text-lg font-semibold text-white">Create Instance</h2>
+            <div class="flex items-center gap-4">
+                <h2 class="text-lg font-semibold text-white">
+                    Create Instance
+                </h2>
+                <div
+                    class="flex bg-gray-800 rounded-lg p-1 text-xs font-medium"
+                >
+                    <button
+                        class="px-3 py-1 rounded-md transition-all {!importMode
+                            ? 'bg-blue-600 text-white shadow-lg'
+                            : 'text-gray-400 hover:text-white'}"
+                        on:click={() => (importMode = false)}>Create New</button
+                    >
+                    <button
+                        class="px-3 py-1 rounded-md transition-all {importMode
+                            ? 'bg-emerald-600 text-white shadow-lg'
+                            : 'text-gray-400 hover:text-white'}"
+                        on:click={() => (importMode = true)}
+                        >Import Existing</button
+                    >
+                </div>
+            </div>
             <a
                 href="/instances"
                 class="text-xs font-medium text-gray-500 hover:text-white transition-colors"
@@ -213,14 +271,19 @@
             <div class="flex items-center gap-2 mb-6 text-sm">
                 <span
                     class={step === 1
-                        ? "text-blue-400 font-bold"
+                        ? importMode
+                            ? "text-emerald-400 font-bold"
+                            : "text-blue-400 font-bold"
                         : "text-gray-500"}>1. Name</span
                 >
                 <span class="text-gray-700">/</span>
                 <span
                     class={step === 2
-                        ? "text-blue-400 font-bold"
-                        : "text-gray-500"}>2. Configuration</span
+                        ? importMode
+                            ? "text-emerald-400 font-bold"
+                            : "text-blue-400 font-bold"
+                        : "text-gray-500"}
+                    >2. {importMode ? "Source" : "Configuration"}</span
                 >
             </div>
 
@@ -237,14 +300,18 @@
                                 type="text"
                                 bind:value={name}
                                 class="w-full bg-gray-800 border border-gray-700 rounded-md p-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-                                placeholder="My Server"
+                                placeholder={importMode
+                                    ? "My Imported Server"
+                                    : "My Server"}
                             />
                         </div>
                         <div class="flex justify-end pt-2">
                             <button
                                 type="button"
                                 on:click={nextStep}
-                                class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-md font-medium text-sm transition-colors hover:shadow-lg hover:shadow-blue-500/20 flex items-center gap-2"
+                                class="{importMode
+                                    ? 'bg-emerald-600 hover:bg-emerald-500'
+                                    : 'bg-blue-600 hover:bg-blue-500'} text-white px-5 py-2 rounded-md font-medium text-sm transition-colors hover:shadow-lg flex items-center gap-2"
                             >
                                 Continue
                             </button>
@@ -252,27 +319,65 @@
                     </div>
                 {:else if step === 2}
                     <div class="space-y-4">
-                        <div class="grid grid-cols-1 gap-4">
+                        {#if importMode}
                             <div>
-                                <Select
-                                    label="Server Type"
-                                    options={typeOptions}
-                                    bind:value={type}
-                                    placeholder="Select Type"
-                                />
+                                <label
+                                    class="block text-xs font-medium text-gray-400 mb-1.5"
+                                    for="source-path">Server Folder Path</label
+                                >
+                                <div class="relative">
+                                    <input
+                                        id="source-path"
+                                        type="text"
+                                        bind:value={sourcePath}
+                                        class="w-full bg-gray-800 border border-gray-700 rounded-md p-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+                                        placeholder="/path/to/existing/server"
+                                    />
+                                    <div
+                                        class="absolute right-3 top-3 text-gray-500 pointer-events-none"
+                                    >
+                                        <svg
+                                            class="w-4 h-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                            ><path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                                            ></path></svg
+                                        >
+                                    </div>
+                                </div>
+                                <p class="text-[10px] text-gray-500 mt-2">
+                                    Files will be copied from this location to
+                                    the new instance folder.
+                                </p>
                             </div>
-
-                            {#if type !== "custom"}
+                        {:else}
+                            <div class="grid grid-cols-1 gap-4">
                                 <div>
                                     <Select
-                                        label="Version"
-                                        options={versionOptions}
-                                        bind:value={version}
-                                        placeholder="Select Version"
+                                        label="Server Type"
+                                        options={typeOptions}
+                                        bind:value={type}
+                                        placeholder="Select Type"
                                     />
                                 </div>
-                            {/if}
-                        </div>
+
+                                {#if type !== "custom"}
+                                    <div>
+                                        <Select
+                                            label="Version"
+                                            options={versionOptions}
+                                            bind:value={version}
+                                            placeholder="Select Version"
+                                        />
+                                    </div>
+                                {/if}
+                            </div>
+                        {/if}
 
                         <div
                             class="flex justify-between items-center pt-6 border-t border-gray-800 mt-6"
@@ -286,7 +391,9 @@
                             <button
                                 on:click={create}
                                 disabled={creating}
-                                class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-md font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                class="{importMode
+                                    ? 'bg-emerald-600 hover:bg-emerald-500'
+                                    : 'bg-blue-600 hover:bg-blue-500'} text-white px-5 py-2 rounded-md font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                             >
                                 {#if creating}
                                     <svg
@@ -309,9 +416,14 @@
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                         ></path>
                                     </svg>
-                                    {status || "Creating..."}
+                                    {status ||
+                                        (importMode
+                                            ? "Importing..."
+                                            : "Creating...")}
                                 {:else}
-                                    Create Server
+                                    {importMode
+                                        ? "Import Server"
+                                        : "Create Server"}
                                 {/if}
                             </button>
                         </div>

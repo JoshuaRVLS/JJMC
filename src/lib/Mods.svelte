@@ -70,7 +70,8 @@
                 );
             }
         } catch (e) {
-            addToast("Error searching: " + e.message, "error");
+            const msg = e instanceof Error ? e.message : String(e);
+            addToast("Error searching: " + msg, "error");
         } finally {
             loading = false;
             loadingMore = false;

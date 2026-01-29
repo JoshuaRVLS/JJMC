@@ -6,8 +6,10 @@
     // I will use Inline SVGs to be safe and dependency-free.
 
     export let status = "Offline"; // Received from parent
+    /** @type {string} */
     export let instanceId;
 
+    /** @param {string} action */
     async function trigger(action) {
         console.log("Controls: Triggering", action);
         try {
@@ -17,8 +19,9 @@
             if (!res.ok) throw new Error(await res.text());
             addToast(`Instance ${action}ed successfully`, "success");
         } catch (e) {
+            const message = e instanceof Error ? e.message : String(e);
             console.error("Controls Trigger Error:", e);
-            addToast("Failed to " + action + ": " + e.message, "error");
+            addToast("Failed to " + action + ": " + message, "error");
         }
     }
 
