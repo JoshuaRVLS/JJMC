@@ -243,6 +243,52 @@ func (im *InstanceManager) UpdateSettings(id string, maxMemory int, javaArgs str
 	return nil
 }
 
+func (inst *Instance) Reset(serverType, version string) error {
+	inst.mu.Lock()
+	defer inst.mu.Unlock()
+
+	// Stop if running
+	if inst.IsRunning() {
+		if err := inst.Stop(); err != nil {
+			return fmt.Errorf("failed to stop server: %v", err)
+		}
+		// Allow some time for cleanup if needed, though Stop() should be synchronous
+		time.Sleep(1 * time.Second)
+	}
+
+	// List of files/directories to remove for a clean type switch
+	// We keep world (saves), server.properties, eula.txt, ops, whitelist, etc.
+	toRemove := []string{
+		inst.jarName,
+		"libraries",
+		"versions",
+		"mods",
+		"config",
+		"plugins", // in case switching from/to Spigot
+		// Add others if needed
+	}
+
+	for _, name := range toRemove {
+		path := filepath.Join(inst.Directory, name)
+		os.RemoveAll(path)
+	}
+
+	// Update Fields
+	inst.Type = serverType
+	inst.Version = version
+
+	// Update DB
+	err := DB.Model(&InstanceModel{}).Where("id = ?", inst.ID).Updates(map[string]interface{}{
+		"type":    serverType,
+		"version": version,
+	}).Error
+	if err != nil {
+		return fmt.Errorf("failed to update db: %v", err)
+	}
+
+	return nil
+}
+
 func (im *InstanceManager) GetInstance(id string) (*Instance, error) {
 	im.mu.RLock()
 	defer im.mu.RUnlock()

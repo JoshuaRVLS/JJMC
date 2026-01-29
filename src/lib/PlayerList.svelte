@@ -63,14 +63,35 @@
         }
     }
 
+    async function checkOnlineMode() {
+        try {
+            const res = await fetch(
+                `/api/instances/${instanceId}/files/content?path=server.properties`,
+            );
+            if (res.ok) {
+                const text = await res.text();
+                // Simple parsing for online-mode=false
+                // Default is true if not found, but usually it's there
+                const match = text.match(/online-mode\s*=\s*(false|true)/);
+                if (match && match[1] === "false") {
+                    return false;
+                }
+            }
+        } catch (e) {
+            console.error("Failed to check online mode", e);
+        }
+        return true;
+    }
+
     async function addPlayer() {
         if (!newPlayerName.trim()) return;
 
         try {
+            const isOnline = await checkOnlineMode();
             const res = await fetch(
-                `https://api.ashcon.app/mojang/v2/user/${newPlayerName}`,
+                `/api/system/uuid?name=${newPlayerName}&offline=${!isOnline}`,
             );
-            if (!res.ok) throw new Error("User not found");
+            if (!res.ok) throw new Error("User not found or API error");
             const data = await res.json();
 
             const newEntry = {
@@ -91,7 +112,8 @@
             newPlayerName = "";
             savePlayers();
         } catch (e) {
-            addToast("Could not resolve username to UUID", "error");
+            console.error(e);
+            addToast("Error: " + e.message + ". Check Online Mode?", "error");
         }
     }
 
@@ -151,7 +173,7 @@
                     >
                         <div class="flex items-center gap-3">
                             <img
-                                src={`https://crafatar.com/avatars/${player.uuid}?size=24&overlay`}
+                                src={`https://minotar.net/helm/${player.name}/24.png`}
                                 alt={player.name}
                                 class="w-6 h-6 rounded"
                             />

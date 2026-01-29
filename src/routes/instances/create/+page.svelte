@@ -245,36 +245,34 @@
         <div
             class="px-6 py-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/50"
         >
-            <div class="flex items-center gap-4">
-                <h2 class="text-lg font-semibold text-white">
-                    Create Instance
-                </h2>
-                <div
-                    class="flex bg-gray-800 rounded-lg p-1 text-xs font-medium"
-                >
-                    <button
-                        class="px-3 py-1 rounded-md transition-all {!importMode
-                            ? 'bg-blue-600 text-white shadow-lg'
-                            : 'text-gray-400 hover:text-white'}"
-                        on:click={() => (importMode = false)}>Create New</button
-                    >
-                    <button
-                        class="px-3 py-1 rounded-md transition-all {importMode
-                            ? 'bg-emerald-600 text-white shadow-lg'
-                            : 'text-gray-400 hover:text-white'}"
-                        on:click={() => (importMode = true)}
-                        >Import Existing</button
-                    >
-                </div>
-            </div>
+            <h2 class="text-lg font-semibold text-white">Create Instance</h2>
             <a
                 href="/instances"
                 class="text-xs font-medium text-gray-500 hover:text-white transition-colors"
                 >CANCEL</a
             >
         </div>
+    </div>
 
-        <div class="p-6">
+    <div class="px-6 pt-6 pb-2">
+        <!-- Mode Toggle -->
+        <div class="bg-gray-800/50 p-1 rounded-lg flex mb-6">
+            <button
+                class="flex-1 py-2 text-sm font-medium rounded-md transition-all {!importMode
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'}"
+                on:click={() => (importMode = false)}
+                >New Server
+            </button>
+            <button
+                class="flex-1 py-2 text-sm font-medium rounded-md transition-all {importMode
+                    ? 'bg-emerald-600 text-white shadow-lg'
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'}"
+                on:click={() => (importMode = true)}>Import Existing</button
+            >
+        </div>
+
+        <div class="p-0">
             <!-- Simple Steps -->
             <div class="flex items-center gap-2 mb-6 text-sm">
                 <span

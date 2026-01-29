@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -260,6 +262,128 @@ func main() {
 			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 		}
 		return c.JSON(fiber.Map{"status": "updated"})
+	})
+
+	// System Routes
+	app.Get("/api/system/uuid", func(c *fiber.Ctx) error {
+		name := c.Query("name")
+		offline := c.Query("offline") == "true"
+
+		if name == "" {
+			return c.Status(400).JSON(fiber.Map{"error": "Name is required"})
+		}
+
+		if offline {
+			// Generate Offline UUID (Version 3 MD5 of "OfflinePlayer:" + name)
+			data := []byte("OfflinePlayer:" + name)
+			hash := md5.Sum(data)
+			hash[6] = (hash[6] & 0x0f) | 0x30 // Version 3
+			hash[8] = (hash[8] & 0x3f) | 0x80 // Variant 10 (IETF)
+
+			uuid := fmt.Sprintf("%x-%x-%x-%x-%x", hash[0:4], hash[4:6], hash[6:8], hash[8:10], hash[10:])
+
+			return c.JSON(fiber.Map{
+				"uuid":     uuid,
+				"username": name,
+			})
+		}
+
+		resp, err := http.Get(fmt.Sprintf("https://api.mojang.com/users/profiles/minecraft/%s", name))
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Failed to contact Mojang API"})
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode == 404 {
+			return c.Status(404).JSON(fiber.Map{"error": "User not found"})
+		} else if resp.StatusCode != 200 {
+			return c.Status(resp.StatusCode).JSON(fiber.Map{"error": "Mojang API error"})
+		}
+
+		var mojangResp struct {
+			Name string `json:"name"`
+			ID   string `json:"id"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&mojangResp); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Failed to parse Mojang response"})
+		}
+
+		// Insert dashes into UUID
+		uuidRaw := mojangResp.ID
+		var uuid string
+		if len(uuidRaw) == 32 {
+			uuid = fmt.Sprintf("%s-%s-%s-%s-%s", uuidRaw[0:8], uuidRaw[8:12], uuidRaw[12:16], uuidRaw[16:20], uuidRaw[20:])
+		} else {
+			uuid = uuidRaw // Should warn or error, but fallback
+		}
+
+		// Return format matching Ashcon's widely used format where possible, or just what our frontend needs
+		return c.JSON(fiber.Map{
+			"uuid":     uuid,
+			"username": mojangResp.Name,
+		})
+	})
+
+	app.Post("/api/instances/:id/type", func(c *fiber.Ctx) error {
+		id := c.Params("id")
+		inst, err := instanceManager.GetInstance(id)
+		if err != nil {
+			return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+		}
+
+		var payload struct {
+			Type    string `json:"type"`
+			Version string `json:"version"`
+		}
+		if err := c.BodyParser(&payload); err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
+		}
+
+		// 1. Reset Instance
+		if err := inst.Reset(payload.Type, payload.Version); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": fmt.Sprintf("Failed to reset instance: %v", err)})
+		}
+
+		// 2. Install New Type (Reuse logic from install endpoint would be ideal, but for now we duplicate/call common logic)
+		// We can call the same logic as the install endpoint.
+		// Since we are in main, we can reuse the logic if we extract it, but for speed, I'll inline the essential install calls again.
+		// NOTE: This duplicates logic from /api/instances/:id/install. Refactoring recommended later.
+
+		if payload.Type == "custom" {
+			// Nothing to install
+			return c.JSON(fiber.Map{"status": "changed", "Note": "Custom type requires manual jar upload"})
+		}
+
+		vm := server.NewVersionsManager(inst.Manager)
+		var installErr error
+		var jarName string
+
+		switch payload.Type {
+		case "fabric":
+			installErr = vm.InstallFabric(payload.Version)
+			jarName = "fabric.jar"
+		case "quilt":
+			installErr = vm.InstallQuilt(payload.Version)
+			jarName = "quilt.jar"
+		case "forge":
+			installErr = vm.InstallForge(payload.Version)
+			jarName = "forge.jar"
+		case "neoforge":
+			installErr = vm.InstallNeoForge(payload.Version)
+			jarName = "neoforge.jar"
+		case "spigot":
+			installErr = vm.InstallSpigot(payload.Version)
+			jarName = "server.jar"
+		default:
+			return c.Status(400).JSON(fiber.Map{"error": "Unsupported type for auto-install"})
+		}
+
+		if installErr != nil {
+			return c.Status(500).JSON(fiber.Map{"error": fmt.Sprintf("Reset successful, but install failed: %v", installErr)})
+		}
+
+		inst.SetJar(jarName)
+		return c.JSON(fiber.Map{"status": "changed"})
 	})
 
 	// Instance Control Routes
