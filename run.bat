@@ -1,47 +1,47 @@
 @echo off
 setlocal
 
-:: Prepend local tools to PATH if they exist
-set ROOT_DIR=%~dp0
-if exist "%ROOT_DIR%.tools\go\bin" set PATH=%ROOT_DIR%.tools\go\bin;%PATH%
-if exist "%ROOT_DIR%.tools\node" set PATH=%ROOT_DIR%.tools\node;%PATH%
+:: Set Root Dir
+set "ROOT_DIR=%~dp0"
 
-:: Check if tools are missing and install if needed
+:: 1. Attempt to add existing local tools to PATH (Run 1)
+:: We use set "VAR=VAL" to safely handle spaces and special characters
+if exist "%ROOT_DIR%.tools\go\bin" set "PATH=%ROOT_DIR%.tools\go\bin;%PATH%"
+if exist "%ROOT_DIR%.tools\node" set "PATH=%ROOT_DIR%.tools\node;%PATH%"
+
+:: 2. Check if tools are missing
+set TOOLS_MISSING=0
 where npm >nul 2>nul
-set NPM_MISSING=%errorlevel%
+if %errorlevel% neq 0 set TOOLS_MISSING=1
 where go >nul 2>nul
-set GO_MISSING=%errorlevel%
+if %errorlevel% neq 0 set TOOLS_MISSING=1
 
-if %NPM_MISSING% neq 0 (
-    set TOOLS_MISSING=1
-) else if %GO_MISSING% neq 0 (
-    set TOOLS_MISSING=1
-) else (
-    set TOOLS_MISSING=0
-)
-
+:: 3. Install if missing
 if %TOOLS_MISSING% equ 1 (
     echo Developer tools missing. Attempting to install portable toolchain...
     if exist "tools\setup.bat" (
         call tools\setup.bat
-        :: Re-check path
-        if exist "%ROOT_DIR%.tools\go\bin" set PATH=%ROOT_DIR%.tools\go\bin;%PATH%
-        if exist "%ROOT_DIR%.tools\node" set PATH=%ROOT_DIR%.tools\node;%PATH%
     ) else (
         echo Error: tools\setup.bat not found.
         exit /b 1
     )
 )
 
-:: Final check
+:: 4. Re-apply path updates (Run 2) - This must be outside the if block above
+:: This ensures that if we just installed them, they are added to PATH now.
+:: Doing this outside the block prevents syntax errors if PATH contains parenthesis (e.g. "Program Files (x86)")
+if exist "%ROOT_DIR%.tools\go\bin" set "PATH=%ROOT_DIR%.tools\go\bin;%PATH%"
+if exist "%ROOT_DIR%.tools\node" set "PATH=%ROOT_DIR%.tools\node;%PATH%"
+
+:: 5. Final Check
 where npm >nul 2>nul
 if %errorlevel% neq 0 (
-    echo Error: Failed to find or install required tools (Go/Node).
+    echo Error: Failed to find or install required tools (npm).
     exit /b 1
 )
 where go >nul 2>nul
 if %errorlevel% neq 0 (
-    echo Error: Failed to find or install required tools (Go/Node).
+    echo Error: Failed to find or install required tools (go).
     exit /b 1
 )
 
