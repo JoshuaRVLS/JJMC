@@ -1,4 +1,7 @@
-# JJMC
+<div align="center">
+  <img src="website/logo.png" alt="JJMC Logo" width="200"/>
+  <h1>JJMC</h1>
+</div>
 
 A simple and modern Minecraft Server Manager. 
 
