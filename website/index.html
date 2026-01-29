@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,9 +9,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
+
 <body>
     <div class="glow-bg"></div>
-    
+
     <nav>
         <div class="logo">
             <i data-lucide="box"></i>
@@ -25,7 +27,8 @@
     <header>
         <div class="hero-content">
             <h1>Server Management <br><span class="gradient-text">Reimagined</span></h1>
-            <p>The specialized, lightweight, and modern manager for your Minecraft servers. Support for Spigot, Fabric, Modrinth, and more.</p>
+            <p>The specialized, lightweight, and modern manager for your Minecraft servers. Support for Spigot, Fabric,
+                Modrinth, and more.</p>
             <div class="cta-group">
                 <a href="https://github.com/JoshuaRVLS/JJMC/releases/latest" class="btn primary">
                     <i data-lucide="download"></i> Download Details
@@ -86,6 +89,39 @@
         </div>
     </section>
 
+    <section id="install">
+        <h2>Install from Source</h2>
+        <div class="install-container">
+            <div class="install-card">
+                <div class="os-header">
+                    <i data-lucide="terminal"></i>
+                    <h3>Linux / macOS</h3>
+                </div>
+                <div class="code-block">
+                    <span class="comment"># Clone the repository</span>
+                    <span class="cmd">git clone https://github.com/JoshuaRVLS/JJMC.git</span>
+                    <span class="cmd">cd JJMC</span>
+                    <span class="comment"># Run the setup script</span>
+                    <span class="cmd">./run.sh</span>
+                </div>
+            </div>
+
+            <div class="install-card">
+                <div class="os-header">
+                    <i data-lucide="monitor"></i>
+                    <h3>Windows</h3>
+                </div>
+                <div class="code-block">
+                    <span class="comment"># Clone the repository</span>
+                    <span class="cmd">git clone https://github.com/JoshuaRVLS/JJMC.git</span>
+                    <span class="cmd">cd JJMC</span>
+                    <span class="comment"># Run the setup script</span>
+                    <span class="cmd">.\run.bat</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <footer>
         <p>&copy; 2026 JJMC Project. Open Source.</p>
     </footer>
@@ -94,4 +130,5 @@
         lucide.createIcons();
     </script>
 </body>
+
 </html>

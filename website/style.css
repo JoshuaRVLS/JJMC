@@ -296,3 +296,56 @@ footer {
         transform: none;
     }
 }
+
+.install-container {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+}
+
+.install-card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 500px;
+    text-align: left;
+}
+
+.os-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    color: var(--brand);
+}
+
+.code-block {
+    background: #000;
+    padding: 1.5rem;
+    border-radius: 12px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.9rem;
+    border: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.code-block .comment {
+    color: #666;
+    user-select: none;
+}
+
+.code-block .cmd {
+    color: #4ade80;
+}
+
+.code-block .cmd::before {
+    content: "$ ";
+    color: #666;
+    user-select: none;
+}
