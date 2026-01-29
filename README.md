@@ -1,42 +1,20 @@
-# sv
+# JJMC
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A simple and modern Minecraft Server Manager. 
 
-## Creating a project
+## Features
+- ✨ Modern and clean web interface
+- 🖥️ Real-time console and process management
+- 📁 Built-in file explorer
+- 🧩 Easy mod installation from Modrinth
+- 🍦 Supported loaders: Vanilla, Fabric, Forge, NeoForge, Quilt
 
-If you're seeing this, you've probably already done this step. Congrats!
+## How to run
+Simply run the script for your OS:
+- **Linux**: `./run.sh`
+- **Windows**: `run.bat` or `run.ps1`
 
-```sh
-# create a new project
-npx sv create my-app
-```
+The script will automatically set up the portable Go and Node.js toolchains if needed.
 
-To recreate this project with the same configuration:
-
-```sh
-# recreate this project
-npx sv create --template minimal --types jsdoc --no-install frontend
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## License
+MIT
