@@ -3,11 +3,11 @@
 A simple and modern Minecraft Server Manager. 
 
 ## Features
-- ✨ Modern and clean web interface
-- 🖥️ Real-time console and process management
-- 📁 Built-in file explorer
-- 🧩 Easy mod installation from Modrinth
-- 🍦 Supported loaders: Vanilla, Fabric, Forge, NeoForge, Quilt
+- Modern and clean web interface
+- Real-time console and process management
+- Built-in file explorer
+- Easy mod installation 
+- Supported loaders: Vanilla, Fabric, Forge, NeoForge, Quilt
 
 ## How to run
 Simply run the script for your OS:
