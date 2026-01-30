@@ -2,13 +2,13 @@ package services
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 
 	"jjmc/models"
+	"jjmc/pkg/logger"
 )
 
 type TemplateManager struct {
@@ -45,13 +45,13 @@ func (tm *TemplateManager) LoadTemplates() error {
 		path := filepath.Join(tm.TemplatesDir, entry.Name())
 		data, err := os.ReadFile(path)
 		if err != nil {
-			fmt.Printf("Failed to read template %s: %v\n", entry.Name(), err)
+			logger.Error("Failed to read template", "file", entry.Name(), "error", err)
 			continue
 		}
 
 		var tmpl models.Template
 		if err := json.Unmarshal(data, &tmpl); err != nil {
-			fmt.Printf("Failed to parse template %s: %v\n", entry.Name(), err)
+			logger.Error("Failed to parse template", "file", entry.Name(), "error", err)
 			continue
 		}
 
