@@ -9,12 +9,13 @@ import (
 
 	"jjmc/auth"
 	"jjmc/database"
-	"jjmc/rcon"
-	"jjmc/servers"
+	"jjmc/instances"
 	"jjmc/services"
+	"jjmc/web"
+
+	"jjmc/rcon"
 	"jjmc/sftp"
 	"jjmc/telnet"
-	"jjmc/web"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -32,7 +33,11 @@ func main() {
 		fmt.Printf("Warning: Failed to load templates: %v\n", err)
 	}
 
-	instanceManager := servers.NewInstanceManager("./instances", templateManager)
+	// Initialize Instances
+	instanceManager := instances.NewInstanceManager(
+		"./servers",
+		templateManager,
+	)
 
 	// Setup Fiber
 	app := fiber.New(fiber.Config{

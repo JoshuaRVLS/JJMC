@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"jjmc/auth"
-	"jjmc/servers"
+	"jjmc/instances"
 )
 
 const (
@@ -23,10 +23,10 @@ const (
 type RCONServer struct {
 	Addr            string
 	AuthManager     *auth.AuthManager
-	InstanceManager *servers.InstanceManager
+	InstanceManager *instances.InstanceManager
 }
 
-func NewRCONServer(addr string, am *auth.AuthManager, im *servers.InstanceManager) *RCONServer {
+func NewRCONServer(addr string, am *auth.AuthManager, im *instances.InstanceManager) *RCONServer {
 	return &RCONServer{
 		Addr:            addr,
 		AuthManager:     am,
@@ -58,7 +58,7 @@ func (s *RCONServer) handleConnection(conn net.Conn) {
 	defer conn.Close()
 
 	authenticated := false
-	var instance *servers.Instance
+	var instance *instances.Instance
 
 	for {
 		// Read Packet

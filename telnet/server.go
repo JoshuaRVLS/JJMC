@@ -8,16 +8,16 @@ import (
 	"strings"
 
 	"jjmc/auth"
-	"jjmc/servers"
+	"jjmc/instances"
 )
 
 type TelnetServer struct {
 	Addr            string
 	AuthManager     *auth.AuthManager
-	InstanceManager *servers.InstanceManager
+	InstanceManager *instances.InstanceManager
 }
 
-func NewTelnetServer(addr string, am *auth.AuthManager, im *servers.InstanceManager) *TelnetServer {
+func NewTelnetServer(addr string, am *auth.AuthManager, im *instances.InstanceManager) *TelnetServer {
 	return &TelnetServer{
 		Addr:            addr,
 		AuthManager:     am,

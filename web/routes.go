@@ -2,7 +2,7 @@ package web
 
 import (
 	"jjmc/auth"
-	"jjmc/servers"
+	"jjmc/instances"
 	"jjmc/web/handlers"
 	"jjmc/web/middleware"
 
@@ -12,7 +12,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
-func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManager *servers.InstanceManager) {
+func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManager *instances.InstanceManager) {
 	// Middleware
 	app.Use(cors.New())
 	app.Use(compress.New())
@@ -66,6 +66,8 @@ func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManag
 	files.Post("/upload", instHandler.Upload)
 	files.Delete("/", instHandler.DeleteFile)
 	files.Post("/mkdir", instHandler.Mkdir)
+	files.Post("/compress", instHandler.Compress)
+	files.Post("/decompress", instHandler.Decompress)
 
 	// Instance Mods
 	mods := inst.Group("/mods")

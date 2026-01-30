@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"fmt"
-	"jjmc/servers"
+	"jjmc/instances"
 	"strconv"
 	"strings"
 
@@ -10,10 +10,10 @@ import (
 )
 
 type InstanceHandler struct {
-	Manager *servers.InstanceManager
+	Manager *instances.InstanceManager
 }
 
-func NewInstanceHandler(im *servers.InstanceManager) *InstanceHandler {
+func NewInstanceHandler(im *instances.InstanceManager) *InstanceHandler {
 	return &InstanceHandler{Manager: im}
 }
 
@@ -112,7 +112,7 @@ func (h *InstanceHandler) ChangeType(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "changed", "Note": "Custom type requires manual jar upload"})
 	}
 
-	vm := servers.NewVersionsManager(inst.Manager)
+	vm := instances.NewVersionsManager(inst.Manager)
 	var installErr error
 	var jarName string
 
@@ -208,7 +208,7 @@ func (h *InstanceHandler) Install(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
 	}
 
-	vm := servers.NewVersionsManager(inst.Manager)
+	vm := instances.NewVersionsManager(inst.Manager)
 
 	if payload.Type == "fabric" {
 		if err := vm.InstallFabric(payload.Version); err != nil {
@@ -455,4 +455,58 @@ func (h *InstanceHandler) Upload(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"status": "uploaded", "count": len(files)})
+}
+
+func (h *InstanceHandler) Compress(c *fiber.Ctx) error {
+	inst, err := h.Manager.GetInstance(c.Params("id"))
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+	}
+
+	var payload struct {
+		Files       []string `json:"files"`
+		Destination string   `json:"destination"`
+	}
+	if err := c.BodyParser(&payload); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
+	}
+
+	if len(payload.Files) == 0 {
+		return c.Status(400).JSON(fiber.Map{"error": "No files selected"})
+	}
+
+	if err := inst.CompressFiles(payload.Files, payload.Destination); err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"status": "compressed"})
+}
+
+func (h *InstanceHandler) Decompress(c *fiber.Ctx) error {
+	inst, err := h.Manager.GetInstance(c.Params("id"))
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+	}
+
+	var payload struct {
+		File        string `json:"file"`
+		Destination string `json:"destination"`
+	}
+	if err := c.BodyParser(&payload); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
+	}
+
+	// Default dest to current dir if empty, or handle in backend
+	if payload.Destination == "" {
+		payload.Destination = "." // Extract relative to instance root, essentially "here" if logic handles it
+		// But DecompressFile expects relative path. "." is fine.
+		// Wait, if I am in "plugins/", I want to extract there?
+		// Frontend should pass correct relative destination path (e.g. "plugins/")
+	}
+
+	if err := inst.DecompressFile(payload.File, payload.Destination); err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"status": "decompressed"})
 }
