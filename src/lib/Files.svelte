@@ -58,7 +58,7 @@
                 )}`,
             );
             if (res.ok) {
-                files = await res.json();
+                files = (await res.json()) || [];
                 currentPath = path;
                 updateBreadcrumbs(path);
             } else {
