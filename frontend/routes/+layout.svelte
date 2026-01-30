@@ -50,12 +50,24 @@
 	// Auth State
 	let isAuthChecked = false;
 
+	// Launch ID for auto-reload
+	let storedLaunchId = null;
+
 	async function checkAuth() {
 		try {
 			const res = await fetch("/api/auth/status");
 			if (res.ok) {
 				const status = await res.json();
 				const path = window.location.pathname;
+
+				// Check Launch ID
+				if (storedLaunchId === null) {
+					storedLaunchId = status.launchId;
+				} else if (storedLaunchId !== status.launchId) {
+					console.log("New version detected, reloading...");
+					window.location.reload();
+					return;
+				}
 
 				if (!status.isSetup) {
 					if (path !== "/setup") {
@@ -73,7 +85,14 @@
 					}
 					// Only load instances if authenticated
 					loadInstances();
-					pollInterval = setInterval(loadInstances, 5000);
+
+					// Setup polling if not already set
+					if (!pollInterval) {
+						pollInterval = setInterval(() => {
+							loadInstances();
+							checkAuth(); // Poll auth/status for version check
+						}, 5000);
+					}
 				}
 			} else {
 				console.error("Auth status failed", res.status);

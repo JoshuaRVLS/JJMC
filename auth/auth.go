@@ -14,6 +14,7 @@ import (
 type AuthManager struct {
 	DB       *sql.DB
 	Sessions map[string]int64 // Token -> Expiry
+	LaunchID string
 	mu       sync.RWMutex
 }
 
@@ -37,6 +38,7 @@ func NewAuthManager(gormDB *gorm.DB) *AuthManager {
 	return &AuthManager{
 		DB:       db,
 		Sessions: make(map[string]int64),
+		LaunchID: uuid.New().String(),
 	}
 }
 

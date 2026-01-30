@@ -17,9 +17,13 @@ func NewAuthHandler(am *auth.AuthManager) *AuthHandler {
 }
 
 func (h *AuthHandler) GetStatus(c *fiber.Ctx) error {
+	c.Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	c.Set("Pragma", "no-cache")
+	c.Set("Expires", "0")
 	return c.JSON(fiber.Map{
 		"isSetup":       h.Manager.IsSetup(),
 		"authenticated": h.Manager.ValidateSession(c.Cookies("auth_token")),
+		"launchId":      h.Manager.LaunchID,
 	})
 }
 

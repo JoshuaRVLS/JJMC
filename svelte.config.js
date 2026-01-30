@@ -10,16 +10,9 @@ const config = {
 			fallback: 'index.html' // Enable SPA mode
 		}),
 		files: {
-			hooks: {
-				client: 'frontend/hooks.client',
-				server: 'frontend/hooks.server'
-			},
 			lib: 'frontend/lib',
-			params: 'frontend/params',
 			routes: 'frontend/routes',
-			serviceWorker: 'frontend/service-worker',
-			appTemplate: 'frontend/app.html',
-			errorTemplate: 'frontend/error.html'
+			appTemplate: 'frontend/app.html'
 		}
 	}
 };
