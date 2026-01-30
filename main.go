@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"strings"
 	"time"
@@ -10,6 +9,8 @@ import (
 	"jjmc/auth"
 	"jjmc/database"
 	"jjmc/instances"
+	"jjmc/pkg/logger"
+	"jjmc/pkg/signals"
 	"jjmc/services"
 	"jjmc/web"
 
@@ -21,6 +22,9 @@ import (
 )
 
 func main() {
+	// Initialize Logger
+	logger.Setup()
+
 	// Initialize Database
 	database.ConnectDB()
 
@@ -30,7 +34,7 @@ func main() {
 	// Template Manager
 	templateManager := services.NewTemplateManager("./templates")
 	if err := templateManager.LoadTemplates(); err != nil {
-		fmt.Printf("Warning: Failed to load templates: %v\n", err)
+		logger.Warn("Failed to load templates", "error", err)
 	}
 
 	// Initialize Instances
@@ -117,29 +121,57 @@ func main() {
 		}
 	}
 
-	// Start SFTP Server
+	// --- Start Servers ---
+
+	// SFTP
+	sftpServer := sftp.NewSFTPServer("0.0.0.0:2022", "./instances", authManager)
 	go func() {
-		sftpServer := sftp.NewSFTPServer("0.0.0.0:2022", "./instances", authManager)
 		if err := sftpServer.Start(); err != nil {
-			log.Printf("SFTP Server failed to start: %v", err)
+			logger.Error("SFTP Server failed to start", "error", err)
 		}
 	}()
 
-	// Start Telnet Server
+	// Telnet
+	telnetServer := telnet.NewTelnetServer("0.0.0.0:2023", authManager, instanceManager)
 	go func() {
-		telnetServer := telnet.NewTelnetServer("0.0.0.0:2023", authManager, instanceManager)
 		if err := telnetServer.Start(); err != nil {
-			log.Printf("Telnet Server failed to start: %v", err)
+			logger.Error("Telnet Server failed to start", "error", err)
 		}
 	}()
 
-	// Start RCON Server
+	// RCON
+	rconServer := rcon.NewRCONServer("0.0.0.0:2024", authManager, instanceManager)
 	go func() {
-		rconServer := rcon.NewRCONServer("0.0.0.0:2024", authManager, instanceManager)
 		if err := rconServer.Start(); err != nil {
-			log.Printf("RCON Server failed to start: %v", err)
+			logger.Error("RCON Server failed to start", "error", err)
 		}
 	}()
 
-	log.Fatal(app.Listen("0.0.0.0:3000"))
+	// Start Web Server
+	go func() {
+		if err := app.Listen("0.0.0.0:3000"); err != nil {
+			logger.Error("Web Server failed to start", "error", err)
+		}
+	}()
+
+	// --- Graceful Shutdown ---
+	ctx := signals.SetupSignalHandler()
+	<-ctx.Done()
+
+	logger.Info("Shutting down servers...")
+
+	// 1. Stop Web Server
+	if err := app.Shutdown(); err != nil {
+		logger.Error("Error shutting down web server", "error", err)
+	}
+
+	// 2. Stop Aux Servers
+	sftpServer.Close()
+	telnetServer.Close()
+	rconServer.Close()
+
+	// 3. Stop All Running Instances?
+	// Optional: instanceManager.StopAll()
+	// For now, let's just log
+	logger.Info("Shutdown complete.")
 }
