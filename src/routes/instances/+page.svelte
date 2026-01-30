@@ -74,6 +74,26 @@
             );
         }
     }
+
+    /**
+     * @param {string} id
+     * @param {string} action
+     */
+    async function triggerInstanceAction(id, action) {
+        try {
+            const res = await fetch(`/api/instances/${id}/${action}`, {
+                method: "POST",
+            });
+            if (!res.ok) throw new Error(await res.text());
+            addToast(`Instance ${action}ed successfully`, "success");
+            // Refresh list to update status UI immediately (and let poll pick it up)
+            loadInstances();
+        } catch (e) {
+            const message = e instanceof Error ? e.message : String(e);
+            console.error(`Failed to ${action} instance`, e);
+            addToast(`Failed to ${action}: ${message}`, "error");
+        }
+    }
 </script>
 
 <div class="h-full flex flex-col p-8">
@@ -223,6 +243,35 @@
                         <div
                             class="col-span-2 flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity"
                         >
+                            <!-- Start/Stop Button -->
+                            {#if inst.status === "Online" || inst.status === "Starting"}
+                                <button
+                                    on:click|stopPropagation={() =>
+                                        triggerInstanceAction(inst.id, "stop")}
+                                    class="px-2 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors border border-red-500/20"
+                                    title="Stop Server"
+                                >
+                                    <svg
+                                        class="w-4 h-4 fill-current"
+                                        viewBox="0 0 24 24"
+                                        ><path d="M6 6h12v12H6z" /></svg
+                                    >
+                                </button>
+                            {:else}
+                                <button
+                                    on:click|stopPropagation={() =>
+                                        triggerInstanceAction(inst.id, "start")}
+                                    class="px-2 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 transition-colors border border-emerald-500/20"
+                                    title="Start Server"
+                                >
+                                    <svg
+                                        class="w-4 h-4 fill-current"
+                                        viewBox="0 0 24 24"
+                                        ><path d="M8 5v14l11-7z" /></svg
+                                    >
+                                </button>
+                            {/if}
+
                             <a
                                 href="/instances/{inst.id}"
                                 class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-colors border border-white/5"

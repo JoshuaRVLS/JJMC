@@ -7,6 +7,9 @@
 
     let maxMemory = 2048;
     let javaArgs = "";
+    let jarFile = "server.jar";
+    /** @type {any[]} */
+    let jarFiles = [];
     let loading = true;
     let saving = false;
 
@@ -18,6 +21,23 @@
                 const data = await res.json();
                 maxMemory = data.maxMemory || 2048;
                 javaArgs = data.javaArgs || "";
+                jarFile = data.jarFile || "server.jar";
+
+                // Load files to find jars
+                const mediaRes = await fetch(
+                    `/api/instances/${instanceId}/files?path=.`,
+                );
+                if (mediaRes.ok) {
+                    const files = await mediaRes.json();
+                    jarFiles = files.filter(
+                        (/** @type {any} */ f) =>
+                            !f.isDir && f.name.endsWith(".jar"),
+                    );
+                    // Ensure current jar is in list if not found (e.g. if manual entry allowed later, but for now just validation)
+                    if (!jarFiles.find((f) => f.name === jarFile)) {
+                        jarFiles = [...jarFiles, { name: jarFile }];
+                    }
+                }
             }
         } catch (e) {
             addToast("Failed to load settings", "error");
@@ -35,6 +55,7 @@
                 body: JSON.stringify({
                     maxMemory: parseInt(String(maxMemory)),
                     javaArgs: javaArgs,
+                    jarFile: jarFile,
                 }),
             });
             if (!res.ok) throw new Error(await res.text());
@@ -60,6 +81,28 @@
             class="bg-gray-900/60 backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-lg max-w-2xl mx-auto space-y-6"
         >
             <h2 class="text-xl font-bold text-white mb-4">Java Settings</h2>
+
+            <!-- Target JAR -->
+            <div class="space-y-2">
+                <label
+                    for="jar"
+                    class="block text-sm font-medium text-gray-400"
+                >
+                    Target JAR
+                </label>
+                <select
+                    id="jar"
+                    bind:value={jarFile}
+                    class="bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white w-full focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all"
+                >
+                    {#each jarFiles as jar}
+                        <option value={jar.name}>{jar.name}</option>
+                    {/each}
+                </select>
+                <div class="text-xs text-gray-500">
+                    Select the server JAR file to execute.
+                </div>
+            </div>
 
             <!-- Memory -->
             <div class="space-y-2">

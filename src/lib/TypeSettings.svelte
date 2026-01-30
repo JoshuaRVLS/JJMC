@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
     import { addToast } from "$lib/stores/toast";
     import Select from "$lib/components/Select.svelte";
-    import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
+    import { askConfirm } from "$lib/stores/confirm";
 
     /** @type {string} */
     export let instanceId;
@@ -26,8 +26,6 @@
     /** @type {Option[]} */
     let versionOptions = [];
     let loadingVersions = false;
-
-    let showConfirm = false;
 
     const SUPPORTED_LOADERS = ["fabric", "quilt", "forge", "neoforge"];
     const MANUAL_LOADERS = [{ value: "spigot", label: "Spigot" }];
@@ -135,6 +133,16 @@
     }
 
     async function changeType() {
+        const confirmed = await askConfirm({
+            title: "Change Server Type?",
+            message:
+                "This action will DELETE all mods, configs, plugins, and server jar files. This cannot be undone. Are you sure you want to proceed?",
+            confirmText: "Yes, Change Type",
+            dangerous: true,
+        });
+
+        if (!confirmed) return;
+
         changing = true;
         try {
             const res = await fetch(`/api/instances/${instanceId}/type`, {
@@ -159,7 +167,6 @@
             addToast("Failed to change server type", "error");
         } finally {
             changing = false;
-            showConfirm = false;
         }
     }
 
@@ -249,7 +256,7 @@
                 <!-- Action -->
                 <div class="pt-4 flex justify-end border-t border-white/5">
                     <button
-                        on:click={() => (showConfirm = true)}
+                        on:click={changeType}
                         disabled={changing || !type || !isChanged}
                         class="bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
@@ -283,14 +290,4 @@
             </div>
         </div>
     {/if}
-
-    <ConfirmDialog
-        bind:open={showConfirm}
-        title="Change Server Type?"
-        message="This action will DELETE all mods, configs, plugins, and server jar files. This cannot be undone. Are you sure you want to proceed?"
-        confirmText="Yes, Change Type"
-        confirmColor="red"
-        on:confirm={changeType}
-        on:cancel={() => (showConfirm = false)}
-    />
 </div>

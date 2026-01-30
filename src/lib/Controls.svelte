@@ -1,5 +1,6 @@
 <script>
     import { addToast } from "$lib/stores/toast.js";
+    import { Play, Square, RotateCcw } from "lucide-svelte";
     // Wait, I don't have unplugin-icons set up probably.
     // I should use SVG directly or see if I can use a library.
     // The previous code had SVGs inline or no icons.
@@ -38,9 +39,7 @@
             title="Start Server"
         >
             <!-- Play Icon -->
-            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"
-                ><path d="M8 5v14l11-7z" /></svg
-            >
+            <Play class="w-5 h-5 fill-current" />
         </button>
     {:else}
         <button
@@ -49,9 +48,7 @@
             title="Stop Server"
         >
             <!-- Square Icon -->
-            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"
-                ><path d="M6 6h12v12H6z" /></svg
-            >
+            <Square class="w-5 h-5 fill-current" />
         </button>
     {/if}
 
@@ -62,18 +59,6 @@
         title="Restart Server"
     >
         <!-- Refresh Icon -->
-        <svg
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-        >
-            <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-            />
-        </svg>
+        <RotateCcw class="w-5 h-5" />
     </button>
 </div>

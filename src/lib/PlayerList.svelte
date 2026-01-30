@@ -31,7 +31,7 @@
             } else {
                 players = [];
             }
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.error(e);
             addToast(`Error loading ${title}`, "error");
         } finally {
@@ -111,7 +111,7 @@
             players = [...players, newEntry];
             newPlayerName = "";
             savePlayers();
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             console.error(e);
             addToast("Error: " + e.message + ". Check Online Mode?", "error");
         }
