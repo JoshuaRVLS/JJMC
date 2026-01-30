@@ -26,6 +26,7 @@
 		"vite": "^7.3.1"
 	},
 	"dependencies": {
-		"@paralleldrive/cuid2": "^3.3.0"
+		"@paralleldrive/cuid2": "^3.3.0",
+		"lucide-svelte": "^0.563.0"
 	}
 }
