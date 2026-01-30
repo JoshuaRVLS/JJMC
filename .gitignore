@@ -25,7 +25,7 @@ vite.config.ts.timestamp-*
 # JJMC
 /.tools
 /bin
-/instances
+# /instances (Removed as it is now a Go package)
 /jjmc.db
 jjmc
 jjmc.exe
@@ -33,3 +33,4 @@ modpack.mrpack
 eula.txt
 auth.db
 ssh_host_rsa_key
+servers/
