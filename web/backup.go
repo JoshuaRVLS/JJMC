@@ -8,7 +8,7 @@ import (
 )
 
 func RegisterBackupRoutes(router fiber.Router, authManager *auth.AuthManager, im *instances.InstanceManager) {
-	g := router.Group("/instances/:id/backups")
+	g := router.Group("/api/instances/:id/backups")
 
 	// List
 	g.Get("/", func(c *fiber.Ctx) error {
