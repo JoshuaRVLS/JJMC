@@ -23,7 +23,7 @@
         try {
             const res = await fetch(`/api/instances/${instanceId}/backups`);
             if (res.ok) {
-                backups = await res.json();
+                backups = (await res.json()) || [];
             } else {
                 addToast("Failed to load backups", "error");
             }

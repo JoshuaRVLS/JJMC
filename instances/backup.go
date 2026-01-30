@@ -50,7 +50,7 @@ func (im *InstanceManager) ListBackups(instanceID string) ([]Backup, error) {
 		return nil, err
 	}
 
-	var backups []Backup
+	backups := []Backup{}
 	for _, entry := range entries {
 		if !entry.IsDir() && filepath.Ext(entry.Name()) == ".zip" {
 			info, err := entry.Info()
