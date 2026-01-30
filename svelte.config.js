@@ -8,7 +8,19 @@ const config = {
 		// See https://svelte.dev/docs/kit/adapters for more information about adapters.
 		adapter: adapter({
 			fallback: 'index.html' // Enable SPA mode
-		})
+		}),
+		files: {
+			hooks: {
+				client: 'frontend/hooks.client',
+				server: 'frontend/hooks.server'
+			},
+			lib: 'frontend/lib',
+			params: 'frontend/params',
+			routes: 'frontend/routes',
+			serviceWorker: 'frontend/service-worker',
+			appTemplate: 'frontend/app.html',
+			errorTemplate: 'frontend/error.html'
+		}
 	}
 };
 
