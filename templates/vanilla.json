@@ -1,0 +1,22 @@
+{
+    "id": "vanilla",
+    "name": "Vanilla Minecraft",
+    "description": "Official Minecraft Server",
+    "environment": {
+        "type": "standard"
+    },
+    "install": [
+        {
+            "type": "download",
+            "options": {
+                "url": "https://piston-data.mojang.com/v1/objects/450698d1863f4a880e7263aadd6308dd5691062d/server.jar",
+                "target": "server.jar"
+            }
+        }
+    ],
+    "run": {
+        "command": "java -Xmx${MAX_MEMORY}M -Xms${MAX_MEMORY}M ${JAVA_ARGS} -jar server.jar nogui",
+        "stop": "stop",
+        "env": {}
+    }
+}
