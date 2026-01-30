@@ -24,6 +24,7 @@ type RCONServer struct {
 	Addr            string
 	AuthManager     *auth.AuthManager
 	InstanceManager *instances.InstanceManager
+	listener        net.Listener
 }
 
 func NewRCONServer(addr string, am *auth.AuthManager, im *instances.InstanceManager) *RCONServer {
@@ -39,18 +40,26 @@ func (s *RCONServer) Start() error {
 	if err != nil {
 		return err
 	}
+	s.listener = listener
 	log.Printf("RCON Server listening on %s", s.Addr)
 
 	go func() {
 		for {
-			conn, err := listener.Accept()
+			conn, err := s.listener.Accept()
 			if err != nil {
-				log.Printf("RCON Accept Error: %v", err)
-				continue
+				// log.Printf("RCON Accept Error: %v", err)
+				return
 			}
 			go s.handleConnection(conn)
 		}
 	}()
+	return nil
+}
+
+func (s *RCONServer) Close() error {
+	if s.listener != nil {
+		return s.listener.Close()
+	}
 	return nil
 }
 

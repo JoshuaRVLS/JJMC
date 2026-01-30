@@ -21,6 +21,7 @@ type SFTPServer struct {
 	Addr        string
 	BasePath    string
 	AuthManager *auth.AuthManager
+	listener    net.Listener
 }
 
 func NewSFTPServer(addr string, basePath string, am *auth.AuthManager) *SFTPServer {
@@ -54,21 +55,30 @@ func (s *SFTPServer) Start() error {
 	if err != nil {
 		return err
 	}
+	s.listener = listener
 
 	log.Printf("SFTP Server listening on %s", s.Addr)
 
 	go func() {
 		for {
-			nConn, err := listener.Accept()
+			nConn, err := s.listener.Accept()
 			if err != nil {
-				log.Printf("SFTP Accept error: %v", err)
-				continue
+				// Log only if not closed
+				// log.Printf("SFTP Accept error: %v", err)
+				return
 			}
 
 			go s.handleConnection(nConn, config)
 		}
 	}()
 
+	return nil
+}
+
+func (s *SFTPServer) Close() error {
+	if s.listener != nil {
+		return s.listener.Close()
+	}
 	return nil
 }
 

@@ -15,6 +15,7 @@ type TelnetServer struct {
 	Addr            string
 	AuthManager     *auth.AuthManager
 	InstanceManager *instances.InstanceManager
+	listener        net.Listener
 }
 
 func NewTelnetServer(addr string, am *auth.AuthManager, im *instances.InstanceManager) *TelnetServer {
@@ -30,18 +31,26 @@ func (s *TelnetServer) Start() error {
 	if err != nil {
 		return err
 	}
+	s.listener = listener
 	log.Printf("Telnet Server listening on %s", s.Addr)
 
 	go func() {
 		for {
-			conn, err := listener.Accept()
+			conn, err := s.listener.Accept()
 			if err != nil {
-				log.Printf("Telnet Accept Error: %v", err)
-				continue
+				// log.Printf("Telnet Accept Error: %v", err)
+				return
 			}
 			go s.handleConnection(conn)
 		}
 	}()
+	return nil
+}
+
+func (s *TelnetServer) Close() error {
+	if s.listener != nil {
+		return s.listener.Close()
+	}
 	return nil
 }
 
