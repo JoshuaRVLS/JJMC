@@ -137,18 +137,30 @@ func (m *Manager) Start() error {
 	if mem <= 0 {
 		mem = 2048
 	}
-	var args []string
-	args = append(args, fmt.Sprintf("-Xmx%dM", mem))
-	args = append(args, fmt.Sprintf("-Xms%dM", mem))
 
-	if m.javaArgs != "" {
-		customArgs := strings.Fields(m.javaArgs)
-		args = append(args, customArgs...)
+	if m.startCommand != "" {
+		// Replace variables in command
+		cmdStr := m.startCommand
+		cmdStr = strings.ReplaceAll(cmdStr, "${MAX_MEMORY}", strconv.Itoa(mem))
+		cmdStr = strings.ReplaceAll(cmdStr, "${JAVA_ARGS}", m.javaArgs)
+
+		// Use sh -c for complex commands
+		m.cmd = exec.Command("sh", "-c", cmdStr)
+	} else {
+		var args []string
+		args = append(args, fmt.Sprintf("-Xmx%dM", mem))
+		args = append(args, fmt.Sprintf("-Xms%dM", mem))
+
+		if m.javaArgs != "" {
+			customArgs := strings.Fields(m.javaArgs)
+			args = append(args, customArgs...)
+		}
+
+		args = append(args, "-jar", m.jarName, "nogui")
+
+		m.cmd = exec.Command("java", args...)
 	}
 
-	args = append(args, "-jar", m.jarName, "nogui")
-
-	m.cmd = exec.Command("java", args...)
 	m.cmd.Dir = m.workDir
 
 	stdin, err := m.cmd.StdinPipe()

@@ -1,0 +1,22 @@
+{
+    "id": "quilt",
+    "name": "Quilt",
+    "description": "The open, community-driven modding toolchain",
+    "environment": {
+        "type": "quilt"
+    },
+    "install": [
+        {
+            "type": "download",
+            "options": {
+                "url": "https://meta.quiltmc.org/v3/versions/loader/${VERSION}/0.24.0/1.0.0/server/jar",
+                "target": "server.jar"
+            }
+        }
+    ],
+    "run": {
+        "command": "java -Xmx${MAX_MEMORY}M -Xms${MAX_MEMORY}M ${JAVA_ARGS} -jar server.jar nogui",
+        "stop": "stop",
+        "env": {}
+    }
+}

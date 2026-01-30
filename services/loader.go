@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"jjmc/models"
 )
@@ -13,6 +14,7 @@ import (
 type TemplateManager struct {
 	TemplatesDir string
 	Templates    map[string]models.Template
+	mu           sync.RWMutex
 }
 
 func NewTemplateManager(dir string) *TemplateManager {
@@ -23,6 +25,9 @@ func NewTemplateManager(dir string) *TemplateManager {
 }
 
 func (tm *TemplateManager) LoadTemplates() error {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+
 	entries, err := os.ReadDir(tm.TemplatesDir)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -61,11 +66,15 @@ func (tm *TemplateManager) LoadTemplates() error {
 }
 
 func (tm *TemplateManager) GetTemplate(id string) (models.Template, bool) {
+	tm.mu.RLock()
+	defer tm.mu.RUnlock()
 	t, ok := tm.Templates[id]
 	return t, ok
 }
 
 func (tm *TemplateManager) ListTemplates() []models.Template {
+	tm.mu.RLock()
+	defer tm.mu.RUnlock()
 	list := make([]models.Template, 0, len(tm.Templates))
 	for _, t := range tm.Templates {
 		list = append(list, t)

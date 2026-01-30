@@ -1,0 +1,34 @@
+{
+    "id": "forge",
+    "name": "Forge",
+    "description": "Minecraft Forge Mod Loader",
+    "environment": {
+        "type": "forge"
+    },
+    "install": [
+        {
+            "type": "download",
+            "options": {
+                "url": "https://maven.minecraftforge.net/net/minecraftforge/forge/${FULL_VERSION}/forge-${FULL_VERSION}-installer.jar",
+                "target": "installer.jar"
+            }
+        },
+        {
+            "type": "command",
+            "options": {
+                "command": "java -jar installer.jar --installServer"
+            }
+        },
+        {
+            "type": "command",
+            "options": {
+                "command": "rm installer.jar"
+            }
+        }
+    ],
+    "run": {
+        "command": "./run.sh",
+        "stop": "stop",
+        "env": {}
+    }
+}

@@ -25,12 +25,13 @@ func (im *InstanceManager) CreateInstance(id, name, serverType, version string) 
 		if tmpl, ok := im.TemplateMgr.GetTemplate(serverType); ok {
 			// Pre-save to DB to establish ID/Dir
 			model := models.InstanceModel{
-				ID:        id,
-				Name:      name,
-				Type:      serverType,
-				Version:   version,
-				CreatedAt: time.Now().Unix(),
-				MaxMemory: 2048,
+				ID:           id,
+				Name:         name,
+				Type:         serverType,
+				Version:      version,
+				CreatedAt:    time.Now().Unix(),
+				MaxMemory:    2048,
+				StartCommand: tmpl.Run.Command,
 			}
 			if err := database.DB.Create(&model).Error; err != nil {
 				return nil, fmt.Errorf("failed to save to db: %v", err)
@@ -45,25 +46,29 @@ func (im *InstanceManager) CreateInstance(id, name, serverType, version string) 
 			mgr := manager.NewManager()
 			instance := &Instance{
 				Instance: &models.Instance{
-					ID:        id,
-					Name:      name,
-					Directory: dir,
-					Type:      serverType,
-					Version:   version,
-					MaxMemory: 2048,
-					JarFile:   "server.jar", // Default, might be updated by template
+					ID:           id,
+					Name:         name,
+					Directory:    dir,
+					Type:         serverType,
+					Version:      version,
+					MaxMemory:    2048,
+					JarFile:      "server.jar", // Default, might be updated by template
+					StartCommand: tmpl.Run.Command,
 				},
 				Manager: mgr,
 			}
 			instance.Manager.SetWorkDir(dir)
 			instance.Manager.SetJar("server.jar")
+			if tmpl.Run.Command != "" {
+				instance.Manager.SetStartCommand(tmpl.Run.Command)
+			}
 			instance.Manager.SetMaxMemory(2048)
 
 			im.instances[id] = instance
 
 			// Execute Template Install
 			go func() {
-				if err := instance.InstallFromTemplate(tmpl); err != nil {
+				if err := instance.InstallFromTemplate(tmpl, version); err != nil {
 					fmt.Printf("Failed to install template for %s: %v\n", id, err)
 				}
 			}()

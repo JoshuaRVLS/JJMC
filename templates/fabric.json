@@ -1,0 +1,22 @@
+{
+    "id": "fabric",
+    "name": "Fabric",
+    "description": "Lightweight modular mod loader",
+    "environment": {
+        "type": "fabric"
+    },
+    "install": [
+        {
+            "type": "download",
+            "options": {
+                "url": "https://meta.fabricmc.net/v2/versions/loader/${VERSION}/0.15.7/1.0.0/server/jar",
+                "target": "server.jar"
+            }
+        }
+    ],
+    "run": {
+        "command": "java -Xmx${MAX_MEMORY}M -Xms${MAX_MEMORY}M -Dfabric.log.level=info ${JAVA_ARGS} -jar server.jar nogui",
+        "stop": "stop",
+        "env": {}
+    }
+}

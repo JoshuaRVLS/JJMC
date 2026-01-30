@@ -1,0 +1,22 @@
+{
+    "id": "spigot",
+    "name": "Spigot",
+    "description": "Modified Minecraft Server",
+    "environment": {
+        "type": "standard"
+    },
+    "install": [
+        {
+            "type": "download",
+            "options": {
+                "url": "https://cdn.getbukkit.org/spigot/spigot-${VERSION}.jar",
+                "target": "server.jar"
+            }
+        }
+    ],
+    "run": {
+        "command": "java -Xmx${MAX_MEMORY}M -Xms${MAX_MEMORY}M ${JAVA_ARGS} -jar server.jar nogui",
+        "stop": "stop",
+        "env": {}
+    }
+}

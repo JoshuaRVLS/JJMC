@@ -20,10 +20,11 @@ type Manager struct {
 	mu      sync.Mutex
 
 	// Configuration
-	workDir   string
-	jarName   string
-	maxMemory int
-	javaArgs  string
+	workDir      string
+	jarName      string
+	startCommand string
+	maxMemory    int
+	javaArgs     string
 
 	broadcast chan string
 	logBuffer []string
@@ -54,6 +55,12 @@ func (m *Manager) SetJar(name string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.jarName = name
+}
+
+func (m *Manager) SetStartCommand(cmd string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.startCommand = cmd
 }
 
 func (m *Manager) SetMaxMemory(mem int) {
