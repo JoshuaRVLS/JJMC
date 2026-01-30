@@ -13,6 +13,8 @@
         FolderPlus,
         Upload,
         X,
+        Archive,
+        ArchiveRestore,
     } from "lucide-svelte";
 
     /** @type {string} */
@@ -352,6 +354,85 @@
         isDraggingOver = true;
     }
 
+    async function compressSelected() {
+        const name = await askInput({
+            title: "Compress Files",
+            placeholder: "Archive Name (e.g. backup.zip)",
+            confirmText: "Compress",
+            value: "archive.zip",
+        });
+        if (!name) return;
+
+        // Ensure .zip extension
+        const finalName = name.endsWith(".zip") ? name : name + ".zip";
+        const filesToCompress = Array.from(selectedFiles).map((f) =>
+            currentPath === "." ? f : `${currentPath}/${f}`,
+        );
+        const destPath =
+            currentPath === "." ? finalName : `${currentPath}/${finalName}`;
+
+        try {
+            loading = true; // or just toast
+            const res = await fetch(
+                `/api/instances/${instanceId}/files/compress`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        files: filesToCompress,
+                        destination: destPath,
+                    }),
+                },
+            );
+            if (res.ok) {
+                addToast("Compressed successfully", "success");
+                loadFiles(currentPath);
+                selectedFiles = new Set();
+            } else {
+                const err = await res.json();
+                addToast(err.error || "Compression failed", "error");
+            }
+        } catch (e) {
+            addToast("Error compressing", "error");
+        } finally {
+            loading = false;
+        }
+    }
+
+    async function extractSelected() {
+        const file = Array.from(selectedFiles)[0];
+        if (!file) return;
+
+        const filePath = currentPath === "." ? file : `${currentPath}/${file}`;
+
+        try {
+            loading = true;
+            const res = await fetch(
+                `/api/instances/${instanceId}/files/decompress`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        file: filePath,
+                        destination: currentPath, // Extract to current folder
+                    }),
+                },
+            );
+            if (res.ok) {
+                addToast("Extracted successfully", "success");
+                loadFiles(currentPath);
+                selectedFiles = new Set();
+            } else {
+                const err = await res.json();
+                addToast(err.error || "Extraction failed", "error");
+            }
+        } catch (e) {
+            addToast("Error extracting", "error");
+        } finally {
+            loading = false;
+        }
+    }
+
     /** @param {DragEvent} e */
     function onDragLeave(e) {
         e.preventDefault();
@@ -461,6 +542,26 @@
                     >
                         <Trash2 class="w-4 h-4" />
                         Delete ({selectedFiles.size})
+                    </button>
+
+                    <button
+                        on:click={compressSelected}
+                        class="flex items-center gap-1 px-2 py-1 bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white rounded-lg transition-colors text-xs font-bold mr-2"
+                    >
+                        <Archive class="w-4 h-4" />
+                        Compress
+                    </button>
+
+                    <div class="h-4 w-px bg-white/10 mx-1"></div>
+                {/if}
+
+                {#if selectedFiles.size === 1 && (Array.from(selectedFiles)[0].endsWith(".zip") || Array.from(selectedFiles)[0].endsWith(".jar"))}
+                    <button
+                        on:click={extractSelected}
+                        class="flex items-center gap-1 px-2 py-1 bg-green-500/10 text-green-400 hover:bg-green-500 hover:text-white rounded-lg transition-colors text-xs font-bold mr-2"
+                    >
+                        <ArchiveRestore class="w-4 h-4" />
+                        Extract
                     </button>
                     <div class="h-4 w-px bg-white/10 mx-1"></div>
                 {/if}
