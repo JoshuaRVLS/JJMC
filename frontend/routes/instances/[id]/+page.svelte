@@ -11,6 +11,7 @@
     import Mods from "$lib/Mods.svelte";
     import ModConfigs from "$lib/ModConfigs.svelte";
     import TypeSettings from "$lib/TypeSettings.svelte";
+    import Backups from "$lib/Backups.svelte";
 
     // Get instance ID from route params
     $: instanceId = $page.params.id || "";
@@ -176,6 +177,8 @@
             <ModConfigs {instanceId} />
         {:else if activeTab === "type"}
             <TypeSettings {instanceId} />
+        {:else if activeTab === "backups"}
+            <Backups {instanceId} />
         {/if}
     </div>
 </div>

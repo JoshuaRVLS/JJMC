@@ -102,9 +102,9 @@
     >
         <div class="flex items-center gap-2">
             <div class="flex gap-1.5">
-                <div class="w-3 h-3 rounded-full bg-red-500/50" />
-                <div class="w-3 h-3 rounded-full bg-yellow-500/50" />
-                <div class="w-3 h-3 rounded-full bg-green-500/50" />
+                <div class="w-3 h-3 rounded-full bg-red-500/50"></div>
+                <div class="w-3 h-3 rounded-full bg-yellow-500/50"></div>
+                <div class="w-3 h-3 rounded-full bg-green-500/50"></div>
             </div>
             <span
                 class="ml-2 text-xs font-bold text-gray-500 uppercase tracking-widest"
@@ -116,7 +116,7 @@
                 class="w-2 h-2 rounded-full {connected
                     ? 'bg-emerald-500 animate-pulse'
                     : 'bg-red-500'}"
-            />
+            ></span>
             <span class="text-xs text-gray-500 uppercase font-bold"
                 >{connected ? "Live" : "Offline"}</span
             >

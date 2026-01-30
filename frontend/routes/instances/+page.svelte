@@ -222,7 +222,7 @@
                                 <div class="flex items-center gap-2">
                                     <div
                                         class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"
-                                    />
+                                    ></div>
                                     <span
                                         class="text-emerald-400 text-xs font-bold"
                                         >Online</span
@@ -232,7 +232,7 @@
                                 <div class="flex items-center gap-2">
                                     <div
                                         class="w-2 h-2 rounded-full bg-gray-600"
-                                    />
+                                    ></div>
                                     <span
                                         class="text-gray-500 text-xs font-bold"
                                         >Offline</span

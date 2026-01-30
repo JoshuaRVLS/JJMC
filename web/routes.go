@@ -104,4 +104,7 @@ func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManag
 			}
 		}
 	}))
+
+	// Backup Routes
+	RegisterBackupRoutes(app, authManager, instanceManager)
 }

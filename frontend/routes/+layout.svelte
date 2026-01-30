@@ -20,6 +20,7 @@
 		LogOut,
 		ArrowLeft,
 		Loader2,
+		Archive,
 	} from "lucide-svelte";
 
 	/**
@@ -276,6 +277,17 @@
 								Configs
 							</a>
 							<a
+								href="/instances/{currentInstanceId}?tab=backups"
+								class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 {$page.url.searchParams.get(
+									'tab',
+								) === 'backups'
+									? 'bg-indigo-500/10 text-indigo-400 ring-1 ring-indigo-500/20'
+									: 'hover:bg-white/5 hover:text-white'}"
+							>
+								<Archive class="w-4 h-4" />
+								Backups
+							</a>
+							<a
 								href="/instances/{currentInstanceId}?tab=type"
 								class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 {$page.url.searchParams.get(
 									'tab',
@@ -334,10 +346,10 @@
 			>
 				<div
 					class="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-indigo-900/10 rounded-full blur-3xl opacity-50"
-				/>
+				></div>
 				<div
 					class="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-cyan-900/10 rounded-full blur-3xl opacity-30"
-				/>
+				></div>
 			</div>
 
 			<!-- Content Slot -->
