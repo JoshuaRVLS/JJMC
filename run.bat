@@ -23,6 +23,7 @@ if %TOOLS_MISSING% equ 1 (
         call tools\setup.bat
     ) else (
         echo Error: tools\setup.bat not found.
+        pause
         exit /b 1
     )
 )
@@ -42,6 +43,7 @@ if %errorlevel% neq 0 (
 where go >nul 2>nul
 if %errorlevel% neq 0 (
     echo Error: Failed to find or install required tools (go).
+    pause
     exit /b 1
 )
 
@@ -61,3 +63,6 @@ if "%1"=="--build" (
 ) else (
     go run main.go
 )
+
+if %errorlevel% neq 0 pause
+
