@@ -67,7 +67,7 @@
         ) {
             try {
                 const res = await fetch(
-                    `/api/instances/${instanceId}/backups/${filename}/restore`,
+                    `/api/instances/${instanceId}/backups/${encodeURIComponent(filename)}/restore`,
                     { method: "POST" },
                 );
                 if (res.ok) {
@@ -93,7 +93,7 @@
         ) {
             try {
                 const res = await fetch(
-                    `/api/instances/${instanceId}/backups/${filename}`,
+                    `/api/instances/${instanceId}/backups/${encodeURIComponent(filename)}`,
                     { method: "DELETE" },
                 );
                 if (res.ok) {

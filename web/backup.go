@@ -3,6 +3,7 @@ package web
 import (
 	"jjmc/auth"
 	"jjmc/instances"
+	"net/url"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -32,7 +33,11 @@ func RegisterBackupRoutes(router fiber.Router, authManager *auth.AuthManager, im
 	// Restore
 	g.Post("/:filename/restore", func(c *fiber.Ctx) error {
 		id := c.Params("id")
-		filename := c.Params("filename")
+		filename, err := url.QueryUnescape(c.Params("filename"))
+		if err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid filename encoding"})
+		}
+
 		if err := im.RestoreBackup(id, filename); err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 		}
@@ -42,7 +47,11 @@ func RegisterBackupRoutes(router fiber.Router, authManager *auth.AuthManager, im
 	// Delete
 	g.Delete("/:filename", func(c *fiber.Ctx) error {
 		id := c.Params("id")
-		filename := c.Params("filename")
+		filename, err := url.QueryUnescape(c.Params("filename"))
+		if err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "Invalid filename encoding"})
+		}
+
 		if err := im.DeleteBackup(id, filename); err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 		}

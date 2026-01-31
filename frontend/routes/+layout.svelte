@@ -55,7 +55,8 @@
 
 	async function checkAuth() {
 		try {
-			const res = await fetch("/api/auth/status");
+			// Add timestamp to prevent caching
+			const res = await fetch("/api/auth/status?t=" + Date.now());
 			if (res.ok) {
 				const status = await res.json();
 				const path = window.location.pathname;
@@ -105,6 +106,23 @@
 	}
 
 	onMount(() => {
+		console.log("JJMC Frontend Loaded - Force Refresh Check");
+
+		// Force unregister any service workers
+		if ("serviceWorker" in navigator) {
+			navigator.serviceWorker
+				.getRegistrations()
+				.then(function (registrations) {
+					for (let registration of registrations) {
+						console.log(
+							"Unregistering Service Worker:",
+							registration,
+						);
+						registration.unregister();
+					}
+				});
+		}
+
 		checkAuth();
 	});
 
