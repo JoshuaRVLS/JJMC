@@ -5,8 +5,23 @@
     /** @type {string} */
     export let instanceId;
     export let type = "";
+    export let mode = "mod"; // "mod" or "plugin"
 
-    let activeTab = "mod"; // 'mod' | 'modpack'
+    let activeTab = mode === "plugin" ? "plugin" : "mod"; // 'mod', 'plugin', 'modpack'
+
+    // React to mode changes
+    $: if (mode) {
+        if (mode === "plugin" && activeTab !== "plugin") {
+            activeTab = "plugin";
+        } else if (
+            mode === "mod" &&
+            activeTab !== "mod" &&
+            activeTab !== "modpack"
+        ) {
+            activeTab = "mod";
+        }
+    }
+
     let query = "";
     /** @type {Array<any>} */
     let results = [];
@@ -47,9 +62,16 @@
             loadingMore = true;
         }
 
+        // Map activeTab to backend 'type' param
+        // If activeTab is 'mod', send 'mod'
+        // If activeTab is 'modpack', send 'modpack'
+        // If activeTab is 'plugin', send 'plugin'
+        let typeParam = activeTab === "plugin" ? "plugin" : activeTab;
+        if (typeParam === "mod" && mode === "plugin") typeParam = "plugin"; // fallback
+
         try {
             const res = await fetch(
-                `/api/instances/${instanceId}/mods/search?query=${encodeURIComponent(query)}&type=${activeTab}&offset=${offset}&sort=${sortBy}`,
+                `/api/instances/${instanceId}/mods/search?query=${encodeURIComponent(query)}&type=${typeParam}&offset=${offset}&sort=${sortBy}`,
             );
             if (res.ok) {
                 const data = await res.json();
@@ -112,13 +134,15 @@
     async function installMod(projectId) {
         installingId = projectId;
         try {
+            let typeParam = activeTab === "plugin" ? "plugin" : "mod";
+
             const res = await fetch(`/api/instances/${instanceId}/mods`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ projectId }),
+                body: JSON.stringify({ projectId, resourceType: typeParam }),
             });
             if (res.ok) {
-                addToast("Mod installed successfully", "success");
+                addToast("Installed successfully", "success");
                 fetchInstalled();
             } else {
                 const err = await res.json();
@@ -142,10 +166,15 @@
         if (!confirm("Are you sure you want to uninstall this?")) return;
         installingId = projectId; // Re-using state var for loading
         try {
+            let typeParam = activeTab === "plugin" ? "plugin" : "mod";
+
             const res = await fetch(`/api/instances/${instanceId}/mods`, {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ project_id: projectId }),
+                body: JSON.stringify({
+                    project_id: projectId,
+                    resource_type: typeParam,
+                }),
             });
             if (res.ok) {
                 addToast("Uninstalled successfully", "success");
@@ -227,18 +256,25 @@
         class="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4 px-1"
     >
         <div class="flex bg-black/20 p-1 rounded-lg self-start">
-            <button
-                class="px-4 py-1.5 rounded-md text-sm font-medium transition-all {activeTab ===
-                'mod'
-                    ? 'bg-indigo-500 text-white shadow-lg'
-                    : 'text-gray-400 hover:text-white'}"
-                on:click={() => {
-                    activeTab = "mod";
-                }}
-            >
-                {type === "spigot" ? "Plugins" : "Mods"}
-            </button>
-            {#if type !== "spigot"}
+            {#if mode === "plugin"}
+                <button
+                    class="px-4 py-1.5 rounded-md text-sm font-medium transition-all bg-indigo-500 text-white shadow-lg"
+                    on:click={() => {}}
+                >
+                    Plugins
+                </button>
+            {:else}
+                <button
+                    class="px-4 py-1.5 rounded-md text-sm font-medium transition-all {activeTab ===
+                    'mod'
+                        ? 'bg-indigo-500 text-white shadow-lg'
+                        : 'text-gray-400 hover:text-white'}"
+                    on:click={() => {
+                        activeTab = "mod";
+                    }}
+                >
+                    Mods
+                </button>
                 <button
                     class="px-4 py-1.5 rounded-md text-sm font-medium transition-all {activeTab ===
                     'modpack'

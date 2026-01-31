@@ -15,8 +15,15 @@ func (h *InstanceHandler) SearchMods(c *fiber.Ctx) error {
 	}
 
 	query := c.Query("query")
-	typeFilter := c.Query("type", "mod") // "mod" or "modpack"
-	isModpack := typeFilter == "modpack"
+	// typeFilter can be "mod", "modpack", "plugin"
+	// Default logic: if instance is spigot/paper, default to plugin, else mod.
+	defaultType := "mod"
+	if inst.Type == "spigot" || inst.Type == "paper" || inst.Type == "bukkit" {
+		defaultType = "plugin"
+	}
+
+	typeFilter := c.Query("type", defaultType)
+
 	offset, _ := strconv.Atoi(c.Query("offset", "0"))
 	sort := c.Query("sort", "")
 	sides := c.Query("sides", "")
@@ -25,7 +32,7 @@ func (h *InstanceHandler) SearchMods(c *fiber.Ctx) error {
 		sidesList = strings.Split(sides, ",")
 	}
 
-	results, err := inst.SearchMods(query, isModpack, offset, sort, sidesList)
+	results, err := inst.SearchMods(query, typeFilter, offset, sort, sidesList)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -39,13 +46,23 @@ func (h *InstanceHandler) InstallMod(c *fiber.Ctx) error {
 	}
 
 	var payload struct {
-		ProjectID string `json:"projectId"`
+		ProjectID    string `json:"projectId"`
+		ResourceType string `json:"resourceType"` // "mod" or "plugin"
 	}
 	if err := c.BodyParser(&payload); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
 	}
 
-	if err := inst.InstallMod(payload.ProjectID); err != nil {
+	// Default resource type logic
+	if payload.ResourceType == "" {
+		if inst.Type == "spigot" || inst.Type == "paper" || inst.Type == "bukkit" {
+			payload.ResourceType = "plugin"
+		} else {
+			payload.ResourceType = "mod"
+		}
+	}
+
+	if err := inst.InstallMod(payload.ProjectID, payload.ResourceType); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"status": "installed"})
@@ -71,13 +88,23 @@ func (h *InstanceHandler) UninstallMod(c *fiber.Ctx) error {
 	}
 
 	var payload struct {
-		ProjectID string `json:"project_id"`
+		ProjectID    string `json:"project_id"`
+		ResourceType string `json:"resource_type"`
 	}
 	if err := c.BodyParser(&payload); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
 	}
 
-	if err := inst.UninstallMod(payload.ProjectID); err != nil {
+	// Default resource type logic
+	if payload.ResourceType == "" {
+		if inst.Type == "spigot" || inst.Type == "paper" || inst.Type == "bukkit" {
+			payload.ResourceType = "plugin"
+		} else {
+			payload.ResourceType = "mod"
+		}
+	}
+
+	if err := inst.UninstallMod(payload.ProjectID, payload.ResourceType); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"status": "uninstalled"})

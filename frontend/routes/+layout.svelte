@@ -277,31 +277,28 @@
 								<Settings class="w-4 h-4" />
 								Settings
 							</a>
-							{#if currentInstanceType !== "spigot"}
-								<a
-									href="/instances/{currentInstanceId}?tab=mods"
-									class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 {$page.url.searchParams.get(
-										'tab',
-									) === 'mods'
-										? 'bg-indigo-500/10 text-indigo-400 ring-1 ring-indigo-500/20'
-										: 'hover:bg-white/5 hover:text-white'}"
-								>
-									<Puzzle class="w-4 h-4" />
-									Mods
-								</a>
-							{:else}
-								<a
-									href="/instances/{currentInstanceId}?tab=plugins"
-									class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 {$page.url.searchParams.get(
-										'tab',
-									) === 'plugins'
-										? 'bg-indigo-500/10 text-indigo-400 ring-1 ring-indigo-500/20'
-										: 'hover:bg-white/5 hover:text-white'}"
-								>
-									<Puzzle class="w-4 h-4" />
-									Plugins
-								</a>
-							{/if}
+							<a
+								href="/instances/{currentInstanceId}?tab=mods"
+								class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 {$page.url.searchParams.get(
+									'tab',
+								) === 'mods'
+									? 'bg-indigo-500/10 text-indigo-400 ring-1 ring-indigo-500/20'
+									: 'hover:bg-white/5 hover:text-white'}"
+							>
+								<Puzzle class="w-4 h-4" />
+								Mods
+							</a>
+							<a
+								href="/instances/{currentInstanceId}?tab=plugins"
+								class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 {$page.url.searchParams.get(
+									'tab',
+								) === 'plugins'
+									? 'bg-indigo-500/10 text-indigo-400 ring-1 ring-indigo-500/20'
+									: 'hover:bg-white/5 hover:text-white'}"
+							>
+								<Puzzle class="w-4 h-4" />
+								Plugins
+							</a>
 							<a
 								href="/instances/{currentInstanceId}?tab=configs"
 								class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 {$page.url.searchParams.get(

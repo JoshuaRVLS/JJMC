@@ -50,22 +50,28 @@ func (v *VersionsManager) runBuildTools(version string, serverType string) error
 	}
 
 	// 5. Run BuildTools
-	v.manager.Broadcast(fmt.Sprintf("Running BuildTools for %s %s...", serverType, version))
-
 	var cmd *exec.Cmd
 
 	if useDocker {
+		v.manager.Broadcast(fmt.Sprintf("Running BuildTools for %s %s (using Docker)...", serverType, version))
+
 		absBuildDir, err := filepath.Abs(buildDir)
 		if err != nil {
 			return fmt.Errorf("failed to get absolute path: %v", err)
 		}
-		// Docker Execution: openjdk:21-jdk-slim is widely available
+
+		// Docker Execution: We use an image that contains BOTH Java and Git.
+		// maven:3.9-eclipse-temurin-21 contains git and openjdk21.
+		dockerImage := "maven:3.9-eclipse-temurin-21"
+
 		cmd = exec.Command("docker", "run", "--rm",
 			"-v", fmt.Sprintf("%s:/data", absBuildDir),
 			"-w", "/data",
-			"openjdk:21-jdk-slim",
+			dockerImage,
 			"java", "-jar", "BuildTools.jar", "--rev", version)
 	} else {
+		v.manager.Broadcast(fmt.Sprintf("Running BuildTools for %s %s (Local)...", serverType, version))
+
 		// Local Execution
 		cmd = exec.Command("java", "-jar", "BuildTools.jar", "--rev", version)
 		cmd.Dir = buildDir

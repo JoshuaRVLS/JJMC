@@ -42,7 +42,11 @@
 
     // Constants
     const SUPPORTED_LOADERS = ["fabric", "quilt", "forge", "neoforge"];
-    const MANUAL_LOADERS = [{ value: "spigot", label: "Spigot", icon: Layers }];
+    const MANUAL_LOADERS = [
+        { value: "paper", label: "Paper", icon: Scroll },
+        { value: "spigot", label: "Spigot", icon: Layers },
+        { value: "bukkit", label: "CraftBukkit", icon: Box },
+    ];
 
     // Map loader names to icons and colors
     const LOADER_META = {
@@ -70,11 +74,23 @@
             bg: "bg-orange-900/20",
             border: "border-orange-600/50",
         },
+        paper: {
+            image: "/paper.png",
+            color: "text-blue-400",
+            bg: "bg-blue-900/20",
+            border: "border-blue-500/50",
+        },
         spigot: {
             image: "/spigot.png",
             color: "text-yellow-400",
             bg: "bg-yellow-900/20",
             border: "border-yellow-500/50",
+        },
+        bukkit: {
+            icon: Box,
+            color: "text-red-400",
+            bg: "bg-red-900/20",
+            border: "border-red-500/50",
         },
         vanilla: {
             icon: Box,
@@ -214,7 +230,7 @@
             return addToast("Missing configuration", "error");
 
         creating = true;
-        status = "Creating instance...";
+        status = "Initializing instance...";
 
         try {
             const id = createId();
@@ -226,6 +242,7 @@
             };
 
             // 1. Create
+            status = "Creating instance directory and config...";
             const res = await fetch("/api/instances", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -236,7 +253,16 @@
 
             // 2. Install (if not custom)
             if (type !== "custom") {
-                status = "Installing server...";
+                status = `Installing ${type} ${version} server...`;
+
+                // Note: The backend installation can take a while (e.g. BuildTools/Download)
+                // We should probably optimize this to return async task ID,
+                // but for now we rely on the long-polling request.
+                // We update status to be informative.
+                if (type === "spigot" || type === "bukkit") {
+                    status = `Compiling ${type} (this may take several minutes)...`;
+                }
+
                 const installRes = await fetch(`/api/instances/${id}/install`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -254,6 +280,10 @@
             } else {
                 addToast("Server created! Please upload your jar.", "success");
             }
+
+            status = "Finalizing settings...";
+            // Slight delay to let user see "Finished" state if we wanted
+            await new Promise((r) => setTimeout(r, 500));
 
             await goto(`/instances/${id}`);
         } catch (e) {

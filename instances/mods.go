@@ -64,12 +64,8 @@ type InstalledPlugin struct {
 	Filename string `json:"filename"`
 }
 
-func (inst *Instance) SearchMods(query string, isModpack bool, offset int, sort string, sides []string) ([]interface{}, error) {
-	if inst.Type == "spigot" {
-		if isModpack {
-			return []interface{}{}, nil // Spigot doesn't support modpacks in the same way yet
-		}
-
+func (inst *Instance) SearchMods(query string, resourceType string, offset int, sort string, sides []string) ([]interface{}, error) {
+	if resourceType == "plugin" {
 		client := NewSpigetClient()
 		// Page size 20, calculate page number from offset
 		page := (offset / 20) + 1
@@ -113,11 +109,12 @@ func (inst *Instance) SearchMods(query string, isModpack bool, offset int, sort 
 		return hits, nil
 	}
 
+	// Modrinth logic (mod or modpack)
 	loader := inst.Type
 	mcVersion := inst.Version
 
 	ptype := "mod"
-	if isModpack {
+	if resourceType == "modpack" {
 		ptype = "modpack"
 	}
 
@@ -127,9 +124,23 @@ func (inst *Instance) SearchMods(query string, isModpack bool, offset int, sort 
 
 	// Modrinth facets: [["facet:value"], ["facet:value"]] for AND logic
 	var facetList []string
-	if loader != "vanilla" && loader != "" {
+	if loader != "vanilla" && loader != "" && loader != "spigot" && loader != "paper" && loader != "unknown" {
+		// Only filter by loader if it maps to a Modrinth loader (fabric, forge, quilt, neoforge)
+		// If custom or paper/spigot, we might want to search ALL Modrinth mods (or filtered by 'bukkit'/'spigot' category if it exists?)
+		// Modrinth usually has "bukkit", "spigot", "paper" categories?
+		// Actually Modrinth hosts plugins too.
+		// For now, if we are searching "mod" on a "paper" server, we probably mean plugins from spigot,
+		// BUT if user explicitly asked for "mod" (Modrinth), we should probably let them search without strict loader filter
+		// OR default to searching compatible things if possible.
+		// Let's stick to strict loader filter ONLY if it's a known mod loader.
 		facetList = append(facetList, fmt.Sprintf(`["categories:%s"]`, loader))
+	} else if loader == "paper" || loader == "spigot" {
+		// If on Paper/Spigot but searching Modrinth, we might want to find "bukkit" compatible plugins on Modrinth?
+		// Modrinth uses "bukkit", "spigot", "paper" as categories.
+		// facetList = append(facetList, `["categories:bukkit"]`)
+		// Let's leave it open for now or add "bukkit" if robust.
 	}
+
 	facetList = append(facetList, fmt.Sprintf(`["versions:%s"]`, mcVersion))
 	facetList = append(facetList, fmt.Sprintf(`["project_type:%s"]`, ptype))
 
@@ -181,8 +192,8 @@ func (inst *Instance) SearchMods(query string, isModpack bool, offset int, sort 
 }
 
 // InstallMod downloads the latest compatible version of a mod
-func (inst *Instance) InstallMod(projectId string) error {
-	if inst.Type == "spigot" {
+func (inst *Instance) InstallMod(projectId string, resourceType string) error {
+	if resourceType == "plugin" {
 		client := NewSpigetClient()
 		var id int
 		if _, err := fmt.Sscanf(projectId, "%d", &id); err != nil {
@@ -275,8 +286,8 @@ func (inst *Instance) InstallMod(projectId string) error {
 	return inst.downloadFile(targetPath, fileUrl)
 }
 
-func (inst *Instance) UninstallMod(projectId string) error {
-	if inst.Type == "spigot" {
+func (inst *Instance) UninstallMod(projectId string, resourceType string) error {
+	if resourceType == "plugin" {
 		metaPath := filepath.Join(inst.Directory, "installed_plugins.json")
 		var plugins []InstalledPlugin
 		if data, err := os.ReadFile(metaPath); err == nil {

@@ -172,7 +172,11 @@
         {:else if activeTab === "settings"}
             <Settings {instanceId} />
         {:else if activeTab === "mods" || activeTab === "plugins"}
-            <Mods {instanceId} {type} />
+            <Mods
+                {instanceId}
+                {type}
+                mode={activeTab === "plugins" ? "plugin" : "mod"}
+            />
         {:else if activeTab === "configs"}
             <ModConfigs {instanceId} />
         {:else if activeTab === "type"}
