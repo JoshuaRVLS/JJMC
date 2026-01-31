@@ -19,6 +19,7 @@
     let loading = true;
     let isRawMode = false;
     let rawContent = "";
+    let searchQuery = "";
 
     // Maintain raw content syncing
     let originalRawContent = "";
@@ -151,6 +152,10 @@
     onMount(() => {
         loadProperties();
     });
+
+    $: filteredProperties = properties.filter((p) =>
+        p.key.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
 </script>
 
 <div
@@ -158,12 +163,14 @@
 >
     <!-- Toolbar -->
     <div
-        class="flex items-center justify-between px-4 py-3 bg-white/5 border-b border-white/5"
+        class="flex items-center justify-between px-4 py-3 bg-white/5 border-b border-white/5 gap-4"
     >
-        <div class="flex items-center gap-4">
-            <div class="text-sm font-bold text-gray-300">server.properties</div>
+        <div class="flex items-center gap-4 flex-1">
+            <div class="text-sm font-bold text-gray-300 whitespace-nowrap">
+                server.properties
+            </div>
 
-            <div class="flex bg-black/40 p-1 rounded-lg">
+            <div class="flex bg-black/40 p-1 rounded-lg shrink-0">
                 <button
                     class="px-3 py-1 rounded text-[10px] font-bold uppercase transition-all {!isRawMode
                         ? 'bg-indigo-600 text-white'
@@ -187,11 +194,34 @@
                     Raw
                 </button>
             </div>
+
+            {#if !isRawMode}
+                <div class="relative flex-1 max-w-sm">
+                    <input
+                        type="text"
+                        placeholder="Search properties..."
+                        bind:value={searchQuery}
+                        class="w-full bg-black/20 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-indigo-500/50 transition-colors"
+                    />
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500"
+                    >
+                        <path
+                            fill-rule="evenodd"
+                            d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
+                            clip-rule="evenodd"
+                        />
+                    </svg>
+                </div>
+            {/if}
         </div>
 
         <button
             on:click={saveProperties}
-            class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-colors"
+            class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-colors shrink-0"
         >
             Save Changes
         </button>
@@ -221,7 +251,7 @@
             <div
                 class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
             >
-                {#each properties as prop, i}
+                {#each filteredProperties as prop, i}
                     <div
                         class="bg-white/5 p-3 rounded-lg border border-white/5 hover:border-white/10 transition-colors"
                     >
@@ -276,6 +306,11 @@
                         {/if}
                     </div>
                 {/each}
+                {#if filteredProperties.length === 0}
+                    <div class="col-span-full text-center text-gray-500 py-8">
+                        No properties found matching "{searchQuery}"
+                    </div>
+                {/if}
             </div>
         {/if}
     </div>
