@@ -149,7 +149,7 @@
                         </div>
                         <div>
                             <div class="text-sm font-bold text-white">
-                                Power Controls
+                                Control Panel
                             </div>
                             <div class="text-xs text-gray-500">
                                 Manage server state

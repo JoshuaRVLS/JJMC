@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"strings"
+	"time"
 
 	"jjmc/auth"
 	"jjmc/instances"
@@ -126,13 +127,13 @@ func (s *RCONServer) handleConnection(conn net.Conn) {
 
 			// Exec
 			cmd := string(body)
-			if err := instance.Manager.WriteCommand(cmd); err != nil {
+			// Wait 100ms for response. Most commands are fast.
+			// Ideally this would be configurable or smarter.
+			output, err := instance.Manager.ExecuteCommand(cmd, 100*time.Millisecond)
+			if err != nil {
 				sendBoxPacket(conn, id, SERVERDATA_RESPONSE_VALUE, fmt.Sprintf("Error: %v", err))
 			} else {
-				// RCON expects output. But our writes are async broadcasted.
-				// Returning empty "Command sent" for now.
-				// Ideally we capture next logs.
-				sendBoxPacket(conn, id, SERVERDATA_RESPONSE_VALUE, "")
+				sendBoxPacket(conn, id, SERVERDATA_RESPONSE_VALUE, output)
 			}
 
 		default:

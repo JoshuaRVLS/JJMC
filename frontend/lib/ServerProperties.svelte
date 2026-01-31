@@ -90,6 +90,24 @@
             }
         });
 
+        // Ensure RCON properties exist
+        const rconProps = [
+            { key: "enable-rcon", value: "false" },
+            { key: "rcon.port", value: "25575" },
+            { key: "rcon.password", value: "" },
+        ];
+
+        rconProps.forEach((rp) => {
+            if (!parsed.some((p) => p.key === rp.key)) {
+                parsed.push({
+                    key: rp.key,
+                    value: rp.value,
+                    type: getInputType(rp.key, rp.value),
+                    originalValue: rp.value,
+                });
+            }
+        });
+
         parsed.sort((a, b) => a.key.localeCompare(b.key));
         properties = parsed;
     }
