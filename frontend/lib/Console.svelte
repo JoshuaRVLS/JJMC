@@ -94,31 +94,59 @@
 </script>
 
 <div
-    class="flex flex-col h-full bg-black/50 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10 shadow-2xl font-mono text-sm group"
+    class="flex flex-col h-full bg-slate-950/80 backdrop-blur-xl rounded-2xl overflow-hidden border border-white/5 shadow-2xl font-mono text-sm group relative"
 >
+    <!-- Glow Effect -->
+    <div
+        class="absolute inset-0 pointer-events-none bg-linear-to-tr from-indigo-500/5 via-transparent to-emerald-500/5 opacity-50"
+    ></div>
+
     <!-- Header/Title -->
     <div
-        class="flex justify-between items-center px-4 py-2 bg-white/5 border-b border-white/5"
+        class="flex justify-between items-center px-5 py-3 bg-white/5 border-b border-white/5 relative z-10"
     >
-        <div class="flex items-center gap-2">
-            <div class="flex gap-1.5">
-                <div class="w-3 h-3 rounded-full bg-red-500/50"></div>
-                <div class="w-3 h-3 rounded-full bg-yellow-500/50"></div>
-                <div class="w-3 h-3 rounded-full bg-green-500/50"></div>
-            </div>
+        <div class="flex items-center gap-3">
+            <!-- Terminal Icon -->
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-4 h-4 text-gray-400"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                ><polyline points="4 17 10 11 4 5"></polyline><line
+                    x1="12"
+                    y1="19"
+                    x2="20"
+                    y2="19"
+                ></line></svg
+            >
             <span
-                class="ml-2 text-xs font-bold text-gray-500 uppercase tracking-widest"
-                >Target: server.jar</span
+                class="text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                >Server Console</span
             >
         </div>
         <div class="flex items-center gap-2">
+            <div class="relative flex h-2 w-2">
+                {#if connected}
+                    <span
+                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"
+                    ></span>
+                    <span
+                        class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"
+                    ></span>
+                {:else}
+                    <span
+                        class="relative inline-flex rounded-full h-2 w-2 bg-rose-500"
+                    ></span>
+                {/if}
+            </div>
             <span
-                class="w-2 h-2 rounded-full {connected
-                    ? 'bg-emerald-500 animate-pulse'
-                    : 'bg-red-500'}"
-            ></span>
-            <span class="text-xs text-gray-500 uppercase font-bold"
-                >{connected ? "Live" : "Offline"}</span
+                class="text-[10px] font-bold tracking-widest uppercase {connected
+                    ? 'text-emerald-500'
+                    : 'text-rose-500'}">{connected ? "Online" : "Offline"}</span
             >
         </div>
     </div>
@@ -126,33 +154,47 @@
     <!-- Logs -->
     <div
         bind:this={consoleDiv}
-        class="flex-1 overflow-y-auto p-4 space-y-0.5 scrollbar-thin scrollbar-thumb-gray-800 scrollbar-track-transparent"
+        class="flex-1 overflow-y-auto p-5 space-y-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent relative z-10"
     >
         {#if logs.length === 0}
-            <div class="text-gray-600 italic">Waiting for logs...</div>
+            <div
+                class="flex flex-col items-center justify-center h-full text-gray-700 space-y-2"
+            >
+                <div class="text-4xl opacity-20">_</div>
+                <div class="text-xs uppercase tracking-widest opacity-50">
+                    No output logs
+                </div>
+            </div>
         {/if}
         {#each logs as log}
             <div
-                class="text-gray-300 break-words font-medium leading-relaxed tracking-tight opacity-90 hover:opacity-100 transition-opacity"
+                class="break-words font-medium leading-relaxed tracking-tight text-slate-300/90 hover:text-white transition-colors duration-150 animate-in fade-in slide-in-from-bottom-1"
             >
-                <span class="text-gray-600 mr-2 select-none">$</span>{log}
+                <span class="text-indigo-400/50 mr-3 select-none text-xs"
+                    >➜</span
+                >{log}
             </div>
         {/each}
     </div>
 
     <!-- Input -->
-    <div class="p-3 bg-white/5 border-t border-white/5">
+    <div class="p-4 bg-white/2 border-t border-white/5 relative z-10">
         <div
-            class="flex items-center gap-3 bg-black/20 rounded-lg px-3 py-2 border border-white/5 focus-within:border-indigo-500/50 focus-within:ring-1 focus-within:ring-indigo-500/50 transition-all duration-200"
+            class="group/input flex items-center gap-3 bg-black/40 rounded-xl px-4 py-3 border border-white/5 focus-within:border-indigo-500/50 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all duration-300 shadow-inner"
         >
-            <span class="text-indigo-400 font-bold">❯</span>
+            <span class="text-indigo-400 font-bold animate-pulse">❯</span>
             <input
                 type="text"
                 bind:value={command}
                 on:keydown={handleKeydown}
-                class="flex-1 bg-transparent border-none text-gray-200 focus:ring-0 focus:outline-none placeholder-gray-600 text-sm font-medium"
-                placeholder="Execute server command..."
+                class="flex-1 bg-transparent border-none text-gray-100 placeholder-gray-600 focus:ring-0 focus:outline-none text-sm font-medium tracking-wide"
+                placeholder="Enter command..."
             />
+            <div
+                class="text-[10px] text-gray-600 font-medium px-2 py-0.5 rounded border border-white/5 hidden group-focus-within/input:block animate-in fade-in zoom-in-95"
+            >
+                ENTER
+            </div>
         </div>
     </div>
 </div>
