@@ -1,10 +1,6 @@
 <script>
     import { addToast } from "$lib/stores/toast.js";
     import { Play, Square, RotateCcw } from "lucide-svelte";
-    // Wait, I don't have unplugin-icons set up probably.
-    // I should use SVG directly or see if I can use a library.
-    // The previous code had SVGs inline or no icons.
-    // I will use Inline SVGs to be safe and dependency-free.
 
     export let status = "Offline"; // Received from parent
     /** @type {string} */
