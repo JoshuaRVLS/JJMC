@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"strings"
@@ -22,6 +23,8 @@ import (
 )
 
 func main() {
+	silent := flag.Bool("silent", false, "Suppress server logs in terminal")
+	flag.Parse()
 
 	logger.Setup()
 
@@ -37,6 +40,7 @@ func main() {
 	instanceManager := instances.NewInstanceManager(
 		"./servers",
 		templateManager,
+		*silent,
 	)
 
 	app := fiber.New(fiber.Config{

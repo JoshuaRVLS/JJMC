@@ -40,7 +40,8 @@ npm run build
 echo "Starting JJMC..."
 if [ "$1" == "--build" ]; then
     go build -o bin/jjmc main.go
-    ./bin/jjmc
+    shift
+    ./bin/jjmc "$@"
 else
-    go run main.go
+    go run main.go "$@"
 fi

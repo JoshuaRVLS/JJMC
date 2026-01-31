@@ -259,7 +259,9 @@ func (m *Manager) streamOutput(r io.Reader, logFile io.Writer) {
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		text := scanner.Text()
-		fmt.Println("Server:", text)
+		if !m.silent {
+			fmt.Println("Server:", text)
+		}
 
 		// Write to log file if available
 		if logFile != nil {

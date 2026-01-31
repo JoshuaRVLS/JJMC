@@ -44,6 +44,7 @@ func (im *InstanceManager) CreateInstance(id, name, serverType, version string) 
 			os.WriteFile(filepath.Join(dir, "eula.txt"), []byte("eula=true"), 0644)
 
 			mgr := manager.NewManager()
+			mgr.SetSilent(im.silent)
 			instance := &Instance{
 				Instance: &models.Instance{
 					ID:           id,
@@ -99,6 +100,7 @@ func (im *InstanceManager) CreateInstance(id, name, serverType, version string) 
 	}
 
 	mgr := manager.NewManager()
+	mgr.SetSilent(im.silent)
 	instance := &Instance{
 		Instance: &models.Instance{
 			ID:        id,
@@ -183,6 +185,7 @@ func (im *InstanceManager) ImportInstance(id, name, sourcePath string) (*Instanc
 	}
 
 	mgr := manager.NewManager()
+	mgr.SetSilent(im.silent)
 	instance := &Instance{
 		Instance: &models.Instance{
 			ID:        id,

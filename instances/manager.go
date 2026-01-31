@@ -20,9 +20,10 @@ type InstanceManager struct {
 	baseDir     string
 	mu          sync.RWMutex
 	TemplateMgr *services.TemplateManager
+	silent      bool
 }
 
-func NewInstanceManager(baseDir string, tm *services.TemplateManager) *InstanceManager {
+func NewInstanceManager(baseDir string, tm *services.TemplateManager, silent bool) *InstanceManager {
 	// Ensure base dir exists
 	os.MkdirAll(baseDir, 0755)
 
@@ -30,6 +31,7 @@ func NewInstanceManager(baseDir string, tm *services.TemplateManager) *InstanceM
 		instances:   make(map[string]*Instance),
 		baseDir:     baseDir,
 		TemplateMgr: tm,
+		silent:      silent,
 	}
 
 	// Load instances from DB
@@ -42,6 +44,7 @@ func NewInstanceManager(baseDir string, tm *services.TemplateManager) *InstanceM
 	for _, model := range dbModels {
 		dir := filepath.Join(baseDir, model.ID)
 		mgr := manager.NewManager()
+		mgr.SetSilent(silent)
 
 		// Copy model data to instance struct
 		instModel := model // Copy

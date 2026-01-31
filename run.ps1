@@ -40,7 +40,9 @@ npm run build
 Write-Host "Starting JJMC..." -ForegroundColor Green
 if ($args[0] -eq "--build") {
     go build -o bin/jjmc.exe main.go
-    .\bin\jjmc.exe
+    # Remove first argument (--build)
+    $runArgs = $args | Select-Object -Skip 1
+    .\bin\jjmc.exe $runArgs
 } else {
-    go run main.go
+    go run main.go $args
 }

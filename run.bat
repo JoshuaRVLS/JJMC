@@ -59,9 +59,10 @@ call npm run build
 echo Starting JJMC...
 if "%1"=="--build" (
     go build -o bin\jjmc.exe main.go
-    bin\jjmc.exe
+    shift
+    bin\jjmc.exe %*
 ) else (
-    go run main.go
+    go run main.go %*
 )
 
 if %errorlevel% neq 0 pause

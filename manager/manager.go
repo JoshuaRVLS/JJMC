@@ -29,6 +29,7 @@ type Manager struct {
 	broadcast chan string
 	logBuffer []string
 	pid       int
+	silent    bool
 }
 
 func NewManager() *Manager {
@@ -79,4 +80,10 @@ func (m *Manager) GetWorkDir() string {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.workDir
+}
+
+func (m *Manager) SetSilent(silent bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.silent = silent
 }
