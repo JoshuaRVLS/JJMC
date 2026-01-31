@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  jjmc:
+    build: .
+    image: jjmc:latest
+    container_name: jjmc
+    ports:
+      - "3001:3001" # Web UI
+      - "2024:2024" # RCON / Other
+    volumes:
+      - ./instances:/app/instances
+      - ./servers:/app/servers
+      - ./backups:/app/backups
+      - ./jjmc.db:/app/jjmc.db
+      # Mount Docker socket to allow managing sibling containers (future proof for "Run Servers in Docker")
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    environment:
+      - TZ=UTC
