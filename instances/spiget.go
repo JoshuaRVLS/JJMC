@@ -20,7 +20,6 @@ func NewSpigetClient() *SpigetClient {
 	}
 }
 
-// SpigetResource represents a plugin from Spiget
 type SpigetResource struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
@@ -39,14 +38,13 @@ type SpigetResource struct {
 		ID int `json:"id"`
 	} `json:"author"`
 	Downloads  int   `json:"downloads"`
-	UpdateDate int64 `json:"updateDate"` // Unix timestamp
+	UpdateDate int64 `json:"updateDate"`
 	Icon       struct {
 		Url  string `json:"url"`
 		Data string `json:"data"`
 	} `json:"icon"`
 }
 
-// SpigetAuthor represents an author from Spiget
 type SpigetAuthor struct {
 	ID       int    `json:"id"`
 	Username string `json:"username"`
@@ -56,10 +54,9 @@ type SpigetAuthor struct {
 func (c *SpigetClient) SearchResources(query string, size int, page int) ([]SpigetResource, error) {
 	var urlStr string
 	if query == "" {
-		// List resources (sort by likes or downloads by default)
+
 		urlStr = fmt.Sprintf("%s/resources?size=%d&page=%d&sort=-likes", c.BaseURL, size, page)
 	} else {
-		// Search resources
 		urlStr = fmt.Sprintf("%s/search/resources/%s?size=%d&page=%d&sort=-likes", c.BaseURL, url.PathEscape(query), size, page)
 	}
 
@@ -81,8 +78,7 @@ func (c *SpigetClient) doRequest(req *http.Request) ([]SpigetResource, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		// If 404 on search, it might just mean no results or empty, return empty list safely?
-		// Spiget returns 404 for some empty searches?
+
 		if resp.StatusCode == 404 {
 			return []SpigetResource{}, nil
 		}
@@ -97,7 +93,6 @@ func (c *SpigetClient) doRequest(req *http.Request) ([]SpigetResource, error) {
 	return resources, nil
 }
 
-// GetAuthor fetches author details
 func (c *SpigetClient) GetAuthor(id int) (*SpigetAuthor, error) {
 	reqUrl := fmt.Sprintf("%s/authors/%d", c.BaseURL, id)
 	resp, err := http.Get(reqUrl)
@@ -117,14 +112,10 @@ func (c *SpigetClient) GetAuthor(id int) (*SpigetAuthor, error) {
 	return &author, nil
 }
 
-// GetDownloadURL returns the download URL for a resource
-// Note: Spiget download URLs might require being behind Cloudflare or user agent mimicking.
-// Direct download: https://api.spiget.org/v2/resources/{id}/download
 func (c *SpigetClient) GetDownloadURL(resourceID int) string {
 	return fmt.Sprintf("%s/resources/%d/download", c.BaseURL, resourceID)
 }
 
-// GetResourceDetails fetches full details for a resource
 func (c *SpigetClient) GetResourceDetails(id int) (*SpigetResource, error) {
 	reqUrl := fmt.Sprintf("%s/resources/%d", c.BaseURL, id)
 	resp, err := http.Get(reqUrl)
@@ -144,12 +135,9 @@ func (c *SpigetClient) GetResourceDetails(id int) (*SpigetResource, error) {
 	return &resource, nil
 }
 
-// DownloadResource downloads the resource to a writer
 func (c *SpigetClient) DownloadResource(resourceID int, w io.Writer) error {
 	downloadUrl := c.GetDownloadURL(resourceID)
 
-	// We might need to handle redirects manually if Spiget does weird things,
-	// but http.Get follows redirects by default.
 	resp, err := http.Get(downloadUrl)
 	if err != nil {
 		return err

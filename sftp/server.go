@@ -35,7 +35,6 @@ func NewSFTPServer(addr string, basePath string, am *auth.AuthManager) *SFTPServ
 func (s *SFTPServer) Start() error {
 	config := &ssh.ServerConfig{
 		PasswordCallback: func(c ssh.ConnMetadata, pass []byte) (*ssh.Permissions, error) {
-			// Use existing AuthManager logic
 			if s.AuthManager.VerifyPassword(string(pass)) {
 				return nil, nil
 			}
@@ -43,8 +42,6 @@ func (s *SFTPServer) Start() error {
 		},
 	}
 
-	// Generate private key for the server
-	// In production, persist this key!
 	privateKey, err := generatePrivateKey()
 	if err != nil {
 		return err
@@ -63,8 +60,6 @@ func (s *SFTPServer) Start() error {
 		for {
 			nConn, err := s.listener.Accept()
 			if err != nil {
-				// Log only if not closed
-				// log.Printf("SFTP Accept error: %v", err)
 				return
 			}
 
@@ -83,14 +78,11 @@ func (s *SFTPServer) Close() error {
 }
 
 func (s *SFTPServer) handleConnection(conn net.Conn, config *ssh.ServerConfig) {
-	// Before using, shake hands
 	_, chans, reqs, err := ssh.NewServerConn(conn, config)
 	if err != nil {
-		// log.Printf("SFTP Handshake failed: %v", err)
 		return
 	}
 
-	// Servicing the incoming requests
 	go ssh.DiscardRequests(reqs)
 
 	for newChannel := range chans {
@@ -129,13 +121,7 @@ func (s *SFTPServer) handleConnection(conn net.Conn, config *ssh.ServerConfig) {
 	}
 }
 
-// Helper to generate an ephemeral host key
-// In a real app, load from disk
 func generatePrivateKey() (ssh.Signer, error) {
-	// For simplicity, generate RSA 2048
-	// This is slow on startup, better to save it.
-	// But sufficient for demo/dev.
-	// Or check if "ssh_host_rsa_key" exists.
 
 	keyPath := "ssh_host_rsa_key"
 	if _, err := os.Stat(keyPath); err == nil {
@@ -148,19 +134,11 @@ func generatePrivateKey() (ssh.Signer, error) {
 		}
 	}
 
-	// Generate new (stub logic for now, using a hardcoded dummy or generating via crypto/rsa if crucial)
-	// Implementing actual generation requires "crypto/rsa" and "crypto/rand"
-	// To avoid complexity, let's skip generation code here and return error if not found,
-	// OR (better) use a pre-generated one or generate on fly.
-	// For this task, I'll allow generating on fly for completeness.
-
-	// Generate new key
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return nil, err
 	}
 
-	// Save to disk
 	keyBytes := x509.MarshalPKCS1PrivateKey(key)
 	pemBlock := &pem.Block{
 		Type:  "RSA PRIVATE KEY",

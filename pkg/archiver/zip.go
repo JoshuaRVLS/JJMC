@@ -8,7 +8,6 @@ import (
 	"strings"
 )
 
-// ZipDirectory archives a source directory into a target zip file.
 func ZipDirectory(source, target string) error {
 	zipfile, err := os.Create(target)
 	if err != nil {
@@ -70,7 +69,6 @@ func ZipDirectory(source, target string) error {
 	return err
 }
 
-// Unzip extracts a zip archive to a destination directory.
 func Unzip(source, destination string) error {
 	r, err := zip.OpenReader(source)
 	if err != nil {
@@ -81,9 +79,7 @@ func Unzip(source, destination string) error {
 	for _, f := range r.File {
 		fpath := filepath.Join(destination, f.Name)
 
-		// Check for ZipSlip (Directory traversal)
 		if !strings.HasPrefix(fpath, filepath.Clean(destination)+string(os.PathSeparator)) {
-			// error: invalid file path
 			continue
 		}
 

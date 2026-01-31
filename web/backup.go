@@ -11,7 +11,6 @@ import (
 func RegisterBackupRoutes(router fiber.Router, authManager *auth.AuthManager, im *instances.InstanceManager) {
 	g := router.Group("/api/instances/:id/backups")
 
-	// List
 	g.Get("/", func(c *fiber.Ctx) error {
 		id := c.Params("id")
 		backups, err := im.ListBackups(id)
@@ -21,7 +20,6 @@ func RegisterBackupRoutes(router fiber.Router, authManager *auth.AuthManager, im
 		return c.JSON(backups)
 	})
 
-	// Create
 	g.Post("/", func(c *fiber.Ctx) error {
 		id := c.Params("id")
 		if err := im.CreateBackup(id); err != nil {
@@ -30,7 +28,6 @@ func RegisterBackupRoutes(router fiber.Router, authManager *auth.AuthManager, im
 		return c.JSON(fiber.Map{"status": "success"})
 	})
 
-	// Restore
 	g.Post("/:filename/restore", func(c *fiber.Ctx) error {
 		id := c.Params("id")
 		filename, err := url.QueryUnescape(c.Params("filename"))
@@ -44,7 +41,6 @@ func RegisterBackupRoutes(router fiber.Router, authManager *auth.AuthManager, im
 		return c.JSON(fiber.Map{"status": "success"})
 	})
 
-	// Delete
 	g.Delete("/:filename", func(c *fiber.Ctx) error {
 		id := c.Params("id")
 		filename, err := url.QueryUnescape(c.Params("filename"))

@@ -35,8 +35,6 @@ func (im *InstanceManager) CreateBackup(instanceID string) error {
 	filename := fmt.Sprintf("%s_%s.zip", inst.Name, timestamp)
 	target := filepath.Join(backupDir, filename)
 
-	// TODO: Consider stopping server or ensuring consistency
-	// For now, we just zip the directory
 	return archiver.ZipDirectory(inst.Directory, target)
 }
 
@@ -65,7 +63,6 @@ func (im *InstanceManager) ListBackups(instanceID string) ([]Backup, error) {
 		}
 	}
 
-	// Sort by newest first
 	sort.Slice(backups, func(i, j int) bool {
 		return backups[i].CreatedAt.After(backups[j].CreatedAt)
 	})
@@ -84,22 +81,9 @@ func (im *InstanceManager) RestoreBackup(instanceID, backupName string) error {
 		return fmt.Errorf("backup not found")
 	}
 
-	// Safety: Ensure server is stopped
 	if inst.IsRunning() {
 		return fmt.Errorf("instance must be offline to restore backup")
 	}
-
-	// Clean destination ?? Or overwrite?
-	// Overwrite is safer than delete all, but might leave orphan files.
-	// Let's rely on overwrite for now as it's less destructive if Restore fails halfway.
-
-	// Issue: ZipDirectory zips the base folder (e.g. "servers/xyz").
-	// Unzip needs to handle this.
-	// If ZipDirectory included the root folder, Unzip will extract "xyz/..." inside target.
-	// We need to check how ZipDirectory was implemented. Refactoring ZipDirectory check.
-	// Actually ZipDirectory logic: `baseDir = filepath.Base(source)`.
-	// So it creates `xyz/file.txt`.
-	// If we unzip to `servers/`, we get `servers/xyz/file.txt`. Correct.
 
 	return archiver.Unzip(backupPath, filepath.Dir(inst.Directory))
 }
