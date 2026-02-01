@@ -77,6 +77,12 @@ func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManag
 	mods.Get("/search", instHandler.SearchMods)
 	mods.Get("/:projectId/versions", instHandler.GetModVersions)
 
+	// Instance Tunnel
+	tunnel := inst.Group("/tunnel")
+	tunnel.Get("/", instHandler.GetTunnelStatus)
+	tunnel.Post("/start", instHandler.StartTunnel)
+	tunnel.Post("/stop", instHandler.StopTunnel)
+
 	inst.Post("/modpacks", instHandler.InstallModpack)
 
 	// WebSocket

@@ -12,6 +12,7 @@
     import ModConfigs from "$lib/ModConfigs.svelte";
     import TypeSettings from "$lib/TypeSettings.svelte";
     import Backups from "$lib/Backups.svelte";
+    import PortForward from "$lib/PortForward.svelte";
 
     // Get instance ID from route params
     $: instanceId = $page.params.id || "";
@@ -183,6 +184,8 @@
             <TypeSettings {instanceId} />
         {:else if activeTab === "backups"}
             <Backups {instanceId} />
+        {:else if activeTab === "portforward"}
+            <PortForward {instanceId} />
         {/if}
     </div>
 </div>

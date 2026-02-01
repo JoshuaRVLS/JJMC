@@ -91,6 +91,131 @@
             sendCommand();
         }
     }
+    function handleConsoleClick(event) {
+        const link = event.target.closest("a.console-link");
+        if (link) {
+            if (!event.ctrlKey && !event.metaKey) {
+                event.preventDefault();
+            }
+        }
+    }
+
+    // ANSI Parser
+    function formatLog(text) {
+        if (!text) return "";
+
+        // Escape HTML
+        text = text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+
+        // Linkify URLs
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        text = text.replace(
+            urlRegex,
+            '<a href="$1" target="_blank" rel="noopener noreferrer" class="console-link underline decoration-indigo-500/50 hover:decoration-indigo-400 text-indigo-300 hover:text-indigo-200 transition-colors cursor-pointer" title="Ctrl + Click to open">$1</a>',
+        );
+
+        // ANSI regex for various codes
+        const ansiRegex = /\x1b\[([0-9;]*)m/g;
+
+        let html = "";
+        let lastIndex = 0;
+        let styleStack = [];
+        let match;
+
+        while ((match = ansiRegex.exec(text)) !== null) {
+            // Append text before the code
+            html += text.substring(lastIndex, match.index);
+            lastIndex = ansiRegex.lastIndex;
+
+            const codes = match[1].split(";").map(Number);
+
+            for (let i = 0; i < codes.length; i++) {
+                const code = codes[i];
+
+                if (code === 0) {
+                    // Reset
+                    while (styleStack.length > 0) {
+                        html += "</span>";
+                        styleStack.pop();
+                    }
+                } else if (code === 1) {
+                    // Bold
+                    html += "<span class='font-bold'>";
+                    styleStack.push("span");
+                } else if (code === 38 && codes[i + 1] === 2) {
+                    // Foreground TrueColor: 38;2;R;G;B
+                    const r = codes[i + 2];
+                    const g = codes[i + 3];
+                    const b = codes[i + 4];
+                    html += `<span style="color: rgb(${r},${g},${b})">`;
+                    styleStack.push("span");
+                    i += 4;
+                } else if (code === 48 && codes[i + 1] === 2) {
+                    // Background TrueColor: 48;2;R;G;B
+                    const r = codes[i + 2];
+                    const g = codes[i + 3];
+                    const b = codes[i + 4];
+                    html += `<span style="background-color: rgb(${r},${g},${b})">`;
+                    styleStack.push("span");
+                    i += 4;
+                } else if (code >= 30 && code <= 37) {
+                    // Standard Foreground
+                    const colors = [
+                        "black",
+                        "red",
+                        "green",
+                        "yellow",
+                        "blue",
+                        "magenta",
+                        "cyan",
+                        "white",
+                        "bright-black", // dummy
+                    ];
+                    // Mapping standard ANSI to somewhat nice terminal colors
+                    const map = [
+                        "#000000",
+                        "#ef4444",
+                        "#22c55e",
+                        "#eab308",
+                        "#3b82f6",
+                        "#d946ef",
+                        "#06b6d4",
+                        "#f1f5f9",
+                    ];
+                    html += `<span style="color: ${map[code - 30]}">`;
+                    styleStack.push("span");
+                } else if (code >= 90 && code <= 97) {
+                    // Bright Foreground
+                    const map = [
+                        "#6b7280",
+                        "#f87171",
+                        "#4ade80",
+                        "#facc15",
+                        "#60a5fa",
+                        "#e879f9",
+                        "#22d3ee",
+                        "#ffffff",
+                    ];
+                    html += `<span style="color: ${map[code - 90]}">`;
+                    styleStack.push("span");
+                }
+                // Add more codes if necessary (bg standard, etc)
+            }
+        }
+
+        html += text.substring(lastIndex);
+
+        // Close remaining tags
+        while (styleStack.length > 0) {
+            html += "</span>";
+            styleStack.pop();
+        }
+
+        return html;
+    }
 </script>
 
 <div
@@ -154,6 +279,8 @@
     <!-- Logs -->
     <div
         bind:this={consoleDiv}
+        on:click={handleConsoleClick}
+        role="log"
         class="flex-1 overflow-y-auto p-5 space-y-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent relative z-10"
     >
         {#if logs.length === 0}
@@ -172,7 +299,7 @@
             >
                 <span class="text-indigo-400/50 mr-3 select-none text-xs"
                     >➜</span
-                >{log}
+                >{@html formatLog(log)}
             </div>
         {/each}
     </div>

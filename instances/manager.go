@@ -48,19 +48,16 @@ func NewInstanceManager(baseDir string, tm *services.TemplateManager, silent boo
 
 		// Copy model data to instance struct
 		instModel := model // Copy
-		instance := &Instance{
-			Instance: &models.Instance{
-				ID:        instModel.ID,
-				Name:      instModel.Name,
-				Directory: dir,
-				Type:      instModel.Type,
-				Version:   instModel.Version,
-				MaxMemory: instModel.MaxMemory,
-				JavaArgs:  instModel.JavaArgs,
-				JarFile:   instModel.JarFile,
-			},
-			Manager: mgr,
-		}
+		instance := NewInstance(&models.Instance{
+			ID:        instModel.ID,
+			Name:      instModel.Name,
+			Directory: dir,
+			Type:      instModel.Type,
+			Version:   instModel.Version,
+			MaxMemory: instModel.MaxMemory,
+			JavaArgs:  instModel.JavaArgs,
+			JarFile:   instModel.JarFile,
+		}, mgr)
 
 		// Restore state
 		instance.Manager.SetWorkDir(dir)

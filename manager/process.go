@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 )
 
 func (m *Manager) loadPid() {
@@ -240,7 +241,32 @@ func (m *Manager) Stop() error {
 }
 
 func (m *Manager) Restart() error {
-	return m.Stop()
+	if err := m.Stop(); err != nil {
+		// If it's not running, just Start
+		if err.Error() == "server is not running" {
+			return m.Start()
+		}
+		return err
+	}
+
+	// Wait for stop in background then Start
+	go func() {
+		// Wait up to 60 seconds for exit
+		for i := 0; i < 60; i++ {
+			if !m.IsRunning() {
+				break
+			}
+			time.Sleep(1 * time.Second)
+		}
+
+		if !m.IsRunning() {
+			m.Start()
+		} else {
+			m.broadcast <- "Restart failed: server didn't stop in time"
+		}
+	}()
+
+	return nil
 }
 
 func (m *Manager) WriteCommand(cmd string) error {
