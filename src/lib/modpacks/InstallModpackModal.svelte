@@ -54,7 +54,7 @@
                 body: JSON.stringify({
                     id,
                     name,
-                    type: "fabric", // Defaulting to fabric
+                    type: "custom", // Avoid triggering template install with empty version
                     version: "", // Let installer handle it
                 }),
             });

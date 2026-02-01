@@ -108,6 +108,28 @@ func (inst *Instance) InstallModpack(projectId string) error {
 		}
 	}
 
+	if len(ver.GameVersions) > 0 {
+		inst.Version = ver.GameVersions[0]
+	}
+	if len(ver.Loaders) > 0 {
+		inst.Type = ver.Loaders[0]
+	}
+	inst.Save()
+
+	inst.Manager.Broadcast(fmt.Sprintf("Updated instance to %s %s", inst.Type, inst.Version))
+
+	// Re-install loader if needed (optional but good idea)
+	vm := NewVersionsManager(inst.Manager)
+	if inst.Type == "fabric" {
+		vm.InstallFabric(inst.Version)
+	} else if inst.Type == "quilt" {
+		vm.InstallQuilt(inst.Version)
+	} else if inst.Type == "forge" {
+		vm.InstallForge(inst.Version)
+	} else if inst.Type == "neoforge" {
+		vm.InstallNeoForge(inst.Version)
+	}
+
 	inst.Manager.Broadcast("Modpack installed successfully.")
 	return nil
 }

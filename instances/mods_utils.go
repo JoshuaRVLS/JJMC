@@ -26,6 +26,8 @@ type ProjectVersion struct {
 		ProjectID      string `json:"project_id"`
 		DependencyType string `json:"dependency_type"`
 	} `json:"dependencies"`
+	GameVersions []string `json:"game_versions"`
+	Loaders      []string `json:"loaders"`
 }
 
 func (inst *Instance) GetModVersions(projectId string, resourceType string) ([]interface{}, error) {
@@ -98,9 +100,10 @@ func (inst *Instance) getCompatibleVersion(projectId string) (*ProjectVersion, e
 
 	u, _ := url.Parse(fmt.Sprintf("https://api.modrinth.com/v2/project/%s/version", projectId))
 	q := u.Query()
-	q.Set("game_versions", fmt.Sprintf("[\"%s\"]", mcVersion))
 
-	q.Set("game_versions", fmt.Sprintf("[\"%s\"]", mcVersion))
+	if mcVersion != "" {
+		q.Set("game_versions", fmt.Sprintf("[\"%s\"]", mcVersion))
+	}
 
 	if loader != "vanilla" && loader != "" && loader != "spigot" && loader != "paper" && loader != "bukkit" {
 		q.Set("loaders", fmt.Sprintf("[\"%s\"]", loader))
