@@ -24,11 +24,8 @@
 		Globe,
 	} from "lucide-svelte";
 
-	 
-
-	 
 	let instances = [];
-	 
+
 	let pollInterval;
 
 	async function loadInstances() {
@@ -42,21 +39,17 @@
 		}
 	}
 
-	 
 	let isAuthChecked = false;
 
-	 
 	let storedLaunchId = null;
 
 	async function checkAuth() {
 		try {
-			 
 			const res = await fetch("/api/auth/status?t=" + Date.now());
 			if (res.ok) {
 				const status = await res.json();
 				const path = window.location.pathname;
 
-				 
 				if (storedLaunchId === null) {
 					storedLaunchId = status.launchId;
 				} else if (storedLaunchId !== status.launchId) {
@@ -70,23 +63,20 @@
 						await goto("/setup");
 					}
 				} else if (!status.authenticated) {
-					 
 					if (path !== "/login" && path !== "/setup") {
 						await goto("/login");
 					}
 				} else {
-					 
 					if (path === "/login" || path === "/setup") {
 						await goto("/");
 					}
-					 
+
 					loadInstances();
 
-					 
 					if (!pollInterval) {
 						pollInterval = setInterval(() => {
 							loadInstances();
-							checkAuth();  
+							checkAuth();
 						}, 5000);
 					}
 				}
@@ -103,7 +93,6 @@
 	onMount(() => {
 		console.log("JJMC Frontend Loaded - Force Refresh Check");
 
-		 
 		if ("serviceWorker" in navigator) {
 			navigator.serviceWorker
 				.getRegistrations()
@@ -131,7 +120,6 @@
 			? instanceMatch[1]
 			: null;
 
-	 
 	$: currentInstanceObj = instances.find((i) => i.id === currentInstanceId);
 	$: currentInstanceName = currentInstanceObj?.name || currentInstanceId;
 	$: currentInstanceType = currentInstanceObj?.type;
@@ -142,15 +130,12 @@
 
 {#if !isAuthChecked}
 	<div class="h-screen bg-gray-950 flex items-center justify-center">
-		
-		
 		<Loader2 class="animate-spin h-8 w-8 text-indigo-500" />
 	</div>
 {:else}
 	<div
 		class="h-screen bg-gray-950 text-gray-300 flex font-sans text-sm overflow-hidden selection:bg-indigo-500/30 selection:text-indigo-200"
 	>
-		
 		{#if !isPublicPage}
 			<aside
 				class="w-64 bg-gray-900/50 backdrop-blur-xl flex flex-col border-r border-white/5"
@@ -184,7 +169,6 @@
 
 				<nav class="flex-1 px-3 space-y-1 overflow-y-auto">
 					{#if currentInstanceId}
-						
 						<div class="mb-4">
 							<a
 								href="/instances"
@@ -340,7 +324,6 @@
 							</a>
 						</div>
 					{:else}
-						
 						<div class="space-y-6">
 							<div>
 								<a
@@ -352,6 +335,18 @@
 								>
 									<LayoutGrid class="w-4 h-4" />
 									All Instances
+								</a>
+							</div>
+							<div>
+								<a
+									href="/modpacks"
+									class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 {$page
+										.url.pathname === '/modpacks'
+										? 'bg-indigo-500/10 text-indigo-400 ring-1 ring-indigo-500/20'
+										: 'hover:bg-white/5 hover:text-white'}"
+								>
+									<Puzzle class="w-4 h-4" />
+									Modpacks
 								</a>
 							</div>
 						</div>
@@ -378,9 +373,7 @@
 			</aside>
 		{/if}
 
-		
 		<main class="flex-1 flex flex-col min-h-0 relative">
-			
 			<div
 				class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none"
 			>
@@ -392,13 +385,11 @@
 				></div>
 			</div>
 
-			
 			<div class="relative z-10 flex-1 flex flex-col min-h-0">
 				<slot />
 			</div>
 		</main>
 
-		
 		<Toast />
 		<ConfirmDialog />
 		<InputModal />

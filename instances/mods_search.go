@@ -83,9 +83,10 @@ func (inst *Instance) SearchMods(query string, resourceType string, offset int, 
 		return hits, nil
 	}
 
-	loader := inst.Type
-	mcVersion := inst.Version
+	return SearchModrinth(query, resourceType, inst.Version, inst.Type, offset, sort, sides)
+}
 
+func SearchModrinth(query string, resourceType string, version string, loader string, offset int, sort string, sides []string) ([]interface{}, error) {
 	ptype := "mod"
 	if resourceType == "modpack" {
 		ptype = "modpack"
@@ -97,13 +98,13 @@ func (inst *Instance) SearchMods(query string, resourceType string, offset int, 
 
 	var facetList []string
 	if loader != "vanilla" && loader != "" && loader != "spigot" && loader != "paper" && loader != "unknown" {
-
 		facetList = append(facetList, fmt.Sprintf(`["categories:%s"]`, loader))
-	} else if loader == "paper" || loader == "spigot" {
-
 	}
 
-	facetList = append(facetList, fmt.Sprintf(`["versions:%s"]`, mcVersion))
+	if version != "" {
+		facetList = append(facetList, fmt.Sprintf(`["versions:%s"]`, version))
+	}
+
 	facetList = append(facetList, fmt.Sprintf(`["project_type:%s"]`, ptype))
 
 	if len(sides) > 0 {

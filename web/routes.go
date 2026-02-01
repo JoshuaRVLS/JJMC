@@ -36,6 +36,10 @@ func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManag
 	verGroup.Get("/game", systemHandler.GetGameVersions)
 	verGroup.Get("/loader", systemHandler.GetLoaders)
 
+	modpackHandler := handlers.NewModpackHandler()
+	mpGroup := app.Group("/api/modpacks")
+	mpGroup.Get("/search", modpackHandler.Search)
+
 	instGroup := app.Group("/api/instances")
 	instGroup.Get("/", instHandler.List)
 	instGroup.Post("/", instHandler.Create)
