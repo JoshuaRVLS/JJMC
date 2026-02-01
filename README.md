@@ -19,5 +19,8 @@ Simply run the script for your OS:
 
 The script will automatically set up the portable Go and Node.js toolchains if needed.
 
+## Advanced Usage & Docker
+For instructions on running with **Docker**, or using **RCON**, **Telnet**, and **SFTP**, please see the [Tutorial & Usage Guide](TUTORIAL.md).
+
 ## License
 MIT
