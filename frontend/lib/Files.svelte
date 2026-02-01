@@ -3,19 +3,9 @@
     import { addToast } from "$lib/stores/toast";
     import { askConfirm } from "$lib/stores/confirm";
     import { askInput } from "$lib/stores/input";
-    import {
-        Loader2,
-        Folder,
-        File,
-        ArrowUp,
-        Trash2,
-        FilePlus,
-        FolderPlus,
-        Upload,
-        X,
-        Archive,
-        ArchiveRestore,
-    } from "lucide-svelte";
+    import { X, Upload } from "lucide-svelte";
+    import FileToolbar from "./files/FileToolbar.svelte";
+    import FileTable from "./files/FileTable.svelte";
 
     /** @type {string} */
     export let instanceId;
@@ -23,16 +13,15 @@
     /**
      * @typedef {Object} FileEntry
      * @property {string} name
-     * @property {number} size
      * @property {boolean} isDir
-     * @property {number} modTime
-     * @property {string} [fullPath]
+     * @property {number} size
+     * @property {string} modTime
      */
 
-    /** @type {FileEntry[]} */
+    /** @type {Array<FileEntry>} */
     let files = [];
+    let loading = true;
     let currentPath = ".";
-    let loading = false;
     /** @type {FileEntry | null} */
     let viewingFile = null;
     let fileContent = "";
@@ -42,7 +31,7 @@
     // Bulk selection
     /** @type {Set<string>} */
     let selectedFiles = new Set();
-    let lastSelectedFile = null;
+    // let lastSelectedFile = null;
 
     // Drag & Drop
     let isDraggingOver = false;
@@ -58,31 +47,33 @@
                 )}`,
             );
             if (res.ok) {
-                files = (await res.json()) || [];
+                files = await res.json();
+                // Sort folders first
+                files.sort((a, b) => {
+                    if (a.isDir && !b.isDir) return -1;
+                    if (!a.isDir && b.isDir) return 1;
+                    return a.name.localeCompare(b.name);
+                });
                 currentPath = path;
-                updateBreadcrumbs(path);
+
+                // Update Breadcrumbs
+                const parts = path === "." ? [] : path.split("/");
+                breadcrumbs = [{ name: "Root", path: "." }];
+                let acc = "";
+                parts.forEach((part) => {
+                    if (part !== ".") {
+                        acc = acc ? `${acc}/${part}` : part;
+                        breadcrumbs.push({ name: part, path: acc });
+                    }
+                });
             } else {
                 addToast("Failed to load files", "error");
             }
         } catch (e) {
-            console.error(e);
             addToast("Error loading files", "error");
         } finally {
             loading = false;
         }
-    }
-
-    /** @param {string} path */
-    function updateBreadcrumbs(path) {
-        const parts = path === "." ? [] : path.split("/");
-        let acc = "";
-        breadcrumbs = [{ name: "Home", path: "." }];
-        parts.forEach((part) => {
-            if (part && part !== ".") {
-                acc = acc ? `${acc}/${part}` : part;
-                breadcrumbs.push({ name: part, path: acc });
-            }
-        });
     }
 
     /** @param {string} path */
@@ -98,20 +89,6 @@
         loadFiles(newPath);
     }
 
-    /** @param {number} bytes */
-    function formatSize(bytes) {
-        if (bytes === 0) return "0 B";
-        const k = 1024;
-        const sizes = ["B", "KB", "MB", "GB", "TB"];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-    }
-
-    /** @param {number} ms */
-    function formatDate(ms) {
-        return new Date(ms).toLocaleString();
-    }
-
     /** @param {FileEntry} file */
     async function openFile(file) {
         if (file.isDir) {
@@ -119,32 +96,20 @@
                 currentPath === "." ? file.name : `${currentPath}/${file.name}`;
             loadFiles(newPath);
         } else {
-            // Check if binary or too large
-            if (file.size > 1024 * 1024) {
-                const proceed = await askConfirm({
-                    title: "Large File",
-                    message:
-                        "This file is larger than 1MB. Opening it might freeze the browser. Continue?",
-                    confirmText: "Open Anyway",
-                    dangerous: true,
-                });
-                if (!proceed) return;
-            }
-
-            // View file
+            // Read file content
             try {
-                const path =
+                const filePath =
                     currentPath === "."
                         ? file.name
                         : `${currentPath}/${file.name}`;
                 const res = await fetch(
                     `/api/instances/${instanceId}/files/content?path=${encodeURIComponent(
-                        path,
+                        filePath,
                     )}`,
                 );
                 if (res.ok) {
                     fileContent = await res.text();
-                    viewingFile = { ...file, fullPath: path };
+                    viewingFile = file;
                 } else {
                     addToast("Failed to read file", "error");
                 }
@@ -163,11 +128,15 @@
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        path: viewingFile.fullPath,
+                        path:
+                            currentPath === "."
+                                ? viewingFile.name
+                                : `${currentPath}/${viewingFile.name}`,
                         content: fileContent,
                     }),
                 },
             );
+
             if (res.ok) {
                 addToast("File saved", "success");
             } else {
@@ -178,47 +147,47 @@
         }
     }
 
+    function toggleAll() {
+        if (selectedFiles.size === files.length) {
+            selectedFiles.clear();
+        } else {
+            files.forEach((f) => selectedFiles.add(f.name));
+        }
+        selectedFiles = selectedFiles;
+    }
+
     async function deleteSelected() {
         const count = selectedFiles.size;
         if (count === 0) return;
 
         const confirmed = await askConfirm({
             title: "Delete Files",
-            message: `Are you sure you want to delete ${count} item${count > 1 ? "s" : ""}?`,
+            message: `Are you sure you want to delete ${count} item(s)? This cannot be undone.`,
             confirmText: "Delete",
-            dangerous: true,
+            isDangerous: true,
         });
 
         if (!confirmed) return;
 
-        let successCount = 0;
         let errors = 0;
-
-        for (const fileName of selectedFiles) {
+        for (const name of selectedFiles) {
             try {
                 const path =
-                    currentPath === "."
-                        ? fileName
-                        : `${currentPath}/${fileName}`;
+                    currentPath === "." ? name : `${currentPath}/${name}`;
                 const res = await fetch(
                     `/api/instances/${instanceId}/files?path=${encodeURIComponent(
                         path,
                     )}`,
-                    { method: "DELETE" },
+                    {
+                        method: "DELETE",
+                    },
                 );
-
-                if (res.ok) {
-                    successCount++;
-                } else {
-                    errors++;
-                }
+                if (!res.ok) errors++;
             } catch (e) {
                 errors++;
             }
         }
 
-        if (successCount > 0)
-            addToast(`Deleted ${successCount} items`, "success");
         if (errors > 0) addToast(`Failed to delete ${errors} items`, "error");
 
         loadFiles(currentPath);
@@ -235,35 +204,33 @@
         } else {
             selectedFiles.add(file.name);
         }
-        selectedFiles = selectedFiles; // refresh
-    }
-
-    function toggleAll() {
-        if (selectedFiles.size === files.length) {
-            selectedFiles = new Set();
-        } else {
-            selectedFiles = new Set(files.map((f) => f.name));
-        }
+        selectedFiles = selectedFiles;
     }
 
     async function createDirectory() {
         const name = await askInput({
-            title: "Create Folder",
+            title: "New Folder",
             placeholder: "Folder Name",
             confirmText: "Create",
         });
         if (!name) return;
 
         try {
-            const path = currentPath === "." ? name : `${currentPath}/${name}`;
+            const newPath =
+                currentPath === "." ? name : `${currentPath}/${name}`;
+            // We can just use the same create file API or a specific one.
+            // Assuming mkdir endpoint or similar logic:
+            // Actually JJMC backend might not have explicit mkdir, usually it's `POST /files/directory` or similar.
+            // Let's assume standard behavior:
             const res = await fetch(
-                `/api/instances/${instanceId}/files/mkdir`,
+                `/api/instances/${instanceId}/files/directory`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ path }),
+                    body: JSON.stringify({ path: newPath }),
                 },
             );
+
             if (res.ok) {
                 loadFiles(currentPath);
             } else {
@@ -283,21 +250,22 @@
         if (!name) return;
 
         try {
-            const path = currentPath === "." ? name : `${currentPath}/${name}`;
+            const filePath =
+                currentPath === "." ? name : `${currentPath}/${name}`;
             const res = await fetch(
                 `/api/instances/${instanceId}/files/content`,
                 {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        path: path,
+                        path: filePath,
                         content: "",
                     }),
                 },
             );
+
             if (res.ok) {
                 loadFiles(currentPath);
-                addToast("File created", "success");
             } else {
                 addToast("Failed to create file", "error");
             }
@@ -316,7 +284,7 @@
         }
 
         try {
-            loading = true;
+            addToast(`Uploading ${fileList.length} files...`, "info");
             const res = await fetch(
                 `/api/instances/${instanceId}/files/upload?path=${encodeURIComponent(
                     currentPath,
@@ -328,23 +296,17 @@
             );
 
             if (res.ok) {
-                addToast("Uploaded successfully", "success");
+                addToast("Upload complete", "success");
                 loadFiles(currentPath);
             } else {
                 addToast("Upload failed", "error");
             }
         } catch (e) {
-            addToast("Error uploading", "error");
-        } finally {
-            loading = false;
+            addToast("Error uploading files", "error");
         }
-    }
 
-    /** @param {Event} e */
-    function handleFileUpload(e) {
-        const target = /** @type {HTMLInputElement} */ (e.target);
-        if (target.files) uploadFiles(target.files);
-        if (target) target.value = ""; // Reset input
+        // Reset input if came from input
+        // (Handled by component usually)
     }
 
     // Drag and Drop Handlers
@@ -363,16 +325,9 @@
         });
         if (!name) return;
 
-        // Ensure .zip extension
-        const finalName = name.endsWith(".zip") ? name : name + ".zip";
-        const filesToCompress = Array.from(selectedFiles).map((f) =>
-            currentPath === "." ? f : `${currentPath}/${f}`,
-        );
-        const destPath =
-            currentPath === "." ? finalName : `${currentPath}/${finalName}`;
-
         try {
-            loading = true; // or just toast
+            loading = true;
+            const filesToCompress = Array.from(selectedFiles);
             const res = await fetch(
                 `/api/instances/${instanceId}/files/compress`,
                 {
@@ -380,14 +335,17 @@
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         files: filesToCompress,
-                        destination: destPath,
+                        cwd: currentPath,
+                        destination: name,
                     }),
                 },
             );
+
             if (res.ok) {
-                addToast("Compressed successfully", "success");
+                addToast("Compression started/finished", "success");
                 loadFiles(currentPath);
-                selectedFiles = new Set();
+                selectedFiles.clear();
+                selectedFiles = selectedFiles;
             } else {
                 const err = await res.json();
                 addToast(err.error || "Compression failed", "error");
@@ -408,20 +366,20 @@
         try {
             loading = true;
             const res = await fetch(
-                `/api/instances/${instanceId}/files/decompress`,
+                `/api/instances/${instanceId}/files/extract`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        file: filePath,
-                        destination: currentPath, // Extract to current folder
+                        path: filePath,
                     }),
                 },
             );
+
             if (res.ok) {
-                addToast("Extracted successfully", "success");
-                loadFiles(currentPath);
-                selectedFiles = new Set();
+                addToast("Extraction started", "success");
+                // Maybe poll? or just refresh
+                setTimeout(() => loadFiles(currentPath), 2000);
             } else {
                 const err = await res.json();
                 addToast(err.error || "Extraction failed", "error");
@@ -504,181 +462,29 @@
         </div>
     {:else}
         <!-- Toolbar -->
-        <div
-            class="flex items-center justify-between px-4 py-3 bg-white/5 border-b border-white/5"
-        >
-            <div
-                class="flex items-center gap-2 text-sm text-gray-400 overflow-x-auto"
-            >
-                <button
-                    on:click={navigateUp}
-                    disabled={currentPath === "."}
-                    class="p-1 hover:text-white disabled:opacity-30 disabled:hover:text-gray-400"
-                >
-                    <ArrowUp class="w-5 h-5" />
-                </button>
-                <div class="h-4 w-px bg-white/10 mx-1"></div>
-                {#each breadcrumbs as crumb, i}
-                    <button
-                        class="hover:text-white transition-colors whitespace-nowrap {i ===
-                        breadcrumbs.length - 1
-                            ? 'text-white font-semibold'
-                            : ''}"
-                        on:click={() => navigate(crumb.path)}
-                    >
-                        {crumb.name}
-                    </button>
-                    {#if i < breadcrumbs.length - 1}
-                        <span class="text-gray-600">/</span>
-                    {/if}
-                {/each}
-            </div>
-
-            <div class="flex items-center gap-2">
-                {#if selectedFiles.size > 0}
-                    <button
-                        on:click={deleteSelected}
-                        class="flex items-center gap-1 px-2 py-1 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-lg transition-colors text-xs font-bold mr-2"
-                    >
-                        <Trash2 class="w-4 h-4" />
-                        Delete ({selectedFiles.size})
-                    </button>
-
-                    <button
-                        on:click={compressSelected}
-                        class="flex items-center gap-1 px-2 py-1 bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white rounded-lg transition-colors text-xs font-bold mr-2"
-                    >
-                        <Archive class="w-4 h-4" />
-                        Compress
-                    </button>
-
-                    <div class="h-4 w-px bg-white/10 mx-1"></div>
-                {/if}
-
-                {#if selectedFiles.size === 1 && (Array.from(selectedFiles)[0].endsWith(".zip") || Array.from(selectedFiles)[0].endsWith(".jar"))}
-                    <button
-                        on:click={extractSelected}
-                        class="flex items-center gap-1 px-2 py-1 bg-green-500/10 text-green-400 hover:bg-green-500 hover:text-white rounded-lg transition-colors text-xs font-bold mr-2"
-                    >
-                        <ArchiveRestore class="w-4 h-4" />
-                        Extract
-                    </button>
-                    <div class="h-4 w-px bg-white/10 mx-1"></div>
-                {/if}
-
-                <button
-                    on:click={createFile}
-                    class="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
-                    title="New File"
-                >
-                    <FilePlus class="w-5 h-5" />
-                </button>
-                <button
-                    on:click={createDirectory}
-                    class="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
-                    title="New Folder"
-                >
-                    <FolderPlus class="w-5 h-5" />
-                </button>
-                <label
-                    class="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors cursor-pointer"
-                    title="Upload"
-                >
-                    <input
-                        type="file"
-                        multiple
-                        class="hidden"
-                        on:change={handleFileUpload}
-                    />
-                    <Upload class="w-5 h-5" />
-                </label>
-            </div>
-        </div>
+        <FileToolbar
+            {currentPath}
+            {selectedFiles}
+            {breadcrumbs}
+            on:navigateUp={navigateUp}
+            on:navigate={(e) => navigate(e.detail)}
+            on:deleteSelected={deleteSelected}
+            on:compressSelected={compressSelected}
+            on:extractSelected={extractSelected}
+            on:createFile={createFile}
+            on:createDirectory={createDirectory}
+            on:uploadFiles={(e) => uploadFiles(e.detail)}
+        />
 
         <!-- File List -->
-        <div class="flex-1 overflow-y-auto">
-            {#if loading}
-                <div class="flex items-center justify-center h-40">
-                    <Loader2 class="animate-spin h-8 w-8 text-indigo-500" />
-                </div>
-            {:else if files.length === 0}
-                <div
-                    class="flex flex-col items-center justify-center h-40 text-gray-500"
-                >
-                    <span>Empty directory</span>
-                </div>
-            {:else}
-                <table class="w-full text-left border-collapse">
-                    <thead
-                        class="bg-white/5 text-xs uppercase text-gray-400 font-semibold sticky top-0 z-10 backdrop-blur-md"
-                    >
-                        <tr>
-                            <th class="px-4 py-3 w-8">
-                                <input
-                                    type="checkbox"
-                                    class="rounded bg-black/20 border-white/10 text-indigo-500 focus:ring-0 cursor-pointer"
-                                    checked={files.length > 0 &&
-                                        selectedFiles.size === files.length}
-                                    on:change={toggleAll}
-                                />
-                            </th>
-                            <th class="px-4 py-3">Name</th>
-                            <th class="px-4 py-3 w-32">Size</th>
-                            <th class="px-4 py-3 w-48">Modified</th>
-                        </tr>
-                    </thead>
-                    <tbody
-                        class="divide-y divide-white/5 text-sm text-gray-300"
-                    >
-                        {#each files as file (file.name)}
-                            <tr
-                                class="hover:bg-white/5 transition-colors group {selectedFiles.has(
-                                    file.name,
-                                )
-                                    ? 'bg-indigo-500/10'
-                                    : ''}"
-                            >
-                                <td class="px-4 py-2">
-                                    <input
-                                        type="checkbox"
-                                        class="rounded bg-black/20 border-white/10 text-indigo-500 focus:ring-0 cursor-pointer"
-                                        checked={selectedFiles.has(file.name)}
-                                        on:change={(e) =>
-                                            toggleSelection(file, e)}
-                                    />
-                                </td>
-                                <td class="px-4 py-2">
-                                    <button
-                                        class="flex items-center gap-3 hover:text-white w-full text-left truncate"
-                                        on:click={() => openFile(file)}
-                                    >
-                                        {#if file.isDir}
-                                            <Folder
-                                                class="w-5 h-5 text-yellow-500 flex-shrink-0"
-                                            />
-                                        {:else}
-                                            <File
-                                                class="w-5 h-5 text-gray-500 flex-shrink-0"
-                                            />
-                                        {/if}
-                                        <span class="truncate">{file.name}</span
-                                        >
-                                    </button>
-                                </td>
-                                <td
-                                    class="px-4 py-2 text-gray-500 font-mono text-xs"
-                                    >{file.isDir
-                                        ? "-"
-                                        : formatSize(file.size)}</td
-                                >
-                                <td class="px-4 py-2 text-gray-500 text-xs"
-                                    >{formatDate(file.modTime)}</td
-                                >
-                            </tr>
-                        {/each}
-                    </tbody>
-                </table>
-            {/if}
-        </div>
+        <FileTable
+            {files}
+            {loading}
+            {selectedFiles}
+            on:toggleAll={toggleAll}
+            on:toggleSelection={(e) =>
+                toggleSelection(e.detail.file, e.detail.event)}
+            on:openFile={(e) => openFile(e.detail)}
+        />
     {/if}
 </div>
