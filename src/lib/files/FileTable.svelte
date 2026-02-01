@@ -2,16 +2,14 @@
     import { Loader2, Folder, File } from "lucide-svelte";
     import { createEventDispatcher } from "svelte";
 
-     
     export let files;
-     
+
     export let loading;
-     
+
     export let selectedFiles;
 
     const dispatch = createEventDispatcher();
 
-     
     function formatSize(bytes) {
         if (bytes === 0) return "0 B";
         const k = 1024;
@@ -20,7 +18,6 @@
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
     }
 
-     
     function formatDate(ms) {
         return new Date(ms).toLocaleString();
     }
@@ -52,7 +49,7 @@
     {:else}
         <table class="w-full text-left border-collapse">
             <thead
-                class="bg-white/5 text-xs uppercase text-gray-400 font-semibold sticky top-0 z-10 backdrop-blur-md"
+                class="bg-gray-900 text-xs uppercase text-gray-400 font-semibold sticky top-0 z-10 border-b border-white/5"
             >
                 <tr>
                     <th class="px-4 py-3 w-8">
