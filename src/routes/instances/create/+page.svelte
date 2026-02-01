@@ -18,7 +18,6 @@
     import StepLoader from "$lib/creation/StepLoader.svelte";
     import StepVersion from "$lib/creation/StepVersion.svelte";
 
-     
     let step = 1;
     let name = "";
     let importMode = false;
@@ -28,15 +27,12 @@
     let type = "";
     let version = "";
 
-     
     let versionOptions = [];
     let loadingLoaders = false;
     let loadingVersions = false;
     let creating = false;
     let status = "";
 
-     
-     
     let typeOptions = [
         { value: "fabric", label: "Fabric", image: "/fabric.png" },
         { value: "quilt", label: "Quilt", image: "/quilt.png" },
@@ -106,20 +102,14 @@
         },
     };
 
-     
     $: typeOptions = typeOptions.map((opt) => ({
         ...opt,
         ...(LOADER_META[opt.value] || LOADER_META.custom),
     }));
 
-     
-
     async function loadLoaders() {
         loadingLoaders = true;
         try {
-             
-             
-             
         } catch (e) {
             console.error(e);
             addToast("Failed to load server types", "error");
@@ -132,26 +122,21 @@
         if (!type || type === "custom") return;
 
         loadingVersions = true;
-        version = "";  
+        version = "";
         versionOptions = [];
 
         try {
-             
-             
             const res = await fetch(`/api/versions/game?loader=${type}`);
             if (res.ok) {
                 const data = await res.json();
                 versionOptions = data.map((v) => ({
-                    value: v,
-                    label: v,
+                    value: v.version,
+                    label: v.version,
                 }));
                 if (versionOptions.length > 0) {
                     version = versionOptions[0].value;
                 }
             } else {
-                 
-                 
-                 
             }
         } catch (e) {
             console.error(e);
@@ -171,7 +156,6 @@
             step = 2;
         } else if (step === 2) {
             if (importMode) {
-                 
                 if (!sourcePath) return addToast("Select a folder", "error");
                 finish();
                 return;
@@ -239,7 +223,6 @@
                 version: type === "custom" ? "" : version,
             };
 
-             
             const res = await fetch("/api/instances", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -248,18 +231,9 @@
 
             if (!res.ok) throw await res.text();
 
-             
             if (type !== "custom") {
                 status = `Installing ${type} ${version} server...`;
 
-                 
-                 
-                 
-                 
-
-                 
-                 
-                 
                 const installRes = await fetch(`/api/instances/${id}/install`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -267,7 +241,6 @@
                 });
 
                 if (!installRes.ok) {
-                     
                     addToast(
                         "Instance created, but installation failed. Check console.",
                         "warning",
@@ -276,7 +249,7 @@
             }
 
             status = "Finalizing settings...";
-             
+
             await new Promise((r) => setTimeout(r, 500));
 
             await goto(`/instances/${id}`);
@@ -288,7 +261,6 @@
     }
 
     onMount(() => {
-         
         loadLoaders();
         loadVersions();
     });
@@ -303,7 +275,6 @@
 <div
     class="min-h-screen bg-gray-950 text-gray-100 flex flex-col items-center justify-center p-4 relative overflow-hidden"
 >
-    
     <div
         class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0"
     >
@@ -318,11 +289,9 @@
         ></div>
     </div>
 
-    
     <div
         class="w-full max-w-4xl bg-gray-900/60 backdrop-blur-xl border border-gray-800 rounded-2xl shadow-2xl relative z-10 overflow-hidden flex flex-col md:flex-row min-h-[500px]"
     >
-        
         <div
             class="w-full md:w-1/3 bg-gray-900/80 border-b md:border-b-0 md:border-r border-gray-800 p-8 flex flex-col justify-between"
         >
@@ -344,7 +313,6 @@
                 </p>
 
                 <div class="space-y-6">
-                    
                     <div
                         class="flex items-start gap-4 transition-colors {step >=
                         1
@@ -380,7 +348,6 @@
                         </div>
                     </div>
 
-                    
                     <div
                         class="flex items-start gap-4 transition-colors {step >=
                         2
@@ -421,7 +388,6 @@
                         </div>
                     </div>
 
-                    
                     {#if !importMode}
                         <div
                             class="flex items-start gap-4 transition-colors {step >=
@@ -461,7 +427,6 @@
             </div>
         </div>
 
-        
         <div class="flex-1 p-8 bg-black/20 relative">
             {#if creating}
                 <div
@@ -516,7 +481,6 @@
 </div>
 
 <style>
-     
     .custom-scrollbar::-webkit-scrollbar {
         width: 6px;
     }
