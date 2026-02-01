@@ -43,7 +43,6 @@ func (inst *Instance) InstallPackwiz(packUrl string) error {
 
 	inst.Manager.Broadcast("Downloading pack.toml...")
 
-	// 1. Download pack.toml
 	packTomlPath := filepath.Join(workDir, "pack.toml")
 	err := dl.DownloadFile(downloader.DownloadOptions{
 		Url:      packUrl,
@@ -54,7 +53,6 @@ func (inst *Instance) InstallPackwiz(packUrl string) error {
 		return fmt.Errorf("failed to download pack.toml: %v", err)
 	}
 
-	// 2. Parse pack.toml
 	var pack PackwizPack
 	if err := parseToml(packTomlPath, &pack); err != nil {
 		return err
@@ -62,8 +60,6 @@ func (inst *Instance) InstallPackwiz(packUrl string) error {
 
 	inst.Manager.Broadcast(fmt.Sprintf("Installing Packwiz Pack: %s", pack.Name))
 
-	// 3. Download index.toml
-	// Resolve index URL relative to packUrl
 	indexUrl, err := resolveRelativeUrl(packUrl, pack.Index.File)
 	if err != nil {
 		return err
@@ -82,24 +78,20 @@ func (inst *Instance) InstallPackwiz(packUrl string) error {
 		return fmt.Errorf("failed to download index: %v", err)
 	}
 
-	// 4. Parse index
 	var index PackwizIndex
 	if err := parseToml(indexTomlPath, &index); err != nil {
 		return err
 	}
 
-	// 5. Download Files
 	total := len(index.Files)
 	for i, f := range index.Files {
-		// Calculate absolute path for this file
+
 		destPath := filepath.Join(workDir, f.File)
 
 		inst.Manager.Broadcast(fmt.Sprintf("Downloading %d/%d: %s", i+1, total, f.File))
 
-		// If it's a "metafile" (points to another toml describing the download), we need to follow it.
-		// Packwiz usually stores mods as .pw.toml files.
 		if f.MetaFile || strings.HasSuffix(f.File, ".toml") {
-			// Download the meta file first
+
 			metaUrl, _ := resolveRelativeUrl(packUrl, f.File)
 			err := dl.DownloadFile(downloader.DownloadOptions{
 				Url:      metaUrl,
@@ -112,7 +104,6 @@ func (inst *Instance) InstallPackwiz(packUrl string) error {
 				return err
 			}
 
-			// Parse meta file to get actual download
 			var modFile struct {
 				Filename string `toml:"filename"`
 				Side     string `toml:"side"`
@@ -126,12 +117,6 @@ func (inst *Instance) InstallPackwiz(packUrl string) error {
 				return err
 			}
 
-			// Download the actual artifact (jar)
-			// Assuming location is relative to the .toml file, or we place it in mods/ ??
-			// Usually filename determines where it goes (e.g. mods/FabricAPI.jar)
-			// But destPath is currently "mods/FabricAPI.pw.toml"
-
-			// We place the jar in the same directory as the toml
 			jarPath := filepath.Join(filepath.Dir(destPath), modFile.Filename)
 
 			err = dl.DownloadFile(downloader.DownloadOptions{
@@ -145,10 +130,6 @@ func (inst *Instance) InstallPackwiz(packUrl string) error {
 			}
 
 		} else {
-			// Direct file (config, etc.)
-			// Ideally we don't have download URL in index for direct files?
-			// Check packwiz spec. Index entries usually just hash.
-			// If no download URL, we assume it's relative to pack base.
 
 			fileUrl := f.Download.Url
 			if fileUrl == "" {

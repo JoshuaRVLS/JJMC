@@ -50,7 +50,6 @@ type SpigetAuthor struct {
 	Username string `json:"username"`
 }
 
-// SearchResources searches for plugins
 func (c *SpigetClient) SearchResources(query string, size int, page int) ([]SpigetResource, error) {
 	var urlStr string
 	if query == "" {

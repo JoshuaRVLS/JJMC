@@ -3,29 +3,29 @@
     import ModCard from "./ModCard.svelte";
     import ModVersions from "./ModVersions.svelte";
 
-    /** @type {Array<any>} */
+     
     export let results;
-    /** @type {boolean} */
+     
     export let loading;
-    /** @type {boolean} */
+     
     export let loadingMore;
-    /** @type {string} */
+     
     export let query;
-    /** @type {boolean} */
+     
     export let hasMore;
-    /** @type {Set<string>} */
+     
     export let installedIds;
-    /** @type {string | null} */
+     
     export let installingId;
-    /** @type {string} */
+     
     export let activeTab;
-    /** @type {string | null} */
+     
     export let viewingVersionsId;
-    /** @type {Array<any>} */
+     
     export let versionsList;
-    /** @type {boolean} */
+     
     export let loadingVersions;
-    /** @type {HTMLElement} */
+     
     export let sentinel;
 
     const dispatch = createEventDispatcher();
@@ -92,7 +92,7 @@
             {/each}
         </div>
 
-        <!-- Sentinel for Infinite Scroll -->
+        
         <div bind:this={sentinel} class="h-10 flex items-center justify-center">
             {#if loadingMore}
                 <div

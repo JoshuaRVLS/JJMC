@@ -55,7 +55,6 @@ func (tm *TemplateManager) LoadTemplates() error {
 			continue
 		}
 
-		// ID defaults to filename info if missing?
 		if tmpl.ID == "" {
 			tmpl.ID = strings.TrimSuffix(entry.Name(), ".json")
 		}

@@ -9,7 +9,6 @@ import (
 	"strings"
 )
 
-// ModSearchResult reflects the structure returned by Modrinth Search API
 type ModSearchResult struct {
 	Hits []struct {
 		ProjectID    string   `json:"project_id"`
@@ -28,14 +27,13 @@ type ModSearchResult struct {
 		DateCreated  string   `json:"date_created"`
 		DateModified string   `json:"date_modified"`
 		License      string   `json:"license"`
-		Gallery      []string `json:"gallery"` // Simplified
+		Gallery      []string `json:"gallery"`
 	} `json:"hits"`
 	Offset int `json:"offset"`
 	Limit  int `json:"limit"`
 	Total  int `json:"total_hits"`
 }
 
-// SearchMods queries Modrinth or Spiget
 type InstalledPlugin struct {
 	ID       string `json:"id"`
 	Name     string `json:"name"`
@@ -45,7 +43,7 @@ type InstalledPlugin struct {
 func (inst *Instance) SearchMods(query string, resourceType string, offset int, sort string, sides []string) ([]interface{}, error) {
 	if resourceType == "plugin" {
 		client := NewSpigetClient()
-		// Page size 20, calculate page number from offset
+
 		page := (offset / 20) + 1
 
 		resources, err := client.SearchResources(query, 20, page)
@@ -55,25 +53,23 @@ func (inst *Instance) SearchMods(query string, resourceType string, offset int, 
 
 		var hits []interface{}
 		for _, r := range resources {
-			// Map SpigetResource to frontend expected format
+
 			hit := map[string]interface{}{
 				"project_id":    fmt.Sprintf("%d", r.ID),
 				"title":         r.Name,
 				"description":   r.Tag,
-				"icon_url":      "",                             // Default empty
-				"author":        fmt.Sprintf("%d", r.Author.ID), // we only have ID initially
+				"icon_url":      "",
+				"author":        fmt.Sprintf("%d", r.Author.ID),
 				"downloads":     r.Downloads,
-				"date_modified": r.UpdateDate * 1000, // Unix timestamp to JS ms
-				"categories":    []string{"plugin"},  // generic category
+				"date_modified": r.UpdateDate * 1000,
+				"categories":    []string{"plugin"},
 				"client_side":   "unsupported",
 				"server_side":   "required",
 			}
 
-			// Handle Icon
 			if r.Icon.Url != "" {
 				if !strings.HasPrefix(r.Icon.Url, "http") {
-					// Relative path, prepend spigotmc.org
-					// Handle cases like "data/..." or "/data/..."
+
 					hit["icon_url"] = "https://www.spigotmc.org/" + strings.TrimPrefix(r.Icon.Url, "/")
 				} else {
 					hit["icon_url"] = r.Icon.Url
@@ -87,7 +83,6 @@ func (inst *Instance) SearchMods(query string, resourceType string, offset int, 
 		return hits, nil
 	}
 
-	// Modrinth logic (mod or modpack)
 	loader := inst.Type
 	mcVersion := inst.Version
 
@@ -100,20 +95,17 @@ func (inst *Instance) SearchMods(query string, resourceType string, offset int, 
 	q := u.Query()
 	q.Set("query", query)
 
-	// Modrinth facets: [["facet:value"], ["facet:value"]] for AND logic
 	var facetList []string
 	if loader != "vanilla" && loader != "" && loader != "spigot" && loader != "paper" && loader != "unknown" {
-		// Only filter by loader if it maps to a Modrinth loader (fabric, forge, quilt, neoforge)
+
 		facetList = append(facetList, fmt.Sprintf(`["categories:%s"]`, loader))
 	} else if loader == "paper" || loader == "spigot" {
-		// If on Paper/Spigot but searching Modrinth, we might want to find "bukkit" compatible plugins on Modrinth?
-		// Modrinth uses "bukkit", "spigot", "paper" as categories.
+
 	}
 
 	facetList = append(facetList, fmt.Sprintf(`["versions:%s"]`, mcVersion))
 	facetList = append(facetList, fmt.Sprintf(`["project_type:%s"]`, ptype))
 
-	// Sides filter if provided (e.g. "client", "server")
 	if len(sides) > 0 {
 		var sideFacets []string
 		for _, s := range sides {
@@ -124,9 +116,8 @@ func (inst *Instance) SearchMods(query string, resourceType string, offset int, 
 
 	q.Set("facets", fmt.Sprintf("[%s]", strings.Join(facetList, ",")))
 
-	// Sorting
 	if sort != "" {
-		q.Set("index", sort) // relevance, downloads, follows, newest, updated
+		q.Set("index", sort)
 	} else if query == "" {
 		q.Set("index", "downloads")
 	} else {

@@ -24,7 +24,7 @@ type InstanceManager struct {
 }
 
 func NewInstanceManager(baseDir string, tm *services.TemplateManager, silent bool) *InstanceManager {
-	// Ensure base dir exists
+
 	os.MkdirAll(baseDir, 0755)
 
 	im := &InstanceManager{
@@ -34,7 +34,6 @@ func NewInstanceManager(baseDir string, tm *services.TemplateManager, silent boo
 		silent:      silent,
 	}
 
-	// Load instances from DB
 	var dbModels []models.InstanceModel
 	result := database.DB.Find(&dbModels)
 	if result.Error != nil {
@@ -46,8 +45,7 @@ func NewInstanceManager(baseDir string, tm *services.TemplateManager, silent boo
 		mgr := manager.NewManager()
 		mgr.SetSilent(silent)
 
-		// Copy model data to instance struct
-		instModel := model // Copy
+		instModel := model
 		instance := NewInstance(&models.Instance{
 			ID:        instModel.ID,
 			Name:      instModel.Name,
@@ -59,7 +57,6 @@ func NewInstanceManager(baseDir string, tm *services.TemplateManager, silent boo
 			JarFile:   instModel.JarFile,
 		}, mgr)
 
-		// Restore state
 		instance.Manager.SetWorkDir(dir)
 		if model.JarFile != "" {
 			instance.Manager.SetJar(model.JarFile)
@@ -84,7 +81,6 @@ func (im *InstanceManager) GetInstance(id string) (*Instance, error) {
 		return nil, fmt.Errorf("instance not found")
 	}
 
-	// Update status before returning
 	if inst.Manager.IsRunning() {
 		inst.Status = "Online"
 	} else {
@@ -100,7 +96,7 @@ func (im *InstanceManager) ListInstances() []*Instance {
 
 	list := make([]*Instance, 0, len(im.instances))
 	for _, inst := range im.instances {
-		// Update status
+
 		if inst.Manager.IsRunning() {
 			inst.Status = "Online"
 		} else {
@@ -109,7 +105,6 @@ func (im *InstanceManager) ListInstances() []*Instance {
 		list = append(list, inst)
 	}
 
-	// Sort by Name, then ID for stability
 	sort.Slice(list, func(i, j int) bool {
 		if list[i].Name != list[j].Name {
 			return strings.ToLower(list[i].Name) < strings.ToLower(list[j].Name)
@@ -129,7 +124,6 @@ func (im *InstanceManager) UpdateSettings(id string, maxMemory int, javaArgs, ja
 		return fmt.Errorf("instance not found")
 	}
 
-	// Update DB
 	err := database.DB.Model(&models.InstanceModel{}).Where("id = ?", id).Updates(models.InstanceModel{
 		MaxMemory: maxMemory,
 		JavaArgs:  javaArgs,
@@ -139,7 +133,6 @@ func (im *InstanceManager) UpdateSettings(id string, maxMemory int, javaArgs, ja
 		return fmt.Errorf("failed to update db: %v", err)
 	}
 
-	// Update Memory
 	inst.MaxMemory = maxMemory
 	inst.JavaArgs = javaArgs
 	inst.JarFile = jarFile
@@ -153,14 +146,6 @@ func (im *InstanceManager) UpdateSettings(id string, maxMemory int, javaArgs, ja
 }
 
 func (inst *Instance) Reset(serverType, version string) error {
-	// Reset logic
-	// Lock Manager's mutex is internal. We should probably add a helper in manager if we need to lock externally?
-	// inst.Manager.mu is not available if unexported.
-	// Wait, Manager.mu is exported in my previous step? "mu sync.Mutex" -> unexported.
-	// Good thing I saw this.
-	// The original code accessed `inst.Manager.mu`.
-	// I should export a method in Manager to stop safely or expose the mutex.
-	// Or better, just call Stop() and handle errors.
 
 	if inst.Manager.IsRunning() {
 		if err := inst.Manager.Stop(); err != nil {
@@ -169,9 +154,8 @@ func (inst *Instance) Reset(serverType, version string) error {
 		time.Sleep(1 * time.Second)
 	}
 
-	// List of files/directories to remove for a clean type switch
 	toRemove := []string{
-		"server.jar", // Assumed default jarName, might need to get from Instance config
+		"server.jar",
 		"libraries",
 		"versions",
 		"mods",
@@ -179,7 +163,6 @@ func (inst *Instance) Reset(serverType, version string) error {
 		"plugins",
 	}
 
-	// Also remove the current jar if it's different
 	if inst.JarFile != "" && inst.JarFile != "server.jar" {
 		toRemove = append(toRemove, inst.JarFile)
 	}
@@ -189,11 +172,9 @@ func (inst *Instance) Reset(serverType, version string) error {
 		os.RemoveAll(path)
 	}
 
-	// Update Fields
 	inst.Type = serverType
 	inst.Version = version
 
-	// Update DB
 	err := database.DB.Model(&models.InstanceModel{}).Where("id = ?", inst.ID).Updates(map[string]interface{}{
 		"type":    serverType,
 		"version": version,

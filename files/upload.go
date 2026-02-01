@@ -16,7 +16,7 @@ func HandleUpload(rootDir, relPath string, file *multipart.FileHeader) error {
 	}
 
 	targetDir := filepath.Join(rootDir, cleanPath)
-	// Ensure directory exists
+
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
 		return err
 	}

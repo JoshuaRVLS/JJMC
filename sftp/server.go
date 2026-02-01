@@ -95,13 +95,12 @@ func (s *SFTPServer) handleConnection(conn net.Conn, config *ssh.ServerConfig) {
 			continue
 		}
 
-		// Sessions have out-of-band requests such as "subsystem" => "sftp"
 		go func(in <-chan *ssh.Request) {
 			for req := range in {
 				ok := false
 				switch req.Type {
 				case "subsystem":
-					if string(req.Payload[4:]) == "sftp" { // Payload usually has length prefix
+					if string(req.Payload[4:]) == "sftp" {
 						ok = true
 						server, err := sftp.NewServer(
 							channel,

@@ -9,7 +9,7 @@
 
     let currentPath = "";
     let selectedPath = "";
-    /** @type {Array<{name: string, path: string, isDir: boolean}>} */
+     
     let files = [];
     let loading = false;
     let error = "";
@@ -17,7 +17,7 @@
     async function loadPath(path = "") {
         loading = true;
         error = "";
-        selectedPath = ""; // Reset selection on navigation
+        selectedPath = "";  
         try {
             const res = await fetch(
                 `/api/system/files?path=${encodeURIComponent(path)}`,
@@ -48,7 +48,7 @@
         open = false;
     }
 
-    /** @param {KeyboardEvent} e */
+     
     function handleKeydown(e) {
         if (e.key === "Enter" && selectedPath) {
             loadPath(selectedPath);
@@ -73,7 +73,7 @@
         <div
             class="bg-gray-900 border border-gray-700 rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[80vh]"
         >
-            <!-- Header -->
+            
             <div
                 class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-800/50 rounded-t-lg"
             >
@@ -83,7 +83,7 @@
                 </button>
             </div>
 
-            <!-- Path Bar -->
+            
             <div class="p-2 border-b border-gray-800 bg-gray-950/30 flex gap-2">
                 <input
                     type="text"
@@ -98,7 +98,7 @@
                 >
             </div>
 
-            <!-- Content -->
+            
             <div class="flex-1 overflow-y-auto p-2 min-h-[300px]">
                 {#if loading}
                     <div
@@ -145,7 +145,7 @@
                 {/if}
             </div>
 
-            <!-- Footer -->
+            
             <div
                 class="p-4 border-t border-gray-800 flex justify-end gap-2 bg-gray-800/50 rounded-b-lg"
             >

@@ -16,7 +16,6 @@ import (
 func (inst *Instance) InstallFromTemplate(tmpl models.Template, version string) error {
 	inst.Manager.Broadcast(fmt.Sprintf("Installing template: %s (Version %s)", tmpl.Name, version))
 
-	// Resolve complex versions
 	vars := map[string]string{
 		"VERSION": version,
 	}
@@ -48,7 +47,6 @@ func (inst *Instance) InstallFromTemplate(tmpl models.Template, version string) 
 				continue
 			}
 
-			// Replace variables
 			for k, v := range vars {
 				cmdStr = strings.ReplaceAll(cmdStr, "${"+k+"}", v)
 			}
@@ -71,7 +69,6 @@ func (inst *Instance) InstallFromTemplate(tmpl models.Template, version string) 
 				continue
 			}
 
-			// Replace variables
 			for k, v := range vars {
 				url = strings.ReplaceAll(url, "${"+k+"}", v)
 			}
@@ -88,11 +85,10 @@ func (inst *Instance) InstallFromTemplate(tmpl models.Template, version string) 
 				return err
 			}
 
-			// If target is server.jar, ensure instance knows
 			if target == "server.jar" {
 				inst.JarFile = "server.jar"
 				inst.Manager.SetJar("server.jar")
-				// Update DB
+
 				database.DB.Model(&models.InstanceModel{}).Where("id = ?", inst.ID).Update("jar_file", "server.jar")
 			}
 		}

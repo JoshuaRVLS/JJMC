@@ -18,7 +18,7 @@
     import StepLoader from "$lib/creation/StepLoader.svelte";
     import StepVersion from "$lib/creation/StepVersion.svelte";
 
-    // --- State ---
+     
     let step = 1;
     let name = "";
     let importMode = false;
@@ -28,15 +28,15 @@
     let type = "";
     let version = "";
 
-    // Options
+     
     let versionOptions = [];
     let loadingLoaders = false;
     let loadingVersions = false;
     let creating = false;
     let status = "";
 
-    // Loaders (Static + Dynamic types)
-    // We map backend types to friendly UI items
+     
+     
     let typeOptions = [
         { value: "fabric", label: "Fabric", image: "/fabric.png" },
         { value: "quilt", label: "Quilt", image: "/quilt.png" },
@@ -106,20 +106,20 @@
         },
     };
 
-    // Enrich static options with meta styles
+     
     $: typeOptions = typeOptions.map((opt) => ({
         ...opt,
         ...(LOADER_META[opt.value] || LOADER_META.custom),
     }));
 
-    // --- Logic ---
+     
 
     async function loadLoaders() {
         loadingLoaders = true;
         try {
-            // If we wanted to fetch available loaders from backend, we could.
-            // But we have a static list for now, we just want to verify connectivity?
-            // Or maybe fetch latest versions for each loader later.
+             
+             
+             
         } catch (e) {
             console.error(e);
             addToast("Failed to load server types", "error");
@@ -132,12 +132,12 @@
         if (!type || type === "custom") return;
 
         loadingVersions = true;
-        version = ""; // Reset selection
+        version = "";  
         versionOptions = [];
 
         try {
-            // For Paper/Spigot etc we check backend, for Fabric/Forge we might check different endpoints
-            // simplified:
+             
+             
             const res = await fetch(`/api/versions/game?loader=${type}`);
             if (res.ok) {
                 const data = await res.json();
@@ -149,9 +149,9 @@
                     version = versionOptions[0].value;
                 }
             } else {
-                // heavy fallback or just show empty
-                // addToast("Failed to load versions for " + type, "error");
-                // For now mockup:
+                 
+                 
+                 
             }
         } catch (e) {
             console.error(e);
@@ -171,7 +171,7 @@
             step = 2;
         } else if (step === 2) {
             if (importMode) {
-                // Check if path is entered
+                 
                 if (!sourcePath) return addToast("Select a folder", "error");
                 finish();
                 return;
@@ -239,7 +239,7 @@
                 version: type === "custom" ? "" : version,
             };
 
-            // 1. Create
+             
             const res = await fetch("/api/instances", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -248,18 +248,18 @@
 
             if (!res.ok) throw await res.text();
 
-            // 2. Install (if not custom)
+             
             if (type !== "custom") {
                 status = `Installing ${type} ${version} server...`;
 
-                // Note: The backend installation can take a while (e.g. BuildTools/Download)
-                // We will poll or wait. For now, assuming synchronous-ish for simple types,
-                // or the user can go to the dashboard and see progress in console.
-                // But typically we want at least initial files setup.
+                 
+                 
+                 
+                 
 
-                // Actually, backend usually handles "install" logic async, but let's assume
-                // we interpret "success" = "created".
-                // If we want to trigger specific install logic:
+                 
+                 
+                 
                 const installRes = await fetch(`/api/instances/${id}/install`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -267,7 +267,7 @@
                 });
 
                 if (!installRes.ok) {
-                    // It might fail if e.g. version not found, but instance is created.
+                     
                     addToast(
                         "Instance created, but installation failed. Check console.",
                         "warning",
@@ -276,7 +276,7 @@
             }
 
             status = "Finalizing settings...";
-            // Slight delay to let user see "Finished" state if we wanted
+             
             await new Promise((r) => setTimeout(r, 500));
 
             await goto(`/instances/${id}`);
@@ -288,7 +288,7 @@
     }
 
     onMount(() => {
-        // Preload
+         
         loadLoaders();
         loadVersions();
     });
@@ -303,7 +303,7 @@
 <div
     class="min-h-screen bg-gray-950 text-gray-100 flex flex-col items-center justify-center p-4 relative overflow-hidden"
 >
-    <!-- Background Effects -->
+    
     <div
         class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0"
     >
@@ -318,11 +318,11 @@
         ></div>
     </div>
 
-    <!-- Main Card -->
+    
     <div
         class="w-full max-w-4xl bg-gray-900/60 backdrop-blur-xl border border-gray-800 rounded-2xl shadow-2xl relative z-10 overflow-hidden flex flex-col md:flex-row min-h-[500px]"
     >
-        <!-- Left Sidebar / Stepper -->
+        
         <div
             class="w-full md:w-1/3 bg-gray-900/80 border-b md:border-b-0 md:border-r border-gray-800 p-8 flex flex-col justify-between"
         >
@@ -344,7 +344,7 @@
                 </p>
 
                 <div class="space-y-6">
-                    <!-- Step 1 Indicator -->
+                    
                     <div
                         class="flex items-start gap-4 transition-colors {step >=
                         1
@@ -380,7 +380,7 @@
                         </div>
                     </div>
 
-                    <!-- Step 2 Indicator -->
+                    
                     <div
                         class="flex items-start gap-4 transition-colors {step >=
                         2
@@ -421,7 +421,7 @@
                         </div>
                     </div>
 
-                    <!-- Step 3 Indicator -->
+                    
                     {#if !importMode}
                         <div
                             class="flex items-start gap-4 transition-colors {step >=
@@ -461,7 +461,7 @@
             </div>
         </div>
 
-        <!-- Right Content Area -->
+        
         <div class="flex-1 p-8 bg-black/20 relative">
             {#if creating}
                 <div
@@ -516,7 +516,7 @@
 </div>
 
 <style>
-    /* Clean scrollbar for list */
+     
     .custom-scrollbar::-webkit-scrollbar {
         width: 6px;
     }

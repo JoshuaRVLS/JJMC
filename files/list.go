@@ -8,15 +8,13 @@ import (
 	"strings"
 )
 
-// List lists files in a given relative path inside the root directory
 func List(rootDir, relPath string) ([]FileInfo, error) {
-	// sanitize path
+
 	cleanPath := filepath.Clean(relPath)
 	if strings.Contains(cleanPath, "..") {
 		return nil, fmt.Errorf("invalid path")
 	}
 
-	// If root ./ or just empty
 	targetDir := filepath.Join(rootDir, cleanPath)
 
 	entries, err := os.ReadDir(targetDir)
@@ -38,7 +36,6 @@ func List(rootDir, relPath string) ([]FileInfo, error) {
 		})
 	}
 
-	// Sort: Directories first, then alphabetical
 	sort.Slice(files, func(a, b int) bool {
 		if files[a].IsDir && !files[b].IsDir {
 			return true

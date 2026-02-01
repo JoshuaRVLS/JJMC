@@ -9,8 +9,7 @@ import (
 type PaperSource struct{}
 
 func (s *PaperSource) Search(query string) ([]SourceResult, error) {
-	// Paper API doesn't really have "search" for projects, it just has "paper", "velocity", "waterfall".
-	// We can return those.
+
 	return []SourceResult{
 		{ID: "paper", Name: "Paper", Description: "High performance Spigot fork", Type: "server"},
 		{ID: "velocity", Name: "Velocity", Description: "Minecraft proxy", Type: "proxy"},
@@ -24,7 +23,7 @@ func (s *PaperSource) GetLatestVersion() (string, error) {
 }
 
 func (s *PaperSource) getLatestVersion(project string) (string, error) {
-	// 1. Get versions
+
 	url := fmt.Sprintf("https://api.papermc.io/v2/projects/%s", project)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -47,10 +46,6 @@ func (s *PaperSource) getLatestVersion(project string) (string, error) {
 }
 
 func (s *PaperSource) GetVersion(versionId string) (*SourceVersion, error) {
-	// versionId e.g. "1.20.4"
-	// We need to fetch builds for this version.
-	// Assumption: Project is "paper" for now, unless we encode project in ID (e.g. "type:project:version")
-	// Let's assume this source is primarily for "paper".
 
 	project := "paper"
 	version := versionId

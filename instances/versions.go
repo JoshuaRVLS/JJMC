@@ -9,7 +9,6 @@ import (
 	"jjmc/manager"
 )
 
-// VersionsManager handles installing and listing server versions
 type VersionsManager struct {
 	manager *manager.Manager
 }
@@ -18,7 +17,6 @@ func NewVersionsManager(m *manager.Manager) *VersionsManager {
 	return &VersionsManager{manager: m}
 }
 
-// WriteCounter counts the number of bytes written to it.
 type WriteCounter struct {
 	Total   uint64
 	Current uint64

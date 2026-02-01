@@ -2,9 +2,9 @@
     import { ArrowUp } from "lucide-svelte";
     import { createEventDispatcher } from "svelte";
 
-    /** @type {string} */
+     
     export let currentPath;
-    /** @type {Array<{name: string, path: string}>} */
+     
     export let breadcrumbs;
 
     const dispatch = createEventDispatcher();

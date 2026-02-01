@@ -4,14 +4,14 @@
     import ModSearch from "./mods/ModSearch.svelte";
     import Modlist from "./mods/Modlist.svelte";
 
-    /** @type {string} */
+     
     export let instanceId;
     export let type = "";
-    export let mode = "mod"; // "mod" or "plugin"
+    export let mode = "mod";  
 
-    let activeTab = mode === "plugin" ? "plugin" : "mod"; // 'mod', 'plugin', 'modpack'
+    let activeTab = mode === "plugin" ? "plugin" : "mod";  
 
-    // React to mode changes
+     
     $: if (mode) {
         if (mode === "plugin" && activeTab !== "plugin") {
             activeTab = "plugin";
@@ -25,27 +25,27 @@
     }
 
     let query = "";
-    /** @type {Array<any>} */
+     
     let results = [];
-    /** @type {Set<string>} */
+     
     let installedIds = new Set();
     let loading = false;
     let loadingMore = false;
-    /** @type {string | null} */
+     
     let installingId = null;
     let offset = 0;
     let hasMore = true;
-    let sortBy = "relevance"; // relevance, downloads, follows, newest, updated
+    let sortBy = "relevance";  
 
-    /** @type {string | null} */
+     
     let viewingVersionsId = null;
-    /** @type {Array<any>} */
+     
     let versionsList = [];
     let loadingVersions = false;
 
-    /** @type {IntersectionObserver} */
+     
     let observer;
-    /** @type {HTMLElement} */
+     
     let sentinel;
 
     async function fetchInstalled() {
@@ -60,15 +60,15 @@
         }
     }
 
-    /** @param {string} projectId */
+     
     async function fetchVersions(projectId) {
         loadingVersions = true;
         versionsList = [];
         try {
             let typeParam = activeTab === "plugin" ? "plugin" : "mod";
-            // If viewing modpack, treat as mod for now or disable?
-            // Modpack versions are usually just the pack versions.
-            // Modrinth "project_type" handles this.
+             
+             
+             
 
             const res = await fetch(
                 `/api/instances/${instanceId}/mods/${projectId}/versions?type=${typeParam}`,
@@ -80,7 +80,7 @@
             }
         } catch (e) {
             addToast(
-                "Error loading versions: " + /** @type {Error} */ (e).message,
+                "Error loading versions: " +   (e).message,
                 "error",
             );
         } finally {
@@ -98,12 +98,12 @@
             loadingMore = true;
         }
 
-        // Map activeTab to backend 'type' param
-        // If activeTab is 'mod', send 'mod'
-        // If activeTab is 'modpack', send 'modpack'
-        // If activeTab is 'plugin', send 'plugin'
+         
+         
+         
+         
         let typeParam = activeTab === "plugin" ? "plugin" : activeTab;
-        if (typeParam === "mod" && mode === "plugin") typeParam = "plugin"; // fallback
+        if (typeParam === "mod" && mode === "plugin") typeParam = "plugin";  
 
         try {
             const res = await fetch(
@@ -142,10 +142,10 @@
         search(false);
     }
 
-    // Trigger search when tab or sort changes
+     
     $: if (activeTab || sortBy) {
         search(true);
-        // Reset version view when changing context
+         
         viewingVersionsId = null;
     }
 
@@ -168,10 +168,10 @@
         };
     });
 
-    /** @param {string} projectId */
-    /** @param {string} [versionId] */
+     
+     
     async function installMod(projectId, versionId = "") {
-        installingId = projectId; // We use project ID for loading state on card
+        installingId = projectId;  
         try {
             let typeParam = activeTab === "plugin" ? "plugin" : "mod";
 
@@ -187,8 +187,8 @@
             if (res.ok) {
                 addToast("Installed successfully", "success");
                 fetchInstalled();
-                // If installed specific version, maybe close version list?
-                // viewingVersionsId = null;
+                 
+                 
             } else {
                 const err = await res.json();
                 addToast(
@@ -198,7 +198,7 @@
             }
         } catch (e) {
             addToast(
-                "Error installing: " + /** @type {Error} */ (e).message,
+                "Error installing: " +   (e).message,
                 "error",
             );
         } finally {
@@ -206,10 +206,10 @@
         }
     }
 
-    /** @param {string} projectId */
+     
     async function uninstallMod(projectId) {
         if (!confirm("Are you sure you want to uninstall this?")) return;
-        installingId = projectId; // Re-using state var for loading
+        installingId = projectId;  
         try {
             let typeParam = activeTab === "plugin" ? "plugin" : "mod";
 
@@ -233,7 +233,7 @@
             }
         } catch (e) {
             addToast(
-                "Error uninstalling: " + /** @type {Error} */ (e).message,
+                "Error uninstalling: " +   (e).message,
                 "error",
             );
         } finally {
@@ -241,7 +241,7 @@
         }
     }
 
-    /** @param {string} projectId */
+     
     async function installModpack(projectId) {
         if (
             !confirm(
@@ -272,7 +272,7 @@
             }
         } catch (e) {
             addToast(
-                "Error installing: " + /** @type {Error} */ (e).message,
+                "Error installing: " +   (e).message,
                 "error",
             );
         } finally {

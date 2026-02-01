@@ -1,20 +1,20 @@
 <script>
     import { onMount } from "svelte";
 
-    /** @type {string} */
+     
     export let value = "";
-    /** @type {"json" | "toml" | "properties"} */
+     
     export let language = "json";
-    /** @type {boolean} */
+     
     export let readonly = false;
 
-    /** @type {HTMLPreElement} */
+     
     let preElement;
-    /** @type {HTMLTextAreaElement} */
+     
     let textareaElement;
 
-    // Basic syntax highlighting
-    /** @param {string} code */
+     
+     
     function highlight(code) {
         if (!code) return "";
 
@@ -31,29 +31,29 @@
                     let cls = "text-indigo-400"; // number
                     if (/^"/.test(match)) {
                         if (/:$/.test(match)) {
-                            cls = "text-sky-400 font-bold"; // key
+                            cls = "text-sky-400 font-bold";  
                         } else {
-                            cls = "text-emerald-400"; // string
+                            cls = "text-emerald-400";  
                         }
                     } else if (/true|false/.test(match)) {
-                        cls = "text-rose-400 font-bold"; // boolean
+                        cls = "text-rose-400 font-bold";  
                     } else if (/null/.test(match)) {
-                        cls = "text-gray-500 font-bold"; // null
+                        cls = "text-gray-500 font-bold";  
                     }
                     return `<span class="${cls}">${match}</span>`;
                 },
             );
         } else if (language === "toml" || language === "properties") {
-            // Composite regex to avoid overlapping replacements
-            // Groups:
-            // 1: String
-            // 2: String inner (ignore)
-            // 3: Comment
-            // 4: Section
-            // 5: Key (bare)
-            // 6: Boolean
-            // 7: Boolean inner (ignore)
-            // 8: Number
+             
+             
+             
+             
+             
+             
+             
+             
+             
+             
             const tokenRegex =
                 /("(\\.|[^"\\])*")|(#.*$)|(^\[.*\]$)|(^\s*[a-zA-Z0-9_\-.]+(?=\s*=))|(\b(true|false)\b)|(\b\d+\b)/gm;
 
@@ -173,13 +173,13 @@
 </script>
 
 <div class="relative w-full h-full font-mono text-sm group">
-    <!-- Highlight Layer -->
+    
     <pre
         bind:this={preElement}
         class="absolute inset-0 m-0 p-4 pointer-events-none overflow-hidden bg-[#0b0e14] text-gray-300 whitespace-pre-wrap break-words"
         aria-hidden="true">{@html highlight(value)}<br /></pre>
 
-    <!-- Input Layer -->
+    
     <textarea
         bind:this={textareaElement}
         {value}

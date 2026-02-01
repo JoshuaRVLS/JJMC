@@ -1,16 +1,16 @@
 <script>
-    /** @type {string} */
+     
     export let mode;
-    /** @type {string} */
+     
     export let activeTab;
-    /** @type {string} */
+     
     export let sortBy;
-    /** @type {string} */
+     
     export let query;
-    /** @type {boolean} */
+     
     export let loading;
-    /** @type {string} */
-    export let type; // 'spigot', 'paper', 'fabric', etc.
+     
+    export let type;  
 
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
@@ -19,7 +19,7 @@
         dispatch("search");
     }
 
-    /** @param {KeyboardEvent} e */
+     
     function handleKeydown(e) {
         if (e.key === "Enter") search();
     }
@@ -79,7 +79,7 @@
     </div>
 </div>
 
-<!-- Search Bar -->
+
 <div class="flex gap-2 mb-6">
     <div class="relative flex-1">
         <input

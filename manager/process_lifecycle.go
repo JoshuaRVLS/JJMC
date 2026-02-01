@@ -15,13 +15,11 @@ func (m *Manager) isPidRunning(pid int) bool {
 	if err != nil {
 		return false
 	}
-	// Send signal 0 to check if running
+
 	err = process.Signal(syscall.Signal(0))
 	return err == nil
 }
 
-// IsRunningUnsafe checks if running without locking.
-// Caller MUST hold lock.
 func (m *Manager) IsRunningUnsafe() bool {
 	if m.cmd != nil && m.cmd.Process != nil && m.cmd.ProcessState == nil {
 		return true
@@ -46,7 +44,6 @@ func (m *Manager) Start() error {
 		return fmt.Errorf("server is already running")
 	}
 
-	// Stop tailing if it was running (shouldn't be, but sanity check)
 	if m.tailCmd != nil {
 		if m.tailCmd.Process != nil {
 			m.tailCmd.Process.Kill()
@@ -54,26 +51,23 @@ func (m *Manager) Start() error {
 		m.tailCmd = nil
 	}
 
-	// Create log file
 	logPath := fmt.Sprintf("%s/server.log", m.workDir)
 	logFile, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Printf("Failed to open log file: %v\n", err)
 	}
 
-	// Build Config
 	mem := m.maxMemory
 	if mem <= 0 {
 		mem = 2048
 	}
 
 	if m.startCommand != "" {
-		// Replace variables in command
+
 		cmdStr := m.startCommand
 		cmdStr = strings.ReplaceAll(cmdStr, "${MAX_MEMORY}", strconv.Itoa(mem))
 		cmdStr = strings.ReplaceAll(cmdStr, "${JAVA_ARGS}", m.javaArgs)
 
-		// Use sh -c for complex commands
 		m.cmd = exec.Command("sh", "-c", cmdStr)
 	} else {
 		var args []string
@@ -115,7 +109,6 @@ func (m *Manager) Start() error {
 	m.pid = m.cmd.Process.Pid
 	os.WriteFile(fmt.Sprintf("%s/server.pid", m.workDir), []byte(fmt.Sprintf("%d", m.pid)), 0644)
 
-	// Stream output to both file and broadcast
 	go m.streamOutput(stdout, logFile)
 	go m.streamOutput(stderr, logFile)
 
@@ -139,7 +132,6 @@ func (m *Manager) Stop() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// Stop tailing if active
 	if m.tailCmd != nil {
 		if m.tailCmd.Process != nil {
 			m.tailCmd.Process.Kill()
@@ -147,17 +139,15 @@ func (m *Manager) Stop() error {
 		m.tailCmd = nil
 	}
 
-	// If cmd exists, use it
 	if m.cmd != nil && m.cmd.Process != nil {
 		fmt.Fprintln(m.stdin, "stop")
 		return nil
 	}
 
-	// If cmd missing but PID exists (orphaned), kill it
 	if m.pid > 0 && m.isPidRunning(m.pid) {
 		process, err := os.FindProcess(m.pid)
 		if err == nil {
-			// SIGTERM
+
 			process.Signal(syscall.SIGTERM)
 			m.pid = 0
 			os.Remove(fmt.Sprintf("%s/server.pid", m.workDir))
@@ -170,16 +160,15 @@ func (m *Manager) Stop() error {
 
 func (m *Manager) Restart() error {
 	if err := m.Stop(); err != nil {
-		// If it's not running, just Start
+
 		if err.Error() == "server is not running" {
 			return m.Start()
 		}
 		return err
 	}
 
-	// Wait for stop in background then Start
 	go func() {
-		// Wait up to 60 seconds for exit
+
 		for i := 0; i < 60; i++ {
 			if !m.IsRunning() {
 				break
@@ -201,8 +190,7 @@ func (m *Manager) WriteCommand(cmd string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.cmd == nil || m.stdin == nil {
-		// Can't write to stdin of orphaned process?
-		// We could potentially write to /proc/PID/fd/0? No.
+
 		return fmt.Errorf("server is running in detached mode (backend restarted), cannot send command")
 	}
 	_, err := fmt.Fprintln(m.stdin, cmd)
@@ -210,7 +198,7 @@ func (m *Manager) WriteCommand(cmd string) error {
 }
 
 func (m *Manager) loadPid() {
-	// Assumes caller holds lock
+
 	data, err := os.ReadFile(fmt.Sprintf("%s/server.pid", m.workDir))
 	if err == nil {
 		pid, err := strconv.Atoi(string(data))
@@ -220,7 +208,7 @@ func (m *Manager) loadPid() {
 				m.recoverLogs()
 				m.startTailing()
 			} else {
-				// Cleanup stale pid
+
 				os.Remove(fmt.Sprintf("%s/server.pid", m.workDir))
 			}
 		}

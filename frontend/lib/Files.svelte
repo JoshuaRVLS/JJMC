@@ -7,39 +7,33 @@
     import FileToolbar from "./files/FileToolbar.svelte";
     import FileTable from "./files/FileTable.svelte";
 
-    /** @type {string} */
+     
     export let instanceId;
 
-    /**
-     * @typedef {Object} FileEntry
-     * @property {string} name
-     * @property {boolean} isDir
-     * @property {number} size
-     * @property {string} modTime
-     */
+     
 
-    /** @type {Array<FileEntry>} */
+     
     let files = [];
     let loading = true;
     let currentPath = ".";
-    /** @type {FileEntry | null} */
+     
     let viewingFile = null;
     let fileContent = "";
-    /** @type {Array<{name: string, path: string}>} */
+     
     let breadcrumbs = [];
 
-    // Bulk selection
-    /** @type {Set<string>} */
+     
+     
     let selectedFiles = new Set();
-    // let lastSelectedFile = null;
+     
 
-    // Drag & Drop
+     
     let isDraggingOver = false;
 
-    /** @param {string} [path] */
+     
     async function loadFiles(path = ".") {
         loading = true;
-        selectedFiles = new Set(); // access cleared on Nav
+        selectedFiles = new Set();  
         try {
             const res = await fetch(
                 `/api/instances/${instanceId}/files?path=${encodeURIComponent(
@@ -48,7 +42,7 @@
             );
             if (res.ok) {
                 files = await res.json();
-                // Sort folders first
+                 
                 files.sort((a, b) => {
                     if (a.isDir && !b.isDir) return -1;
                     if (!a.isDir && b.isDir) return 1;
@@ -56,7 +50,7 @@
                 });
                 currentPath = path;
 
-                // Update Breadcrumbs
+                 
                 const parts = path === "." ? [] : path.split("/");
                 breadcrumbs = [{ name: "Root", path: "." }];
                 let acc = "";
@@ -76,7 +70,7 @@
         }
     }
 
-    /** @param {string} path */
+     
     function navigate(path) {
         loadFiles(path);
     }
@@ -89,14 +83,14 @@
         loadFiles(newPath);
     }
 
-    /** @param {FileEntry} file */
+     
     async function openFile(file) {
         if (file.isDir) {
             const newPath =
                 currentPath === "." ? file.name : `${currentPath}/${file.name}`;
             loadFiles(newPath);
         } else {
-            // Read file content
+             
             try {
                 const filePath =
                     currentPath === "."
@@ -193,12 +187,9 @@
         loadFiles(currentPath);
     }
 
-    /**
-     * @param {FileEntry} file
-     * @param {Event} event
-     */
+     
     function toggleSelection(file, event) {
-        // Shift select logic could go here
+         
         if (selectedFiles.has(file.name)) {
             selectedFiles.delete(file.name);
         } else {
@@ -218,10 +209,10 @@
         try {
             const newPath =
                 currentPath === "." ? name : `${currentPath}/${name}`;
-            // We can just use the same create file API or a specific one.
-            // Assuming mkdir endpoint or similar logic:
-            // Actually JJMC backend might not have explicit mkdir, usually it's `POST /files/directory` or similar.
-            // Let's assume standard behavior:
+             
+             
+             
+             
             const res = await fetch(
                 `/api/instances/${instanceId}/files/directory`,
                 {
@@ -274,7 +265,7 @@
         }
     }
 
-    /** @param {FileList} fileList */
+     
     async function uploadFiles(fileList) {
         if (!fileList || fileList.length === 0) return;
 
@@ -305,12 +296,12 @@
             addToast("Error uploading files", "error");
         }
 
-        // Reset input if came from input
-        // (Handled by component usually)
+         
+         
     }
 
-    // Drag and Drop Handlers
-    /** @param {DragEvent} e */
+     
+     
     function onDragOver(e) {
         e.preventDefault();
         isDraggingOver = true;
@@ -378,7 +369,7 @@
 
             if (res.ok) {
                 addToast("Extraction started", "success");
-                // Maybe poll? or just refresh
+                 
                 setTimeout(() => loadFiles(currentPath), 2000);
             } else {
                 const err = await res.json();
@@ -391,13 +382,13 @@
         }
     }
 
-    /** @param {DragEvent} e */
+     
     function onDragLeave(e) {
         e.preventDefault();
         isDraggingOver = false;
     }
 
-    /** @param {DragEvent} e */
+     
     function onDrop(e) {
         e.preventDefault();
         isDraggingOver = false;
@@ -419,7 +410,7 @@
     role="region"
     aria-label="File Browser"
 >
-    <!-- Drop Overlay -->
+    
     {#if isDraggingOver}
         <div
             class="absolute inset-0 z-50 bg-indigo-500/20 backdrop-blur-sm border-2 border-dashed border-indigo-400 flex flex-col items-center justify-center text-white pointer-events-none"
@@ -461,7 +452,7 @@
             ></textarea>
         </div>
     {:else}
-        <!-- Toolbar -->
+        
         <FileToolbar
             {currentPath}
             {selectedFiles}
@@ -476,7 +467,7 @@
             on:uploadFiles={(e) => uploadFiles(e.detail)}
         />
 
-        <!-- File List -->
+        
         <FileTable
             {files}
             {loading}

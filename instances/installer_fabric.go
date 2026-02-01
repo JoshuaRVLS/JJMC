@@ -11,7 +11,7 @@ import (
 )
 
 func (v *VersionsManager) InstallFabric(version string) error {
-	// 1. Download Fabric Installer
+
 	installerUrl := "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar"
 	installerName := "fabric-installer.jar"
 
@@ -25,20 +25,15 @@ func (v *VersionsManager) InstallFabric(version string) error {
 	}
 	defer os.Remove(installerPath)
 
-	// 2. Run Installer to generate server.jar
-	// java -jar fabric-installer.jar server -mcversion <version> -downloadMinecraft
 	v.manager.Broadcast("Running Fabric Installer...")
 	cmd := exec.Command("java", "-jar", installerName, "server", "-mcversion", version, "-downloadMinecraft")
-	cmd.Dir = workDir // Execute in the instance directory
+	cmd.Dir = workDir
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("installer failed: %v, output: %s", err, string(output))
 	}
 	v.manager.Broadcast("Fabric Installer completed.")
-
-	// 3. Rename/Setup
-	// Fabric installer usually creates fabric-server-launch.jar and server.jar
 
 	fabricLaunchJar := filepath.Join(workDir, "fabric-server-launch.jar")
 	fabricJar := filepath.Join(workDir, "fabric.jar")
@@ -47,8 +42,6 @@ func (v *VersionsManager) InstallFabric(version string) error {
 		os.Rename(fabricLaunchJar, fabricJar)
 	}
 
-	// 4. Download Fabric API Mod
-	// Dynamic fetching from Modrinth
 	v.manager.Broadcast("Fetching compatible Fabric API version...")
 	fabricApiUrl, err := v.getFabricApiUrl(version)
 	if err != nil {
@@ -90,7 +83,6 @@ func (v *VersionsManager) getFabricApiUrl(mcVersion string) (string, error) {
 		return "", fmt.Errorf("modrinth api returned %d", resp.StatusCode)
 	}
 
-	// Minimal struct for parsing
 	type File struct {
 		Url     string `json:"url"`
 		Primary bool   `json:"primary"`
@@ -108,7 +100,6 @@ func (v *VersionsManager) getFabricApiUrl(mcVersion string) (string, error) {
 		return "", fmt.Errorf("no fabric-api versions found for mc %s", mcVersion)
 	}
 
-	// Get the first version (usually latest)
 	for _, file := range versions[0].Files {
 		if file.Primary {
 			return file.Url, nil
@@ -123,8 +114,7 @@ func (v *VersionsManager) getFabricApiUrl(mcVersion string) (string, error) {
 }
 
 func (v *VersionsManager) InstallQuilt(version string) error {
-	// 1. Download Quilt Installer
-	// Using a recent version
+
 	installerUrl := "https://maven.quiltmc.org/repository/release/org/quiltmc/quilt-installer/0.11.0/quilt-installer-0.11.0.jar"
 	installerName := "quilt-installer.jar"
 
@@ -137,8 +127,6 @@ func (v *VersionsManager) InstallQuilt(version string) error {
 	}
 	defer os.Remove(installerPath)
 
-	// 2. Run Installer
-	// java -jar quilt-installer.jar install server <minecraft-version> --download-server
 	v.manager.Broadcast("Running Quilt Installer...")
 	cmd := exec.Command("java", "-jar", installerName, "install", "server", version, "--download-server")
 	cmd.Dir = workDir
@@ -149,8 +137,6 @@ func (v *VersionsManager) InstallQuilt(version string) error {
 	}
 	v.manager.Broadcast("Quilt Installer completed.")
 
-	// 3. Rename/Setup
-	// Quilt installer creates quilt-server-launch.jar
 	quiltLaunchJar := filepath.Join(workDir, "quilt-server-launch.jar")
 	quiltJar := filepath.Join(workDir, "quilt.jar")
 

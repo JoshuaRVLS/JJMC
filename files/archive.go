@@ -10,14 +10,13 @@ import (
 )
 
 func Compress(rootDir string, relPaths []string, destRelPath string) error {
-	// Sanitize destination
+
 	cleanDest := filepath.Clean(destRelPath)
 	if strings.Contains(cleanDest, "..") {
 		return fmt.Errorf("invalid destination path")
 	}
 	destPath := filepath.Join(rootDir, cleanDest)
 
-	// Create zip file
 	outFile, err := os.Create(destPath)
 	if err != nil {
 		return err
@@ -30,28 +29,25 @@ func Compress(rootDir string, relPaths []string, destRelPath string) error {
 	for _, relPath := range relPaths {
 		cleanRel := filepath.Clean(relPath)
 		if strings.Contains(cleanRel, "..") {
-			continue // Skip invalid paths
+			continue
 		}
 		fullPath := filepath.Join(rootDir, cleanRel)
 
 		info, err := os.Stat(fullPath)
 		if err != nil {
-			continue // Skip missing files
+			continue
 		}
 
-		// Let's allow walker to handle directories
 		walker := func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
 
-			// Calculate path in zip
 			relInInstance, err := filepath.Rel(rootDir, path)
 			if err != nil {
 				return err
 			}
 
-			// Start creating header
 			header, err := zip.FileInfoHeader(info)
 			if err != nil {
 				return err
@@ -113,10 +109,10 @@ func Decompress(rootDir string, zipRelPath string, destRelPath string) error {
 	defer r.Close()
 
 	for _, f := range r.File {
-		// ZipSlip protection
+
 		fpath := filepath.Join(destDir, f.Name)
 		if !strings.HasPrefix(fpath, filepath.Clean(destDir)+string(os.PathSeparator)) {
-			// Skip invalid paths
+
 			continue
 		}
 

@@ -15,8 +15,7 @@ func (h *InstanceHandler) SearchMods(c *fiber.Ctx) error {
 	}
 
 	query := c.Query("query")
-	// typeFilter can be "mod", "modpack", "plugin"
-	// Default logic: if instance is spigot/paper, default to plugin, else mod.
+
 	defaultType := "mod"
 	if inst.Type == "spigot" || inst.Type == "paper" || inst.Type == "bukkit" {
 		defaultType = "plugin"
@@ -63,14 +62,13 @@ func (h *InstanceHandler) InstallMod(c *fiber.Ctx) error {
 
 	var payload struct {
 		ProjectID    string `json:"projectId"`
-		ResourceType string `json:"resourceType"` // "mod" or "plugin"
+		ResourceType string `json:"resourceType"`
 		VersionID    string `json:"versionId"`
 	}
 	if err := c.BodyParser(&payload); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
 	}
 
-	// Default resource type logic
 	if payload.ResourceType == "" {
 		if inst.Type == "spigot" || inst.Type == "paper" || inst.Type == "bukkit" {
 			payload.ResourceType = "plugin"
@@ -112,7 +110,6 @@ func (h *InstanceHandler) UninstallMod(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
 	}
 
-	// Default resource type logic
 	if payload.ResourceType == "" {
 		if inst.Type == "spigot" || inst.Type == "paper" || inst.Type == "bukkit" {
 			payload.ResourceType = "plugin"

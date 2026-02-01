@@ -2,13 +2,13 @@
     import { onMount } from "svelte";
     import { addToast } from "$lib/stores/toast";
 
-    /** @type {string} */
+     
     export let instanceId;
 
     let maxMemory = 2048;
     let javaArgs = "";
     let jarFile = "server.jar";
-    /** @type {any[]} */
+     
     let jarFiles = [];
     let loading = true;
     let saving = false;
@@ -23,17 +23,17 @@
                 javaArgs = data.javaArgs || "";
                 jarFile = data.jarFile || "server.jar";
 
-                // Load files to find jars
+                 
                 const mediaRes = await fetch(
                     `/api/instances/${instanceId}/files?path=.`,
                 );
                 if (mediaRes.ok) {
                     const files = await mediaRes.json();
                     jarFiles = files.filter(
-                        (/** @type {any} */ f) =>
+                        (  f) =>
                             !f.isDir && f.name.endsWith(".jar"),
                     );
-                    // Ensure current jar is in list if not found (e.g. if manual entry allowed later, but for now just validation)
+                     
                     if (!jarFiles.find((f) => f.name === jarFile)) {
                         jarFiles = [...jarFiles, { name: jarFile }];
                     }
@@ -62,7 +62,7 @@
             addToast("Settings saved", "success");
         } catch (e) {
             addToast(
-                "Failed to save settings: " + /** @type {Error} */ (e).message,
+                "Failed to save settings: " +   (e).message,
                 "error",
             );
         } finally {
@@ -82,7 +82,7 @@
         >
             <h2 class="text-xl font-bold text-white mb-4">Java Settings</h2>
 
-            <!-- Target JAR -->
+            
             <div class="space-y-2">
                 <label
                     for="jar"
@@ -104,7 +104,7 @@
                 </div>
             </div>
 
-            <!-- Memory -->
+            
             <div class="space-y-2">
                 <label
                     for="memory"
@@ -129,7 +129,7 @@
                 </div>
             </div>
 
-            <!-- Java Args -->
+            
             <div class="space-y-2">
                 <label
                     for="args"
@@ -149,7 +149,7 @@
                 </div>
             </div>
 
-            <!-- Save -->
+            
             <div class="pt-4 flex justify-end">
                 <button
                     on:click={saveSettings}

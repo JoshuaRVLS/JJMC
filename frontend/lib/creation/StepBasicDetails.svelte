@@ -3,9 +3,9 @@
     import { Server, FolderInput, Check, ArrowRight } from "lucide-svelte";
     import { createEventDispatcher } from "svelte";
 
-    /** @type {string} */
+     
     export let name;
-    /** @type {boolean} */
+     
     export let importMode;
 
     const dispatch = createEventDispatcher();

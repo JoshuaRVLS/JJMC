@@ -4,16 +4,12 @@
     import Select from "$lib/components/Select.svelte";
     import { askConfirm } from "$lib/stores/confirm";
 
-    /** @type {string} */
+     
     export let instanceId;
 
-    /**
-     * @typedef {Object} Option
-     * @property {string} value
-     * @property {string} label
-     */
+     
 
-    /** @type {Option[]} */
+     
     let typeOptions = [];
     let loadingLoaders = false;
     let type = "";
@@ -23,7 +19,7 @@
     let currentType = "";
     let currentVersion = "";
 
-    /** @type {Option[]} */
+     
     let versionOptions = [];
     let loadingVersions = false;
 
@@ -37,7 +33,7 @@
                 const data = await res.json();
                 currentType = data.type;
                 currentVersion = data.version;
-                // Initialize selection with current
+                 
                 if (!type) {
                     type = currentType;
                     version = currentVersion;
@@ -55,10 +51,10 @@
             if (res.ok) {
                 const data = await res.json();
                 const available = data
-                    .filter((/** @type {{name: string}} */ l) =>
+                    .filter((  l) =>
                         SUPPORTED_LOADERS.includes(l.name),
                     )
-                    .map((/** @type {{name: string}} */ l) => ({
+                    .map((  l) => ({
                         value: l.name,
                         label: l.name.charAt(0).toUpperCase() + l.name.slice(1),
                     }));
@@ -72,7 +68,7 @@
         } catch (e) {
             console.error("Failed to load loaders", e);
             addToast("Failed to load server types", "error");
-            // Fallback
+             
             typeOptions = [
                 { value: "fabric", label: "Fabric" },
                 { value: "quilt", label: "Quilt" },
@@ -93,28 +89,24 @@
         }
         loadingVersions = true;
         try {
-            // Re-fetch versions regardless of type for now, optimized later
+             
             const res = await fetch("/api/versions/game");
             if (res.ok) {
                 const data = await res.json();
                 versionOptions = data
                     .filter(
                         (
-                            /** @type {{version: string, version_type: string}} */ v,
+                              v,
                         ) => v.version_type === "release",
                     )
-                    .map((/** @type {{version: string}} */ v) => ({
+                    .map((  v) => ({
                         value: v.version,
                         label: v.version,
                     }));
 
-                // If version is not in list (e.g. switching types), reset to first
-                // unless it matches current selection
-                /* 
-                 logic here is tricky: current selection might be valid for new type or not.
-                 But game versions are shared across loader types usually.
-                 So we keep version if possible.
-                 */
+                 
+                 
+                 
                 if (!version && versionOptions.length > 0) {
                     version = versionOptions[0].value;
                 }
@@ -127,7 +119,7 @@
         }
     }
 
-    // React to type change
+     
     $: if (type) {
         loadVersions();
     }
@@ -156,7 +148,7 @@
 
             if (res.ok) {
                 addToast("Server type changed successfully!", "success");
-                // Reload current details
+                 
                 await loadInstanceDetails();
             } else {
                 const data = await res.json();
@@ -202,7 +194,7 @@
             </div>
 
             <div class="space-y-6">
-                <!-- Current Info -->
+                
                 <div class="grid grid-cols-2 gap-4">
                     <div
                         class="bg-black/20 p-4 rounded-lg border border-white/5"
@@ -230,7 +222,7 @@
                     </div>
                 </div>
 
-                <!-- Selection -->
+                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <Select
@@ -253,7 +245,7 @@
                     {/if}
                 </div>
 
-                <!-- Action -->
+                
                 <div class="pt-4 flex justify-end border-t border-white/5">
                     <button
                         on:click={changeType}

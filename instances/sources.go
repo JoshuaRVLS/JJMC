@@ -4,31 +4,25 @@ import (
 	"fmt"
 )
 
-// Source represents a provider of server software (e.g. Paper, Spigot, Vanilla, Modrinth)
 type Source interface {
-	// Search queries the source for available versions or projects
 	Search(query string) ([]SourceResult, error)
 
-	// GetVersion resolves a specific version ID to a downloadable artifact
 	GetVersion(versionId string) (*SourceVersion, error)
 
-	// GetLatestVersion returns the latest stable version
 	GetLatestVersion() (string, error)
 }
 
-// SourceResult is a summary of a search result
 type SourceResult struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	Type        string `json:"type"` // e.g. "mod", "modpack", "server"
+	Type        string `json:"type"`
 }
 
-// SourceVersion represents a concrete version ready for download
 type SourceVersion struct {
 	ID      string       `json:"id"`
-	Name    string       `json:"name"`    // Display name (e.g. "1.20.4-Build-123")
-	Version string       `json:"version"` // Minecraft version (e.g. "1.20.4")
+	Name    string       `json:"name"`
+	Version string       `json:"version"`
 	Files   []SourceFile `json:"files"`
 }
 
@@ -36,11 +30,10 @@ type SourceFile struct {
 	Url      string `json:"url"`
 	Filename string `json:"filename"`
 	Hash     string `json:"hash"`
-	HashAlgo string `json:"hash_algo"` // sha1, sha256
+	HashAlgo string `json:"hash_algo"`
 	Primary  bool   `json:"primary"`
 }
 
-// SourceRegistry holds available sources
 type SourceRegistry struct {
 	sources map[string]Source
 }

@@ -9,7 +9,7 @@ import (
 )
 
 func (m *Manager) recoverLogs() {
-	// Read last 100 lines of server.log
+
 	logPath := fmt.Sprintf("%s/server.log", m.workDir)
 	file, err := os.Open(logPath)
 	if err != nil {
@@ -23,7 +23,6 @@ func (m *Manager) recoverLogs() {
 		lines = append(lines, scanner.Text())
 	}
 
-	// Take last 100
 	start := 0
 	if len(lines) > 100 {
 		start = len(lines) - 100
@@ -35,7 +34,7 @@ func (m *Manager) startTailing() {
 	if m.tailCmd != nil {
 		return
 	}
-	// tail -f -n 0 server.log
+
 	logPath := fmt.Sprintf("%s/server.log", m.workDir)
 	m.tailCmd = exec.Command("tail", "-f", "-n", "0", logPath)
 
@@ -50,7 +49,7 @@ func (m *Manager) startTailing() {
 		return
 	}
 
-	go m.streamOutput(stdout, nil) // nil logFile because tail reads FROM file
+	go m.streamOutput(stdout, nil)
 
 	go func() {
 		m.tailCmd.Wait()
@@ -68,12 +67,10 @@ func (m *Manager) streamOutput(r io.Reader, logFile io.Writer) {
 			fmt.Println("Server:", text)
 		}
 
-		// Write to log file if available
 		if logFile != nil {
 			fmt.Fprintln(logFile, text)
 		}
 
-		// Buffer log
 		m.mu.Lock()
 		m.logBuffer = append(m.logBuffer, text)
 		if len(m.logBuffer) > 100 {

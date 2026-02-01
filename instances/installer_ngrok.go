@@ -13,7 +13,6 @@ import (
 	"runtime"
 )
 
-// GetToolsDir returns the absolute path to the .tools directory
 func GetToolsDir() (string, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -26,14 +25,11 @@ func GetToolsDir() (string, error) {
 	return dir, nil
 }
 
-// GetNgrokPath returns the path to the ngrok binary, or empty string if not found
 func GetNgrokPath() string {
-	// 1. Check PATH
+
 	if path, err := exec.LookPath("ngrok"); err == nil {
 		return path
 	}
-	// Actually exec.LookPath is better called by the caller or we duplicate logic.
-	// But let's check our local tools dir first or second.
 
 	toolsDir, err := GetToolsDir()
 	if err == nil {
@@ -58,7 +54,6 @@ func InstallNgrok(logFunc func(string)) error {
 	var url string
 	var ext string
 
-	// https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
 	baseUrl := "https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable"
 
 	switch runtime.GOOS {
@@ -93,7 +88,6 @@ func InstallNgrok(logFunc func(string)) error {
 		return fmt.Errorf("unsupported os: %s", runtime.GOOS)
 	}
 
-	// Download
 	if logFunc != nil {
 		logFunc(fmt.Sprintf("Downloading ngrok from %s...", url))
 	}
@@ -107,7 +101,6 @@ func InstallNgrok(logFunc func(string)) error {
 		return fmt.Errorf("download failed with status: %s", resp.Status)
 	}
 
-	// Create temp file
 	tmpFile, err := os.CreateTemp("", "ngrok-download-*"+ext)
 	if err != nil {
 		return err
@@ -120,10 +113,8 @@ func InstallNgrok(logFunc func(string)) error {
 		return err
 	}
 
-	// Rewind
 	tmpFile.Seek(0, 0)
 
-	// Extract
 	targetName := "ngrok"
 	if runtime.GOOS == "windows" {
 		targetName = "ngrok.exe"
@@ -133,7 +124,7 @@ func InstallNgrok(logFunc func(string)) error {
 	if ext == ".tgz" {
 		return untar(tmpFile, targetPath)
 	} else if ext == ".zip" {
-		// For zip we need a ReaderAt, os.File implements it
+
 		stat, _ := tmpFile.Stat()
 		return unzip(tmpFile, stat.Size(), targetPath)
 	} else {
@@ -160,7 +151,7 @@ func untar(r io.Reader, targetPath string) error {
 		}
 
 		if header.Typeflag == tar.TypeReg && header.Name == "ngrok" {
-			// Found it
+
 			outFile, err := os.Create(targetPath)
 			if err != nil {
 				return err

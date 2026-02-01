@@ -1,11 +1,11 @@
 <script>
-    /** @type {any} */
+     
     export let item;
-    /** @type {string} */
+     
     export let activeTab;
-    /** @type {Set<string>} */
+     
     export let installedIds;
-    /** @type {string | null} */
+     
     export let installingId;
 
     import { createEventDispatcher } from "svelte";
@@ -36,7 +36,7 @@
     class="bg-gray-900/40 border border-white/5 hover:border-indigo-500/30 rounded-xl p-4 transition-all group relative overflow-hidden flex flex-col"
 >
     <div class="flex gap-4 mb-3">
-        <!-- Icon -->
+        
         <div class="shrink-0">
             {#if item.icon_url}
                 <img
@@ -79,7 +79,7 @@
             {/if}
         </div>
 
-        <!-- Content -->
+        
         <div class="flex-1 min-w-0">
             <div class="flex justify-between items-start">
                 <h3 class="text-white font-bold truncate pr-2 text-sm">
@@ -135,7 +135,7 @@
         </div>
     </div>
 
-    <!-- Categories -->
+    
     <div class="flex flex-wrap gap-1 mb-4">
         {#each (item.categories || []).slice(0, 3) as cat}
             <span
@@ -153,7 +153,7 @@
 
     <slot name="versions"></slot>
 
-    <!-- Install Button -->
+    
     <div
         class="mt-auto flex justify-between items-center bg-black/20 -mx-4 -mb-4 px-4 py-2.5 border-t border-white/5"
     >

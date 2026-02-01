@@ -8,8 +8,6 @@ import (
 	"strings"
 )
 
-// Resolvers for complex version numbers
-
 func ResolveForgeVersion(mcVersion string) (string, error) {
 	resp, err := http.Get("https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json")
 	if err != nil {
@@ -24,7 +22,6 @@ func ResolveForgeVersion(mcVersion string) (string, error) {
 		return "", fmt.Errorf("failed to decode promotions: %v", err)
 	}
 
-	// Try "recommended" first, then "latest"
 	if ver, ok := promotions.Promos[mcVersion+"-recommended"]; ok {
 		return ver, nil
 	}
@@ -38,12 +35,11 @@ func ResolveForgeVersion(mcVersion string) (string, error) {
 func ResolveNeoForgeVersion(mcVersion string) (string, error) {
 	var prefix string
 	if len(mcVersion) > 2 && mcVersion[:2] == "1." {
-		prefix = mcVersion[2:] // "21.1" or "20.4"
+		prefix = mcVersion[2:]
 	} else {
 		return "", fmt.Errorf("unsupported mc version format: %s", mcVersion)
 	}
 
-	// Fetch metadata
 	resp, err := http.Get("https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml")
 	if err != nil {
 		return "", err
@@ -56,19 +52,17 @@ func ResolveNeoForgeVersion(mcVersion string) (string, error) {
 	}
 	sBody := string(body)
 
-	// Simple parsing using strings
 	parts := strings.Split(sBody, "<version>")
 	var bestVer string
 
 	for i := 1; i < len(parts); i++ {
-		// substring until </version>
+
 		end := strings.Index(parts[i], "</version>")
 		if end == -1 {
 			continue
 		}
 		ver := parts[i][:end]
 
-		// check if ver starts with prefix "21.1" etc.
 		if strings.HasPrefix(ver, prefix) {
 			bestVer = ver
 		}

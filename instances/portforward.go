@@ -13,8 +13,8 @@ import (
 )
 
 type TunnelConfig struct {
-	Provider string `json:"provider"` // "playit" or "ngrok"
-	Token    string `json:"token"`    // Secret key or auth token
+	Provider string `json:"provider"`
+	Token    string `json:"token"`
 }
 
 type TunnelStatus struct {
@@ -62,7 +62,6 @@ func (tm *TunnelManager) Start(provider, token string) error {
 		return fmt.Errorf("tunnel already running")
 	}
 
-	// Determine port from server.properties
 	port := GetServerPort(tm.InstanceDir)
 	portStr := fmt.Sprintf("%d", port)
 
@@ -72,14 +71,14 @@ func (tm *TunnelManager) Start(provider, token string) error {
 
 	var cmd *exec.Cmd
 	if provider == "playit" {
-		// playit --secret <token>
+
 		cmd = exec.Command("playit", "--secret", token)
 	} else if provider == "ngrok" {
-		// Check/Install ngrok
+
 		ngrokPath := GetNgrokPath()
 
 		if ngrokPath == "" {
-			// Release lock while installing so GetStatus isn't blocked!
+
 			tm.Mu.Unlock()
 
 			logFunc := func(msg string) {
@@ -90,11 +89,10 @@ func (tm *TunnelManager) Start(provider, token string) error {
 
 			logFunc("Ngrok not found. Installing...")
 			if err := InstallNgrok(logFunc); err != nil {
-				// Re-acquire lock to ensure safe return (though we return error immediately)
+
 				return fmt.Errorf("failed to install ngrok: %v", err)
 			}
 
-			// Re-acquire lock for the rest of setup
 			tm.Mu.Lock()
 
 			ngrokPath = GetNgrokPath()
@@ -105,7 +103,6 @@ func (tm *TunnelManager) Start(provider, token string) error {
 			tm.Status.Log += "Ngrok installed successfully.\n"
 		}
 
-		// ngrok tcp <port> --authtoken <token> --log=stdout
 		tm.Status.Log += fmt.Sprintf("Forwarding local port %s\n", portStr)
 		args := []string{"tcp", portStr, "--log=stdout"}
 		if token != "" {
@@ -117,7 +114,6 @@ func (tm *TunnelManager) Start(provider, token string) error {
 		return fmt.Errorf("unknown provider: %s", provider)
 	}
 
-	// Capture output to find address
 	stdout, _ := cmd.StdoutPipe()
 	stderr, _ := cmd.StderrPipe()
 
@@ -130,48 +126,42 @@ func (tm *TunnelManager) Start(provider, token string) error {
 	tm.Status.Running = true
 	tm.Status.Provider = provider
 	tm.Status.PublicAddress = "Starting..."
-	// Don't clear log, just append separator
-	tm.Status.Log += "\n--- Starting Tunnel ---\n"
-	tm.Mu.Unlock() // Unlock here, goroutines will lock as needed
 
-	// Monitor output in background
+	tm.Status.Log += "\n--- Starting Tunnel ---\n"
+	tm.Mu.Unlock()
+
 	go func() {
 		scanner := bufio.NewScanner(stdout)
 		for scanner.Scan() {
 			line := scanner.Text()
 			tm.Mu.Lock()
 			tm.Status.Log += line + "\n"
-			if len(tm.Status.Log) > 10000 { // Increased log size
+			if len(tm.Status.Log) > 10000 {
 				tm.Status.Log = tm.Status.Log[len(tm.Status.Log)-10000:]
 			}
-			// Parse address
-			if provider == "ngrok" {
-				// Standard TUI: Forwarding                    tcp://0.tcp.ngrok.io:12345 -> localhost:25565
-				// Log format: url=tcp://0.tcp.ngrok.io:12345
 
-				// Try log format first
+			if provider == "ngrok" {
+
 				reLog := regexp.MustCompile(`url=(tcp://[^ ]+)`)
 				if match := reLog.FindStringSubmatch(line); len(match) > 1 {
 					tm.Status.PublicAddress = match[1]
 				} else {
-					// Try TUI format
+
 					reTui := regexp.MustCompile(`(tcp://.*:\d+)`)
 					if match := reTui.FindString(line); match != "" {
 						tm.Status.PublicAddress = match
 					}
 				}
 			} else if provider == "playit" {
-				// Playit output varies, usually prints a claim URL or address
-				// Looking for .gl.joinmc.link or similar
+
 				if match, _ := regexp.MatchString(`.*\.gl\.joinmc\.link.*`, line); match {
-					tm.Status.PublicAddress = line // Simplified for now
+					tm.Status.PublicAddress = line
 				}
 			}
 			tm.Mu.Unlock()
 		}
 	}()
 
-	// Monitor stderr too
 	go func() {
 		scanner := bufio.NewScanner(stderr)
 		for scanner.Scan() {
@@ -185,7 +175,6 @@ func (tm *TunnelManager) Start(provider, token string) error {
 		}
 	}()
 
-	// Wait for exit
 	go func() {
 		cmd.Wait()
 		tm.Mu.Lock()
@@ -210,7 +199,6 @@ func (tm *TunnelManager) Stop() error {
 		tm.Cmd.Process.Kill()
 	}
 
-	// Wait logic handled by the goroutine above
 	return nil
 }
 
@@ -219,7 +207,7 @@ func (tm *TunnelManager) GetStatus() TunnelStatus {
 	defer tm.Mu.Unlock()
 
 	status := tm.Status
-	// Always return the saved config so UI can populate it
+
 	status.Config = tm.Config
 	return status
 }
@@ -228,7 +216,7 @@ func GetServerPort(instanceDir string) int {
 	path := filepath.Join(instanceDir, "server.properties")
 	file, err := os.Open(path)
 	if err != nil {
-		return 25565 // Default
+		return 25565
 	}
 	defer file.Close()
 
@@ -238,7 +226,7 @@ func GetServerPort(instanceDir string) int {
 		if len(line) > 0 && line[0] == '#' {
 			continue
 		}
-		// server-port=25565
+
 		if match, _ := regexp.MatchString(`^server-port=(\d+)`, line); match {
 			re := regexp.MustCompile(`^server-port=(\d+)`)
 			parts := re.FindStringSubmatch(line)

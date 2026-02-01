@@ -6,20 +6,17 @@ import (
 	"sync"
 )
 
-// Client interface for console consumers
 type ConsoleClient interface {
 	WriteMessage(messageType int, data []byte) error
 }
 
-// Manager controls a single server instance process
 type Manager struct {
 	cmd     *exec.Cmd
-	tailCmd *exec.Cmd // Command for tailing logs of detached process
+	tailCmd *exec.Cmd
 	stdin   io.WriteCloser
 	clients map[ConsoleClient]bool
 	mu      sync.Mutex
 
-	// Configuration
 	workDir      string
 	jarName      string
 	startCommand string

@@ -48,7 +48,7 @@ func (s *RCONServer) Start() error {
 		for {
 			conn, err := s.listener.Accept()
 			if err != nil {
-				// log.Printf("RCON Accept Error: %v", err)
+
 				return
 			}
 			go s.handleConnection(conn)
@@ -71,8 +71,7 @@ func (s *RCONServer) handleConnection(conn net.Conn) {
 	var instance *instances.Instance
 
 	for {
-		// Read Packet
-		// Size (4 bytes) little-endian
+
 		var size int32
 		if err := binary.Read(conn, binary.LittleEndian, &size); err != nil {
 			return
@@ -87,15 +86,13 @@ func (s *RCONServer) handleConnection(conn net.Conn) {
 			return
 		}
 
-		// Parse
 		id := int32(binary.LittleEndian.Uint32(payload[0:4]))
 		typ := int32(binary.LittleEndian.Uint32(payload[4:8]))
-		body := payload[8 : len(payload)-2] // Strip null terminators (2 bytes at end usually)
+		body := payload[8 : len(payload)-2]
 
-		// Handle
 		switch typ {
 		case SERVERDATA_AUTH:
-			// Password format: password#instanceID
+
 			parts := strings.SplitN(string(body), "#", 2)
 			password := parts[0]
 
@@ -107,10 +104,10 @@ func (s *RCONServer) handleConnection(conn net.Conn) {
 						instance = inst
 					}
 				}
-				// Auth Success Response: ID sent back
+
 				sendBoxPacket(conn, id, SERVERDATA_AUTH_RESPONSE, "")
 			} else {
-				// Auth Fail: -1
+
 				sendBoxPacket(conn, -1, SERVERDATA_AUTH_RESPONSE, "")
 				return
 			}
@@ -125,10 +122,8 @@ func (s *RCONServer) handleConnection(conn net.Conn) {
 				continue
 			}
 
-			// Exec
 			cmd := string(body)
-			// Wait 100ms for response. Most commands are fast.
-			// Ideally this would be configurable or smarter.
+
 			output, err := instance.Manager.ExecuteCommand(cmd, 100*time.Millisecond)
 			if err != nil {
 				sendBoxPacket(conn, id, SERVERDATA_RESPONSE_VALUE, fmt.Sprintf("Error: %v", err))
@@ -145,7 +140,6 @@ func (s *RCONServer) handleConnection(conn net.Conn) {
 func sendBoxPacket(conn net.Conn, id int32, typ int32, body string) {
 	buf := new(bytes.Buffer)
 
-	// Size = 4 (ID) + 4 (Type) + len(body) + 2 (Nulls)
 	size := int32(4 + 4 + len(body) + 2)
 
 	binary.Write(buf, binary.LittleEndian, size)

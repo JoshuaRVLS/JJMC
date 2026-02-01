@@ -21,26 +21,22 @@ func (v *VersionsManager) runBuildTools(version string, serverType string) error
 	workDir := v.manager.GetWorkDir()
 	buildDir := filepath.Join(workDir, "build-tools")
 
-	// 1. Determine Execution Mode (Docker vs Local)
 	useDocker := false
 	if path, err := exec.LookPath("docker"); err == nil && path != "" {
 		useDocker = true
 	}
 
-	// 2. Prerequisites Check (Local Only)
 	if !useDocker {
 		if _, err := exec.LookPath("git"); err != nil {
 			return fmt.Errorf("git is required for BuildTools but was not found in PATH")
 		}
 	}
 
-	// 3. Prepare Directory
 	if err := os.MkdirAll(buildDir, 0755); err != nil {
 		return fmt.Errorf("failed to create build dir: %v", err)
 	}
-	defer os.RemoveAll(buildDir) // Cleanup after build
+	defer os.RemoveAll(buildDir)
 
-	// 4. Download BuildTools
 	buildToolsUrl := "https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar"
 	buildToolsPath := filepath.Join(buildDir, "BuildTools.jar")
 
@@ -49,7 +45,6 @@ func (v *VersionsManager) runBuildTools(version string, serverType string) error
 		return fmt.Errorf("failed to download BuildTools: %v", err)
 	}
 
-	// 5. Run BuildTools
 	var cmd *exec.Cmd
 
 	if useDocker {
@@ -60,8 +55,6 @@ func (v *VersionsManager) runBuildTools(version string, serverType string) error
 			return fmt.Errorf("failed to get absolute path: %v", err)
 		}
 
-		// Docker Execution: We use an image that contains BOTH Java and Git.
-		// maven:3.9-eclipse-temurin-21 contains git and openjdk21.
 		dockerImage := "maven:3.9-eclipse-temurin-21"
 
 		cmd = exec.Command("docker", "run", "--rm",
@@ -72,12 +65,10 @@ func (v *VersionsManager) runBuildTools(version string, serverType string) error
 	} else {
 		v.manager.Broadcast(fmt.Sprintf("Running BuildTools for %s %s (Local)...", serverType, version))
 
-		// Local Execution
 		cmd = exec.Command("java", "-jar", "BuildTools.jar", "--rev", version)
 		cmd.Dir = buildDir
 	}
 
-	// Stream/Capture Output
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("BuildTools failed: %v\nOutput: %s", err, string(output))
@@ -85,7 +76,6 @@ func (v *VersionsManager) runBuildTools(version string, serverType string) error
 
 	v.manager.Broadcast("BuildTools finished successfully.")
 
-	// 6. Find and Move Artifact
 	entries, err := os.ReadDir(buildDir)
 	if err != nil {
 		return fmt.Errorf("failed to read build dir: %v", err)
@@ -102,7 +92,7 @@ func (v *VersionsManager) runBuildTools(version string, serverType string) error
 	}
 
 	if foundJar == "" {
-		// Fallback: search for any jar starting with type
+
 		for _, entry := range entries {
 			name := entry.Name()
 			if !entry.IsDir() && strings.HasPrefix(name, serverType) && strings.HasSuffix(name, ".jar") {
@@ -116,7 +106,6 @@ func (v *VersionsManager) runBuildTools(version string, serverType string) error
 		return fmt.Errorf("could not locate installed server jar in %s", buildDir)
 	}
 
-	// Move to root as server.jar
 	srcPath := filepath.Join(buildDir, foundJar)
 	destPath := filepath.Join(workDir, "server.jar")
 

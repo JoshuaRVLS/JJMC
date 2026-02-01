@@ -3,13 +3,13 @@
     import { HardDrive, Download, Box, ArrowRight } from "lucide-svelte";
     import { createEventDispatcher } from "svelte";
 
-    /** @type {boolean} */
+     
     export let importMode;
-    /** @type {string} */
+     
     export let sourcePath;
-    /** @type {string} */
+     
     export let type;
-    /** @type {Array<any>} */
+     
     export let typeOptions;
     export let showDirPicker = false;
 

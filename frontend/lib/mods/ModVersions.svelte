@@ -1,11 +1,11 @@
 <script>
-    /** @type {any} */
+     
     export let item;
-    /** @type {Array<any>} */
+     
     export let versionsList;
-    /** @type {boolean} */
+     
     export let loadingVersions;
-    /** @type {string} */
+     
     export let activeTab;
 
     import { createEventDispatcher } from "svelte";
@@ -15,10 +15,7 @@
         dispatch("close");
     }
 
-    /**
-     * @param {string} projectId
-     * @param {string} versionId
-     */
+     
     function install(projectId, versionId) {
         dispatch("install", { projectId, versionId });
     }
@@ -39,7 +36,7 @@
         on:click|stopPropagation
         on:keydown|stopPropagation
     >
-        <!-- Header -->
+        
         <div
             class="p-4 border-b border-white/10 flex justify-between items-center bg-black/20 rounded-t-2xl"
         >
@@ -70,7 +67,7 @@
             </button>
         </div>
 
-        <!-- Version List -->
+        
         <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
             {#if loadingVersions}
                 <div
@@ -183,7 +180,7 @@
             {/if}
         </div>
 
-        <!-- Footer -->
+        
         <div
             class="p-3 bg-black/40 text-center text-[10px] text-gray-500 border-t border-white/5 rounded-b-2xl"
         >

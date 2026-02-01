@@ -8,8 +8,7 @@ import (
 )
 
 func (v *VersionsManager) InstallPaper(version string) error {
-	// PaperMC API v2
-	// 1. Get latest build
+
 	baseUrl := fmt.Sprintf("https://api.papermc.io/v2/projects/paper/versions/%s/builds", version)
 	resp, err := http.Get(baseUrl)
 	if err != nil {
@@ -41,12 +40,10 @@ func (v *VersionsManager) InstallPaper(version string) error {
 		return fmt.Errorf("no builds found for paper %s", version)
 	}
 
-	// Last build is usually the latest
 	latestBuild := result.Builds[len(result.Builds)-1]
 	buildNum := latestBuild.Build
 	fileName := latestBuild.Downloads.Application.Name
 
-	// 2. Download
 	downloadUrl := fmt.Sprintf("https://api.papermc.io/v2/projects/paper/versions/%s/builds/%d/downloads/%s",
 		version, buildNum, fileName)
 

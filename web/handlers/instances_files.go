@@ -11,7 +11,7 @@ func (h *InstanceHandler) ListFiles(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
 	}
-	path := c.Query("path", ".") // Default to root
+	path := c.Query("path", ".")
 	files, err := inst.ListFiles(path)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
@@ -148,12 +148,9 @@ func (h *InstanceHandler) Decompress(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
 	}
 
-	// Default dest to current dir if empty, or handle in backend
 	if payload.Destination == "" {
-		payload.Destination = "." // Extract relative to instance root, essentially "here" if logic handles it
-		// But DecompressFile expects relative path. "." is fine.
-		// Wait, if I am in "plugins/", I want to extract there?
-		// Frontend should pass correct relative destination path (e.g. "plugins/")
+		payload.Destination = "."
+
 	}
 
 	if err := inst.DecompressFile(payload.File, payload.Destination); err != nil {

@@ -24,11 +24,10 @@ type ProjectVersion struct {
 	Dependencies []struct {
 		VersionID      string `json:"version_id"`
 		ProjectID      string `json:"project_id"`
-		DependencyType string `json:"dependency_type"` // "required", "optional"
+		DependencyType string `json:"dependency_type"`
 	} `json:"dependencies"`
 }
 
-// GetModVersions fetches compatible versions for a project
 func (inst *Instance) GetModVersions(projectId string, resourceType string) ([]interface{}, error) {
 	if resourceType == "plugin" {
 		client := NewSpigetClient()
@@ -45,21 +44,19 @@ func (inst *Instance) GetModVersions(projectId string, resourceType string) ([]i
 			result = append(result, map[string]interface{}{
 				"id":             fmt.Sprintf("%d", v.ID),
 				"name":           v.Name,
-				"version_number": v.Name, // Spiget "name" is often the version string
+				"version_number": v.Name,
 				"date_published": v.Date * 1000,
 			})
 		}
 		return result, nil
 	}
 
-	// Modrinth
 	loader := inst.Type
 	mcVersion := inst.Version
 
 	u, _ := url.Parse(fmt.Sprintf("https://api.modrinth.com/v2/project/%s/version", projectId))
 	q := u.Query()
-	// Filter by game version if possible, but user might want to see all?
-	// Usually better to show compatible ones.
+
 	q.Set("game_versions", fmt.Sprintf("[\"%s\"]", mcVersion))
 
 	if loader != "vanilla" && loader != "" && loader != "spigot" && loader != "paper" {
@@ -86,9 +83,9 @@ func (inst *Instance) GetModVersions(projectId string, resourceType string) ([]i
 	for _, v := range versions {
 		result = append(result, map[string]interface{}{
 			"id":             v.ID,
-			"name":           v.VersionNumber, // or Name
+			"name":           v.VersionNumber,
 			"version_number": v.VersionNumber,
-			"date_published": v.DatePublished, // Modrinth has this field, need to add to struct if missing
+			"date_published": v.DatePublished,
 			"files":          v.Files,
 		})
 	}

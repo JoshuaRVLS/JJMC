@@ -17,7 +17,7 @@
             });
 
             if (res.ok) {
-                window.location.href = "/"; // Force reload to refresh layout state
+                window.location.href = "/";  
             } else {
                 const data = await res.json();
                 addToast(data.error || "Login failed", "error");
@@ -29,8 +29,8 @@
         }
     }
 
-    // Check if already logged in? The layout should handle it, preventing access to login if authorized.
-    // But for safety/UX we can check status here too.
+     
+     
     onMount(async () => {
         const res = await fetch("/api/auth/status");
         if (res.ok) {

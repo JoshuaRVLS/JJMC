@@ -13,7 +13,7 @@ import (
 
 type AuthManager struct {
 	DB       *sql.DB
-	Sessions map[string]int64 // Token -> Expiry
+	Sessions map[string]int64
 	LaunchID string
 	mu       sync.RWMutex
 }
@@ -24,7 +24,6 @@ func NewAuthManager(gormDB *gorm.DB) *AuthManager {
 		log.Fatal(err)
 	}
 
-	// Initialize Table
 	query := `
 	CREATE TABLE IF NOT EXISTS auth (
 		id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -65,7 +64,7 @@ func (am *AuthManager) VerifyPassword(password string) bool {
 	var hash string
 	err := am.DB.QueryRow("SELECT password_hash FROM auth WHERE id = 1").Scan(&hash)
 	if err != nil {
-		return false // No password set or error
+		return false
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
@@ -76,7 +75,7 @@ func (am *AuthManager) CreateSession() string {
 	token := uuid.New().String()
 	am.mu.Lock()
 	defer am.mu.Unlock()
-	// 24 hour session
+
 	am.Sessions[token] = time.Now().Add(24 * time.Hour).Unix()
 	return token
 }

@@ -10,7 +10,7 @@ type Template struct {
 }
 
 type InstallStep struct {
-	Type    string            `json:"type"` // "download", "command", "unzip", "move"
+	Type    string            `json:"type"`
 	Options map[string]string `json:"options"`
 }
 

@@ -10,20 +10,17 @@ import (
 	"strings"
 )
 
-// InstallModpack downloads a modpack and installs its contents
 func (inst *Instance) InstallModpack(projectId string) error {
 	ver, err := inst.getCompatibleVersion(projectId)
 	if err != nil {
 		return err
 	}
 
-	// 1. Reset Mods
 	modsDir := filepath.Join(inst.Directory, "mods")
 	inst.Manager.Broadcast("Resetting mods directory...")
 	os.RemoveAll(modsDir)
 	os.MkdirAll(modsDir, 0755)
 
-	// 2. Download .mrpack
 	var mrpackUrl string
 	for _, f := range ver.Files {
 		if strings.HasSuffix(f.Filename, ".mrpack") {
@@ -42,7 +39,6 @@ func (inst *Instance) InstallModpack(projectId string) error {
 	}
 	defer os.Remove(packPath)
 
-	// 3. Read Index
 	inst.Manager.Broadcast("Parsing modpack...")
 	r, err := zip.OpenReader(packPath)
 	if err != nil {
@@ -80,7 +76,6 @@ func (inst *Instance) InstallModpack(projectId string) error {
 	}
 	rc.Close()
 
-	// 4. Download files
 	totalFiles := len(index.Files)
 	for i, f := range index.Files {
 		if len(f.Downloads) == 0 {
@@ -96,7 +91,6 @@ func (inst *Instance) InstallModpack(projectId string) error {
 		}
 	}
 
-	// 5. Overrides
 	for _, f := range r.File {
 		if strings.HasPrefix(f.Name, "overrides/") {
 			relPath := strings.TrimPrefix(f.Name, "overrides/")

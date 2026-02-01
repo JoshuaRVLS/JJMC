@@ -3,32 +3,23 @@
     import { addToast } from "$lib/stores/toast";
     import CodeEditor from "$lib/components/CodeEditor.svelte";
 
-    /** @type {string} */
+     
     export let instanceId;
 
-    /**
-     * @typedef {Object} Property
-     * @property {string} key
-     * @property {string} value
-     * @property {string} type
-     * @property {string} originalValue
-     */
+     
 
-    /** @type {Property[]} */
+     
     let properties = [];
     let loading = true;
     let isRawMode = false;
     let rawContent = "";
     let searchQuery = "";
 
-    // Maintain raw content syncing
+     
     let originalRawContent = "";
 
-    // Helper to determine input type
-    /**
-     * @param {string} key
-     * @param {string} value
-     */
+     
+     
     function getInputType(key, value) {
         if (value === "true" || value === "false") return "boolean";
         if (
@@ -52,7 +43,7 @@
                 originalRawContent = text;
                 parseProperties(text);
             } else {
-                // If not found, maybe just empty or show error
+                 
                 if (res.status === 404) {
                     addToast("server.properties not found", "error");
                 } else {
@@ -67,10 +58,10 @@
         }
     }
 
-    /** @param {string} text */
+     
     function parseProperties(text) {
         const lines = text.split("\n");
-        /** @type {Property[]} */
+         
         const parsed = [];
 
         lines.forEach((line) => {
@@ -90,7 +81,7 @@
             }
         });
 
-        // Ensure RCON properties exist
+         
         const rconProps = [
             { key: "enable-rcon", value: "false" },
             { key: "rcon.port", value: "25575" },
@@ -113,11 +104,11 @@
     }
 
     function syncToRaw() {
-        // Reconstruct raw content from properties
-        // We try to preserve the header from original if possible, removing old props
-        // But for simplicity and correctness, we generate a fresh structure
-        // A robust solution would parse the original AST and inject values.
-        // Here we just regenerate.
+         
+         
+         
+         
+         
 
         let content =
             "#Minecraft server properties\n#" + new Date().toISOString() + "\n";
@@ -128,16 +119,16 @@
     }
 
     function syncToGui() {
-        // Parse rawContent content back to properties
+         
         parseProperties(rawContent);
     }
 
     async function saveProperties() {
-        // Sync current View to Payload
+         
         let contentToSend = "";
         if (isRawMode) {
             contentToSend = rawContent;
-            // efficient: also sync back to GUI state
+             
             syncToGui();
         } else {
             syncToRaw();
@@ -179,7 +170,7 @@
 <div
     class="h-full flex flex-col bg-gray-900/50 rounded-xl overflow-hidden border border-white/5"
 >
-    <!-- Toolbar -->
+    
     <div
         class="flex items-center justify-between px-4 py-3 bg-white/5 border-b border-white/5 gap-4"
     >
@@ -245,7 +236,7 @@
         </button>
     </div>
 
-    <!-- Scrollable Content -->
+    
     <div class="flex-1 overflow-y-auto relative">
         {#if loading}
             <div class="flex items-center justify-center h-full text-gray-500">

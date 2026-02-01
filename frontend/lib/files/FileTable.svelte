@@ -2,16 +2,16 @@
     import { Loader2, Folder, File } from "lucide-svelte";
     import { createEventDispatcher } from "svelte";
 
-    /** @type {Array<any>} */
+     
     export let files;
-    /** @type {boolean} */
+     
     export let loading;
-    /** @type {Set<string>} */
+     
     export let selectedFiles;
 
     const dispatch = createEventDispatcher();
 
-    /** @param {number} bytes */
+     
     function formatSize(bytes) {
         if (bytes === 0) return "0 B";
         const k = 1024;
@@ -20,7 +20,7 @@
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
     }
 
-    /** @param {number | string} ms */
+     
     function formatDate(ms) {
         return new Date(ms).toLocaleString();
     }

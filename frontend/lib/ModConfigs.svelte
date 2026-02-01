@@ -3,21 +3,15 @@
     import { addToast } from "$lib/stores/toast";
     import CodeEditor from "$lib/components/CodeEditor.svelte";
 
-    /** @type {string} */
+     
     export let instanceId;
 
-    /**
-     * @typedef {Object} ConfigFile
-     * @property {string} name
-     * @property {number} size
-     * @property {boolean} isDir
-     * @property {string} [fullPath]
-     */
+     
 
-    /** @type {ConfigFile[]} */
+     
     let files = [];
     let loading = false;
-    /** @type {ConfigFile | null} */
+     
     let viewingFile = null;
     let fileContent = "";
     let query = "";
@@ -25,14 +19,14 @@
     async function loadConfigs() {
         loading = true;
         try {
-            // We specifically target the 'config' directory
+             
             const res = await fetch(
                 `/api/instances/${instanceId}/files?path=config`,
             );
             if (res.ok) {
                 files = await res.json();
             } else {
-                // If config dir doesn't exist, it might be empty
+                 
                 files = [];
             }
         } catch (e) {
@@ -43,9 +37,9 @@
         }
     }
 
-    /** @param {ConfigFile} file */
+     
     async function openFile(file) {
-        if (file.isDir) return; // Only files for now in configs view
+        if (file.isDir) return;  
 
         try {
             const path = `config/${file.name}`;
@@ -90,7 +84,7 @@
         }
     }
 
-    /** @param {number} bytes */
+     
     function formatSize(bytes) {
         if (bytes === 0) return "0 B";
         const k = 1024;
@@ -103,8 +97,8 @@
         (f) => !f.isDir && f.name.toLowerCase().includes(query.toLowerCase()),
     );
 
-    // Determine language from extension
-    /** @type {"json" | "toml" | "properties"} */
+     
+     
     let language = "json";
 
     $: if (viewingFile) {
@@ -182,7 +176,7 @@
         </div>
     {:else}
         <div class="flex flex-col gap-4 h-full">
-            <!-- Search -->
+            
             <div class="relative">
                 <input
                     type="text"
@@ -205,7 +199,7 @@
                 </svg>
             </div>
 
-            <!-- List -->
+            
             <div
                 class="flex-1 bg-gray-900/50 rounded-xl border border-white/5 overflow-hidden flex flex-col"
             >

@@ -7,7 +7,7 @@
 
     let loading = false;
     let config = {
-        provider: "playit", // 'playit' or 'ngrok'
+        provider: "playit",  
         token: "",
     };
 
@@ -19,7 +19,7 @@
         config: { provider: "", token: "" },
     };
 
-    /** @type {ReturnType<typeof setInterval> | undefined} */
+     
     let pollInterval;
 
     async function loadStatus() {
@@ -28,10 +28,10 @@
             if (res.ok) {
                 status = await res.json();
 
-                // Load saved config if we have it
+                 
                 if (status.config) {
                     if (status.config.provider) {
-                        // Only override if not already running (or to sync state)
+                         
                         if (!config.provider || !status.running) {
                             config.provider = status.config.provider;
                         }
@@ -52,7 +52,7 @@
 
         try {
             if (status.running) {
-                // Stop
+                 
                 const res = await fetch(
                     `/api/instances/${instanceId}/tunnel/stop`,
                     { method: "POST" },
@@ -60,9 +60,9 @@
                 if (!res.ok) throw await res.text();
                 addToast("Tunnel stopped", "success");
             } else {
-                // Start
+                 
                 if (!config.token && config.provider === "playit") {
-                    // Ngrok might not need token if configured globally, but playit usually does via CLI
+                     
                     return addToast("Please enter a token/secret", "error");
                 }
 
@@ -123,7 +123,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- Configuration -->
+            
             <div class="space-y-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-400 mb-2"
@@ -203,7 +203,7 @@
                 </div>
             </div>
 
-            <!-- Status -->
+            
             <div
                 class="bg-black/40 rounded-xl border border-white/5 p-4 flex flex-col min-h-[300px]"
             >
@@ -255,7 +255,7 @@
 </div>
 
 <style>
-    /* Custom Scrollbar */
+     
     .custom-scrollbar::-webkit-scrollbar {
         width: 6px;
     }

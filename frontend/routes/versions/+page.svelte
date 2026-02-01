@@ -1,13 +1,7 @@
 <script>
-    /**
-     * @typedef {Object} Version
-     * @property {string} name
-     * @property {string} type
-     * @property {string} version
-     * @property {boolean} installed
-     */
+     
 
-    /** @type {Version[]} */
+     
     let versions = [
         {
             name: "Fabric 1.21.1",
@@ -19,7 +13,7 @@
     let activeVersion = "None";
     let isInstalling = false;
 
-    /** @param {Version} v */
+     
     async function install(v) {
         if (isInstalling) return;
         isInstalling = true;
@@ -36,13 +30,13 @@
                 alert("Install failed");
             }
         } catch (e) {
-            alert("Error: " + /** @type {Error} */ (e).message);
+            alert("Error: " +   (e).message);
         } finally {
             isInstalling = false;
         }
     }
 
-    /** @param {Version} v */
+     
     function select(v) {
         activeVersion = v.name;
     }

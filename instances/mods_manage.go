@@ -10,7 +10,6 @@ import (
 	"strings"
 )
 
-// InstallMod downloads the latest compatible version of a mod
 func (inst *Instance) InstallMod(projectId string, resourceType string, versionId string) error {
 	if resourceType == "plugin" {
 		client := NewSpigetClient()
@@ -39,7 +38,7 @@ func (inst *Instance) InstallMod(projectId string, resourceType string, versionI
 		targetPath := filepath.Join(pluginsDir, fileName)
 
 		downloadUrl := client.GetDownloadURL(id)
-		// If versionId is provided, use specific version URL
+
 		if versionId != "" {
 			var vid int
 			if _, err := fmt.Sscanf(versionId, "%d", &vid); err == nil {
@@ -54,7 +53,6 @@ func (inst *Instance) InstallMod(projectId string, resourceType string, versionI
 			return err
 		}
 
-		// Update installed_plugins.json
 		metaPath := filepath.Join(inst.Directory, "installed_plugins.json")
 		var plugins []InstalledPlugin
 		if data, err := os.ReadFile(metaPath); err == nil {
@@ -82,12 +80,11 @@ func (inst *Instance) InstallMod(projectId string, resourceType string, versionI
 		return os.WriteFile(metaPath, data, 0644)
 	}
 
-	// Modrinth
 	var ver *ProjectVersion
 	var err error
 
 	if versionId != "" {
-		// Get specific version
+
 		u := fmt.Sprintf("https://api.modrinth.com/v2/version/%s", versionId)
 		resp, err := http.Get(u)
 		if err != nil {
@@ -102,7 +99,7 @@ func (inst *Instance) InstallMod(projectId string, resourceType string, versionI
 			return err
 		}
 	} else {
-		// Get latest compatible
+
 		ver, err = inst.getCompatibleVersion(projectId)
 		if err != nil {
 			return err
@@ -153,10 +150,9 @@ func (inst *Instance) UninstallMod(projectId string, resourceType string) error 
 		}
 
 		if filename != "" {
-			// Remove file
+
 			os.Remove(filepath.Join(inst.Directory, "plugins", filename))
 
-			// Update metadata
 			data, _ := json.MarshalIndent(newPlugins, "", "  ")
 			os.WriteFile(metaPath, data, 0644)
 			return nil
@@ -164,15 +160,12 @@ func (inst *Instance) UninstallMod(projectId string, resourceType string) error 
 		return fmt.Errorf("plugin not found in metadata")
 	}
 
-	// Modrinth uninstall logic (future/stub)
-	// For now just error or ignored as user only asked for Spigot text
 	return fmt.Errorf("uninstall not supported for this type yet")
 }
 
 func (inst *Instance) GetInstalledMods() ([]string, error) {
 	var ids []string
 
-	// 1. Check for installed plugins (Spigot/Paper/Bukkit)
 	metaPath := filepath.Join(inst.Directory, "installed_plugins.json")
 	if _, err := os.Stat(metaPath); err == nil {
 		var plugins []InstalledPlugin
@@ -184,7 +177,6 @@ func (inst *Instance) GetInstalledMods() ([]string, error) {
 		}
 	}
 
-	// 2. Check for installed mods (Modrinth)
 	modsDir := filepath.Join(inst.Directory, "mods")
 	files, err := os.ReadDir(modsDir)
 	if err == nil {
@@ -216,7 +208,7 @@ func (inst *Instance) GetInstalledMods() ([]string, error) {
 					}
 					if err := json.NewDecoder(resp.Body).Decode(&result); err == nil {
 						installed := make(map[string]bool)
-						// Add existing plugin IDs to map to prevent duplicates if any overlap (unlikely)
+
 						for _, id := range ids {
 							installed[id] = true
 						}

@@ -5,23 +5,16 @@
 
     import { onDestroy } from "svelte";
 
-    /**
-     * @typedef {Object} Instance
-     * @property {string} id
-     * @property {string} name
-     * @property {string} type
-     * @property {string} version
-     * @property {string} status
-     */
+     
 
-    /** @type {Instance[]} */
+     
     let instances = [];
     let loading = true;
-    /** @type {ReturnType<typeof setInterval> | undefined} */
+     
     let pollInterval;
 
     async function loadInstances() {
-        // Don't set loading=true on subsequent polls to avoid flickering
+         
         if (!instances.length) loading = true;
 
         try {
@@ -45,7 +38,7 @@
         if (pollInterval) clearInterval(pollInterval);
     });
 
-    /** @param {string} id */
+     
     async function deleteInstance(id) {
         const confirmed = await askConfirm({
             title: "Delete Instance",
@@ -69,16 +62,13 @@
             }
         } catch (e) {
             addToast(
-                "Error deleting instance: " + /** @type {Error} */ (e).message,
+                "Error deleting instance: " +   (e).message,
                 "error",
             );
         }
     }
 
-    /**
-     * @param {string} id
-     * @param {string} action
-     */
+     
     async function triggerInstanceAction(id, action) {
         try {
             const res = await fetch(`/api/instances/${id}/${action}`, {
@@ -86,7 +76,7 @@
             });
             if (!res.ok) throw new Error(await res.text());
             addToast(`Instance ${action}ed successfully`, "success");
-            // Refresh list to update status UI immediately (and let poll pick it up)
+             
             loadInstances();
         } catch (e) {
             const message = e instanceof Error ? e.message : String(e);
@@ -129,7 +119,7 @@
     <div
         class="bg-gray-900/60 backdrop-blur-xl border border-white/5 rounded-2xl overflow-hidden shadow-xl flex-1 flex flex-col min-h-0"
     >
-        <!-- Table Header -->
+        
         <div
             class="grid grid-cols-12 gap-4 px-6 py-4 border-b border-white/5 bg-white/5 text-xs font-bold text-gray-400 uppercase tracking-wider"
         >
@@ -140,7 +130,7 @@
             <div class="col-span-2 text-right">Actions</div>
         </div>
 
-        <!-- Table Body -->
+        
         <div class="overflow-y-auto flex-1 p-2 space-y-1">
             {#if loading}
                 <div
@@ -243,7 +233,7 @@
                         <div
                             class="col-span-2 flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity"
                         >
-                            <!-- Start/Stop Button -->
+                            
                             {#if inst.status === "Online" || inst.status === "Starting"}
                                 <button
                                     on:click|stopPropagation={() =>

@@ -20,10 +20,9 @@ func (im *InstanceManager) CreateInstance(id, name, serverType, version string) 
 		return nil, fmt.Errorf("instance with id %s already exists", id)
 	}
 
-	// Check if type matches a template
 	if im.TemplateMgr != nil {
 		if tmpl, ok := im.TemplateMgr.GetTemplate(serverType); ok {
-			// Pre-save to DB to establish ID/Dir
+
 			model := models.InstanceModel{
 				ID:           id,
 				Name:         name,
@@ -53,7 +52,7 @@ func (im *InstanceManager) CreateInstance(id, name, serverType, version string) 
 					Type:         serverType,
 					Version:      version,
 					MaxMemory:    2048,
-					JarFile:      "server.jar", // Default, might be updated by template
+					JarFile:      "server.jar",
 					StartCommand: tmpl.Run.Command,
 				},
 				Manager: mgr,
@@ -67,7 +66,6 @@ func (im *InstanceManager) CreateInstance(id, name, serverType, version string) 
 
 			im.instances[id] = instance
 
-			// Execute Template Install
 			go func() {
 				if err := instance.InstallFromTemplate(tmpl, version); err != nil {
 					fmt.Printf("Failed to install template for %s: %v\n", id, err)
@@ -83,10 +81,8 @@ func (im *InstanceManager) CreateInstance(id, name, serverType, version string) 
 		return nil, err
 	}
 
-	// Create eula.txt automatically
 	os.WriteFile(filepath.Join(dir, "eula.txt"), []byte("eula=true"), 0644)
 
-	// Save to DB
 	model := models.InstanceModel{
 		ID:        id,
 		Name:      name,
@@ -135,12 +131,10 @@ func (im *InstanceManager) DeleteInstance(id string) error {
 		return fmt.Errorf("cannot delete running instance")
 	}
 
-	// Delete from DB
 	if err := database.DB.Delete(&models.InstanceModel{}, "id = ?", id).Error; err != nil {
 		return fmt.Errorf("failed to delete from db: %v", err)
 	}
 
-	// Remove files
 	os.RemoveAll(inst.Directory)
 	delete(im.instances, id)
 	return nil
@@ -155,23 +149,20 @@ func (im *InstanceManager) ImportInstance(id, name, sourcePath string) (*Instanc
 	}
 
 	dir := filepath.Join(im.baseDir, id)
-	// Check if source path exists
+
 	info, err := os.Stat(sourcePath)
 	if err != nil || !info.IsDir() {
 		return nil, fmt.Errorf("invalid source path: %s", sourcePath)
 	}
 
-	// Create dir
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, err
 	}
 
-	// Copy files
 	if err := copyDir(sourcePath, dir); err != nil {
 		return nil, fmt.Errorf("failed to copy files: %v", err)
 	}
 
-	// Save to DB
 	model := models.InstanceModel{
 		ID:        id,
 		Name:      name,
@@ -199,7 +190,7 @@ func (im *InstanceManager) ImportInstance(id, name, sourcePath string) (*Instanc
 	}
 
 	instance.Manager.SetWorkDir(dir)
-	// Try to find server jar?
+
 	jars, _ := filepath.Glob(filepath.Join(dir, "*.jar"))
 	jarName := "server.jar"
 	if len(jars) > 0 {
@@ -208,7 +199,6 @@ func (im *InstanceManager) ImportInstance(id, name, sourcePath string) (*Instanc
 	instance.Manager.SetJar(jarName)
 	instance.JarFile = jarName
 
-	// Update DB with detected jar
 	database.DB.Model(&models.InstanceModel{}).Where("id = ?", id).Update("jar_file", jarName)
 
 	instance.Manager.SetMaxMemory(2048)
@@ -232,7 +222,6 @@ func copyDir(src, dst string) error {
 			return os.MkdirAll(destPath, info.Mode())
 		}
 
-		// Copy file
 		srcFile, err := os.Open(path)
 		if err != nil {
 			return err

@@ -13,40 +13,34 @@ import (
 )
 
 func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManager *instances.InstanceManager) {
-	// Middleware
+
 	app.Use(cors.New())
 	app.Use(compress.New())
 	app.Use(middleware.AuthMiddleware(authManager))
 
-	// Handlers
 	authHandler := handlers.NewAuthHandler(authManager)
 	systemHandler := handlers.NewSystemHandler()
 	instHandler := handlers.NewInstanceHandler(instanceManager)
 
-	// Auth Routes
 	authGroup := app.Group("/api/auth")
 	authGroup.Get("/status", authHandler.GetStatus)
 	authGroup.Post("/setup", authHandler.Setup)
 	authGroup.Post("/login", authHandler.Login)
 	authGroup.Post("/logout", authHandler.Logout)
 
-	// System Routes
 	sysGroup := app.Group("/api/system")
 	sysGroup.Get("/files", systemHandler.GetFiles)
 	sysGroup.Get("/uuid", systemHandler.GetUUID)
 
-	// Modrinth Helper Routes (System-wide)
 	verGroup := app.Group("/api/versions")
 	verGroup.Get("/game", systemHandler.GetGameVersions)
 	verGroup.Get("/loader", systemHandler.GetLoaders)
 
-	// Instance Routes
 	instGroup := app.Group("/api/instances")
 	instGroup.Get("/", instHandler.List)
 	instGroup.Post("/", instHandler.Create)
 	instGroup.Post("/import", instHandler.Import)
 
-	// Single Instance Routes
 	inst := instGroup.Group("/:id")
 	inst.Get("/", instHandler.Get)
 	inst.Delete("/", instHandler.Delete)
@@ -58,7 +52,6 @@ func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManag
 	inst.Post("/command", instHandler.Command)
 	inst.Post("/install", instHandler.Install)
 
-	// Instance Files
 	files := inst.Group("/files")
 	files.Get("/", instHandler.ListFiles)
 	files.Get("/content", instHandler.ReadFile)
@@ -69,7 +62,6 @@ func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManag
 	files.Post("/compress", instHandler.Compress)
 	files.Post("/decompress", instHandler.Decompress)
 
-	// Instance Mods
 	mods := inst.Group("/mods")
 	mods.Get("/", instHandler.GetInstalledMods)
 	mods.Post("/", instHandler.InstallMod)
@@ -77,7 +69,6 @@ func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManag
 	mods.Get("/search", instHandler.SearchMods)
 	mods.Get("/:projectId/versions", instHandler.GetModVersions)
 
-	// Instance Tunnel
 	tunnel := inst.Group("/tunnel")
 	tunnel.Get("/", instHandler.GetTunnelStatus)
 	tunnel.Post("/start", instHandler.StartTunnel)
@@ -85,7 +76,6 @@ func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManag
 
 	inst.Post("/modpacks", instHandler.InstallModpack)
 
-	// WebSocket
 	app.Use("/ws", func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {
 			c.Locals("allowed", true)
@@ -112,6 +102,5 @@ func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManag
 		}
 	}))
 
-	// Backup Routes
 	RegisterBackupRoutes(app, authManager, instanceManager)
 }

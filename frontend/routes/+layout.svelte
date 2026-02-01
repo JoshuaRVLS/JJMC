@@ -24,17 +24,11 @@
 		Globe,
 	} from "lucide-svelte";
 
-	/**
-	 * @typedef {Object} Instance
-	 * @property {string} id
-	 * @property {string} name
-	 * @property {string} type
-	 * @property {string} status
-	 */
+	 
 
-	/** @type {Instance[]} */
+	 
 	let instances = [];
-	/** @type {ReturnType<typeof setInterval> | undefined} */
+	 
 	let pollInterval;
 
 	async function loadInstances() {
@@ -48,21 +42,21 @@
 		}
 	}
 
-	// Auth State
+	 
 	let isAuthChecked = false;
 
-	// Launch ID for auto-reload
+	 
 	let storedLaunchId = null;
 
 	async function checkAuth() {
 		try {
-			// Add timestamp to prevent caching
+			 
 			const res = await fetch("/api/auth/status?t=" + Date.now());
 			if (res.ok) {
 				const status = await res.json();
 				const path = window.location.pathname;
 
-				// Check Launch ID
+				 
 				if (storedLaunchId === null) {
 					storedLaunchId = status.launchId;
 				} else if (storedLaunchId !== status.launchId) {
@@ -76,23 +70,23 @@
 						await goto("/setup");
 					}
 				} else if (!status.authenticated) {
-					// Check if we are already on a public page to avoid loop
+					 
 					if (path !== "/login" && path !== "/setup") {
 						await goto("/login");
 					}
 				} else {
-					// Authenticated
+					 
 					if (path === "/login" || path === "/setup") {
 						await goto("/");
 					}
-					// Only load instances if authenticated
+					 
 					loadInstances();
 
-					// Setup polling if not already set
+					 
 					if (!pollInterval) {
 						pollInterval = setInterval(() => {
 							loadInstances();
-							checkAuth(); // Poll auth/status for version check
+							checkAuth();  
 						}, 5000);
 					}
 				}
@@ -109,7 +103,7 @@
 	onMount(() => {
 		console.log("JJMC Frontend Loaded - Force Refresh Check");
 
-		// Force unregister any service workers
+		 
 		if ("serviceWorker" in navigator) {
 			navigator.serviceWorker
 				.getRegistrations()
@@ -137,7 +131,7 @@
 			? instanceMatch[1]
 			: null;
 
-	// Find name and type if we have the list
+	 
 	$: currentInstanceObj = instances.find((i) => i.id === currentInstanceId);
 	$: currentInstanceName = currentInstanceObj?.name || currentInstanceId;
 	$: currentInstanceType = currentInstanceObj?.type;
@@ -148,15 +142,15 @@
 
 {#if !isAuthChecked}
 	<div class="h-screen bg-gray-950 flex items-center justify-center">
-		<!-- Loading Spinner -->
-		<!-- Loading Spinner -->
+		
+		
 		<Loader2 class="animate-spin h-8 w-8 text-indigo-500" />
 	</div>
 {:else}
 	<div
 		class="h-screen bg-gray-950 text-gray-300 flex font-sans text-sm overflow-hidden selection:bg-indigo-500/30 selection:text-indigo-200"
 	>
-		<!-- Sidebar -->
+		
 		{#if !isPublicPage}
 			<aside
 				class="w-64 bg-gray-900/50 backdrop-blur-xl flex flex-col border-r border-white/5"
@@ -190,7 +184,7 @@
 
 				<nav class="flex-1 px-3 space-y-1 overflow-y-auto">
 					{#if currentInstanceId}
-						<!-- Instance Context Menu -->
+						
 						<div class="mb-4">
 							<a
 								href="/instances"
@@ -346,7 +340,7 @@
 							</a>
 						</div>
 					{:else}
-						<!-- Global Context Menu -->
+						
 						<div class="space-y-6">
 							<div>
 								<a
@@ -384,9 +378,9 @@
 			</aside>
 		{/if}
 
-		<!-- Main Content -->
+		
 		<main class="flex-1 flex flex-col min-h-0 relative">
-			<!-- Main Background Glow -->
+			
 			<div
 				class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none"
 			>
@@ -398,13 +392,13 @@
 				></div>
 			</div>
 
-			<!-- Content Slot -->
+			
 			<div class="relative z-10 flex-1 flex flex-col min-h-0">
 				<slot />
 			</div>
 		</main>
 
-		<!-- Global Overlays -->
+		
 		<Toast />
 		<ConfirmDialog />
 		<InputModal />

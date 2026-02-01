@@ -7,14 +7,13 @@ import (
 )
 
 func TestTemplateManager_LoadTemplates(t *testing.T) {
-	// Create a temporary directory for templates
+
 	tmpDir, err := os.MkdirTemp("", "templates")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// Create a dummy template file
 	tmplContent := `{"id": "test-template", "name": "Test Template"}`
 	err = os.WriteFile(filepath.Join(tmpDir, "test.json"), []byte(tmplContent), 0644)
 	if err != nil {
@@ -69,7 +68,6 @@ func TestTemplateManager_ThreadSafety(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// Create initial template
 	os.WriteFile(filepath.Join(tmpDir, "t1.json"), []byte(`{"id": "t1", "name": "T1"}`), 0644)
 
 	tm := NewTemplateManager(tmpDir)
@@ -85,7 +83,7 @@ func TestTemplateManager_ThreadSafety(t *testing.T) {
 
 	go func() {
 		for i := 0; i < 10; i++ {
-			// Simulate reloading
+
 			tm.LoadTemplates()
 		}
 		done <- true

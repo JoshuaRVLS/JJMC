@@ -27,7 +27,7 @@ func NewSystemHandler() *SystemHandler {
 func (h *SystemHandler) GetFiles(c *fiber.Ctx) error {
 	dirPath := c.Query("path")
 	if dirPath == "" {
-		// Default to user home directory
+
 		home, err := os.UserHomeDir()
 		if err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": "Failed to get home directory"})
@@ -41,7 +41,7 @@ func (h *SystemHandler) GetFiles(c *fiber.Ctx) error {
 	}
 
 	var files []SystemFile
-	// potential parent directory
+
 	parent := filepath.Dir(dirPath)
 	if parent != dirPath {
 		files = append(files, SystemFile{
@@ -109,11 +109,11 @@ func (h *SystemHandler) GetUUID(c *fiber.Ctx) error {
 	}
 
 	if offline {
-		// Generate Offline UUID (Version 3 MD5 of "OfflinePlayer:" + name)
+
 		data := []byte("OfflinePlayer:" + name)
 		hash := md5.Sum(data)
-		hash[6] = (hash[6] & 0x0f) | 0x30 // Version 3
-		hash[8] = (hash[8] & 0x3f) | 0x80 // Variant 10 (IETF)
+		hash[6] = (hash[6] & 0x0f) | 0x30
+		hash[8] = (hash[8] & 0x3f) | 0x80
 
 		uuid := fmt.Sprintf("%x-%x-%x-%x-%x", hash[0:4], hash[4:6], hash[6:8], hash[8:10], hash[10:])
 
@@ -143,13 +143,12 @@ func (h *SystemHandler) GetUUID(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to parse Mojang response"})
 	}
 
-	// Insert dashes into UUID
 	uuidRaw := mojangResp.ID
 	var uuid string
 	if len(uuidRaw) == 32 {
 		uuid = fmt.Sprintf("%s-%s-%s-%s-%s", uuidRaw[0:8], uuidRaw[8:12], uuidRaw[12:16], uuidRaw[16:20], uuidRaw[20:])
 	} else {
-		uuid = uuidRaw // Should warn or error, but fallback
+		uuid = uuidRaw
 	}
 
 	return c.JSON(fiber.Map{

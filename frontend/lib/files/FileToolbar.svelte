@@ -10,11 +10,11 @@
     import { createEventDispatcher } from "svelte";
     import FileBreadcrumbs from "./FileBreadcrumbs.svelte";
 
-    /** @type {string} */
+     
     export let currentPath;
-    /** @type {Set<string>} */
+     
     export let selectedFiles;
-    /** @type {Array<any>} */
+     
     export let breadcrumbs;
 
     const dispatch = createEventDispatcher();

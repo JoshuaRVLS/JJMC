@@ -14,18 +14,18 @@
     import Backups from "$lib/Backups.svelte";
     import PortForward from "$lib/PortForward.svelte";
 
-    // Get instance ID from route params
+     
     $: instanceId = $page.params.id || "";
 
     let status = "Offline";
     let type = "";
-    /** @type {ReturnType<typeof setInterval> | undefined} */
+     
     let interval;
 
-    // Sync activeTab with URL
+     
     $: activeTab = $page.url.searchParams.get("tab") || "console";
 
-    /** @param {string} tab */
+     
     function setTab(tab) {
         const url = new URL($page.url);
         url.searchParams.set("tab", tab);
@@ -62,9 +62,9 @@
 </script>
 
 <div class="h-full flex flex-col p-6 gap-6">
-    <!-- Header -->
+    
     <header class="flex justify-between items-center">
-        <!-- ... existing header content ... -->
+        
         <div class="flex items-center gap-4">
             <a
                 href="/instances"
@@ -88,7 +88,7 @@
                 <h2 class="text-xl font-bold text-white tracking-tight">
                     {instanceId}
                 </h2>
-                <!-- Status indicator -->
+                
                 <div
                     class="flex items-center gap-2 text-xs font-mono text-gray-400"
                 >
@@ -118,16 +118,16 @@
         </div>
     </header>
 
-    <!-- Main Grid -->
+    
     <div class="flex-1 min-h-0 flex flex-col">
         {#if activeTab === "console"}
             <div class="flex-1 grid grid-rows-[1fr_auto] gap-6 min-h-0">
-                <!-- Console Area -->
+                
                 <div class="min-h-0 relative">
                     <Console {instanceId} {status} />
                 </div>
 
-                <!-- Controls Area -->
+                
                 <div
                     class="relative z-10 bg-gray-900/60 backdrop-blur-xl border border-white/5 rounded-2xl p-6 flex justify-between items-center shadow-lg"
                 >

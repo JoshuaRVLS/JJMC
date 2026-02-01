@@ -22,12 +22,10 @@ func (h *InstanceHandler) ChangeType(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
 	}
 
-	// 1. Reset Instance
 	if err := inst.Reset(payload.Type, payload.Version); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": fmt.Sprintf("Failed to reset instance: %v", err)})
 	}
 
-	// 2. Install New Type
 	if payload.Type == "custom" {
 		return c.JSON(fiber.Map{"status": "changed", "Note": "Custom type requires manual jar upload"})
 	}

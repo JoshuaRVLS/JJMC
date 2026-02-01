@@ -5,7 +5,6 @@ import (
 	"mime/multipart"
 )
 
-// ListFiles lists files in a given relative path inside the instance directory
 func (i *Instance) ListFiles(relPath string) ([]files.FileInfo, error) {
 	return files.List(i.Directory, relPath)
 }

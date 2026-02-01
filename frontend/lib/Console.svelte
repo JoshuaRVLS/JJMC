@@ -1,26 +1,26 @@
 <script>
     import { onMount, onDestroy } from "svelte";
 
-    /** @type {string} */
+     
     export let instanceId;
     export let status = "Offline";
 
-    /** @type {string[]} */
+     
     let logs = [];
     let command = "";
-    /** @type {WebSocket | undefined} */
+     
     let socket;
-    /** @type {HTMLDivElement} */
+     
     let consoleDiv;
     let connected = false;
 
-    // Connect to WebSocket
+     
     function connect() {
         if (!instanceId) return;
 
-        // Determine Protocol
+         
         const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        // Construct URL: /ws/instances/:id/console
+         
         const wsUrl = `${protocol}//${window.location.host}/ws/instances/${instanceId}/console`;
 
         socket = new WebSocket(wsUrl);
@@ -29,7 +29,7 @@
             connected = true;
         };
 
-        socket.onmessage = (/** @type {MessageEvent} */ event) => {
+        socket.onmessage = (  event) => {
             logs = [...logs, event.data];
             scrollToBottom();
         };
@@ -44,12 +44,12 @@
         };
     }
 
-    // Connect on mount
+     
     onMount(() => {
         connect();
     });
 
-    // Reconnect if instanceId changes
+     
     $: if (instanceId) {
         if (socket) socket.close();
         connect();
@@ -70,8 +70,8 @@
     async function sendCommand() {
         if (!command.trim()) return;
 
-        // Optimistic update
-        // logs = [...logs, `> ${command}`];
+         
+         
 
         try {
             await fetch(`/api/instances/${instanceId}/command`, {
@@ -85,7 +85,7 @@
         }
     }
 
-    /** @param {KeyboardEvent} e */
+     
     function handleKeydown(e) {
         if (e.key === "Enter") {
             sendCommand();
@@ -100,24 +100,24 @@
         }
     }
 
-    // ANSI Parser
+     
     function formatLog(text) {
         if (!text) return "";
 
-        // Escape HTML
+         
         text = text
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;");
 
-        // Linkify URLs
+         
         const urlRegex = /(https?:\/\/[^\s]+)/g;
         text = text.replace(
             urlRegex,
             '<a href="$1" target="_blank" rel="noopener noreferrer" class="console-link underline decoration-indigo-500/50 hover:decoration-indigo-400 text-indigo-300 hover:text-indigo-200 transition-colors cursor-pointer" title="Ctrl + Click to open">$1</a>',
         );
 
-        // ANSI regex for various codes
+         
         const ansiRegex = /\x1b\[([0-9;]*)m/g;
 
         let html = "";
@@ -126,7 +126,7 @@
         let match;
 
         while ((match = ansiRegex.exec(text)) !== null) {
-            // Append text before the code
+             
             html += text.substring(lastIndex, match.index);
             lastIndex = ansiRegex.lastIndex;
 
@@ -136,17 +136,17 @@
                 const code = codes[i];
 
                 if (code === 0) {
-                    // Reset
+                     
                     while (styleStack.length > 0) {
                         html += "</span>";
                         styleStack.pop();
                     }
                 } else if (code === 1) {
-                    // Bold
+                     
                     html += "<span class='font-bold'>";
                     styleStack.push("span");
                 } else if (code === 38 && codes[i + 1] === 2) {
-                    // Foreground TrueColor: 38;2;R;G;B
+                     
                     const r = codes[i + 2];
                     const g = codes[i + 3];
                     const b = codes[i + 4];
@@ -154,7 +154,7 @@
                     styleStack.push("span");
                     i += 4;
                 } else if (code === 48 && codes[i + 1] === 2) {
-                    // Background TrueColor: 48;2;R;G;B
+                     
                     const r = codes[i + 2];
                     const g = codes[i + 3];
                     const b = codes[i + 4];
@@ -162,7 +162,7 @@
                     styleStack.push("span");
                     i += 4;
                 } else if (code >= 30 && code <= 37) {
-                    // Standard Foreground
+                     
                     const colors = [
                         "black",
                         "red",
@@ -172,9 +172,9 @@
                         "magenta",
                         "cyan",
                         "white",
-                        "bright-black", // dummy
+                        "bright-black",  
                     ];
-                    // Mapping standard ANSI to somewhat nice terminal colors
+                     
                     const map = [
                         "#000000",
                         "#ef4444",
@@ -188,7 +188,7 @@
                     html += `<span style="color: ${map[code - 30]}">`;
                     styleStack.push("span");
                 } else if (code >= 90 && code <= 97) {
-                    // Bright Foreground
+                     
                     const map = [
                         "#6b7280",
                         "#f87171",
@@ -202,13 +202,13 @@
                     html += `<span style="color: ${map[code - 90]}">`;
                     styleStack.push("span");
                 }
-                // Add more codes if necessary (bg standard, etc)
+                 
             }
         }
 
         html += text.substring(lastIndex);
 
-        // Close remaining tags
+         
         while (styleStack.length > 0) {
             html += "</span>";
             styleStack.pop();
@@ -221,17 +221,17 @@
 <div
     class="flex flex-col h-full bg-slate-950/80 backdrop-blur-xl rounded-2xl overflow-hidden border border-white/5 shadow-2xl font-mono text-sm group relative"
 >
-    <!-- Glow Effect -->
+    
     <div
         class="absolute inset-0 pointer-events-none bg-linear-to-tr from-indigo-500/5 via-transparent to-emerald-500/5 opacity-50"
     ></div>
 
-    <!-- Header/Title -->
+    
     <div
         class="flex justify-between items-center px-5 py-3 bg-white/5 border-b border-white/5 relative z-10"
     >
         <div class="flex items-center gap-3">
-            <!-- Terminal Icon -->
+            
             <svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="w-4 h-4 text-gray-400"
@@ -276,7 +276,7 @@
         </div>
     </div>
 
-    <!-- Logs -->
+    
     <div
         bind:this={consoleDiv}
         on:click={handleConsoleClick}
@@ -304,7 +304,7 @@
         {/each}
     </div>
 
-    <!-- Input -->
+    
     <div class="p-4 bg-white/2 border-t border-white/5 relative z-10">
         <div
             class="group/input flex items-center gap-3 bg-black/40 rounded-xl px-4 py-3 border border-white/5 focus-within:border-indigo-500/50 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all duration-300 shadow-inner"

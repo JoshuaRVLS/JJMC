@@ -38,7 +38,7 @@ func (s *TelnetServer) Start() error {
 		for {
 			conn, err := s.listener.Accept()
 			if err != nil {
-				// log.Printf("Telnet Accept Error: %v", err)
+
 				return
 			}
 			go s.handleConnection(conn)
@@ -58,15 +58,10 @@ func (s *TelnetServer) handleConnection(conn net.Conn) {
 	defer conn.Close()
 	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 
-	// Banner
 	rw.WriteString("JJMC Telnet Console\r\n")
 	rw.WriteString("====================\r\n")
 	rw.Flush()
 
-	// Auth
-	// Since we only have a global password, just ask for "Password:"
-	// Or mimicking PufferPanel: Username/Password?
-	// Our AuthManager only supports single password for now.
 	rw.WriteString("Password: ")
 	rw.Flush()
 
@@ -84,7 +79,6 @@ func (s *TelnetServer) handleConnection(conn net.Conn) {
 
 	rw.WriteString("Authenticated.\r\n")
 
-	// Select Instance
 	rw.WriteString("Enter Instance ID: ")
 	rw.Flush()
 
@@ -104,12 +98,10 @@ func (s *TelnetServer) handleConnection(conn net.Conn) {
 	rw.WriteString(fmt.Sprintf("Attached to %s (%s). Type /exit to disconnect.\r\n", inst.Name, inst.ID))
 	rw.Flush()
 
-	// Attach Client
 	client := &TelnetClient{conn: conn}
 	inst.Manager.RegisterClient(client)
 	defer inst.Manager.UnregisterClient(client)
 
-	// Read Input Loop
 	for {
 		line, err := rw.Reader.ReadString('\n')
 		if err != nil {
@@ -132,8 +124,7 @@ type TelnetClient struct {
 }
 
 func (c *TelnetClient) WriteMessage(messageType int, data []byte) error {
-	// messageType is ignored (assumed text)
-	// Telnet expects CRLF?
+
 	_, err := c.conn.Write(append(data, '\r', '\n'))
 	return err
 }
