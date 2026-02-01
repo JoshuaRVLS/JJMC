@@ -56,6 +56,7 @@ func (im *InstanceManager) CreateInstance(id, name, serverType, version string) 
 					StartCommand: tmpl.Run.Command,
 				},
 				Manager: mgr,
+				Tunnel:  NewTunnelManager(dir),
 			}
 			instance.Manager.SetWorkDir(dir)
 			instance.Manager.SetJar("server.jar")
@@ -108,6 +109,7 @@ func (im *InstanceManager) CreateInstance(id, name, serverType, version string) 
 			JarFile:   "server.jar",
 		},
 		Manager: mgr,
+		Tunnel:  NewTunnelManager(dir),
 	}
 
 	instance.Manager.SetWorkDir(dir)
@@ -187,6 +189,7 @@ func (im *InstanceManager) ImportInstance(id, name, sourcePath string) (*Instanc
 			MaxMemory: 2048,
 		},
 		Manager: mgr,
+		Tunnel:  NewTunnelManager(dir),
 	}
 
 	instance.Manager.SetWorkDir(dir)
