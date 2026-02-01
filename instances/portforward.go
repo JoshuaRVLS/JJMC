@@ -172,6 +172,7 @@ func (tm *TunnelManager) Start(provider, token string) error {
 		tm.Mu.Lock()
 		tm.Status.Running = false
 		tm.Status.PublicAddress = ""
+		tm.Status.Log = ""
 		tm.Cmd = nil
 		tm.Mu.Unlock()
 	}()
