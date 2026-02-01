@@ -12,7 +12,7 @@ import (
 
 func (v *VersionsManager) InstallFabric(version string) error {
 
-	installerUrl := "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.0.1/fabric-installer-1.0.1.jar"
+	installerUrl := "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.1.1/fabric-installer-1.1.1.jar"
 	installerName := "fabric-installer.jar"
 
 	workDir := v.manager.GetWorkDir()

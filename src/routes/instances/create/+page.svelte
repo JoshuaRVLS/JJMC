@@ -129,10 +129,12 @@
             const res = await fetch(`/api/versions/game?loader=${type}`);
             if (res.ok) {
                 const data = await res.json();
-                versionOptions = data.map((v) => ({
-                    value: v.version,
-                    label: v.version,
-                }));
+                versionOptions = data
+                    .filter((v) => v.version_type === "release")
+                    .map((v) => ({
+                        value: v.version,
+                        label: v.version,
+                    }));
                 if (versionOptions.length > 0) {
                     version = versionOptions[0].value;
                 }
@@ -237,7 +239,7 @@
                 const installRes = await fetch(`/api/instances/${id}/install`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ version }),
+                    body: JSON.stringify({ version, type }),
                 });
 
                 if (!installRes.ok) {
