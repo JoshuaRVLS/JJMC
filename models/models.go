@@ -10,6 +10,7 @@ type Instance struct {
 	MaxMemory    int    `json:"maxMemory"`
 	JavaArgs     string `json:"javaArgs"`
 	JarFile      string `json:"jarFile"`
+	JavaPath     string `json:"javaPath"`
 	StartCommand string `json:"startCommand"`
 }
 
@@ -21,6 +22,7 @@ type InstanceModel struct {
 	MaxMemory    int
 	JavaArgs     string
 	JarFile      string
+	JavaPath     string
 	StartCommand string
 	CreatedAt    int64
 }

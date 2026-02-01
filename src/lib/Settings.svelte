@@ -2,13 +2,13 @@
     import { onMount } from "svelte";
     import { addToast } from "$lib/stores/toast";
 
-     
     export let instanceId;
 
     let maxMemory = 2048;
     let javaArgs = "";
     let jarFile = "server.jar";
-     
+    let javaPath = "";
+
     let jarFiles = [];
     let loading = true;
     let saving = false;
@@ -22,18 +22,17 @@
                 maxMemory = data.maxMemory || 2048;
                 javaArgs = data.javaArgs || "";
                 jarFile = data.jarFile || "server.jar";
+                javaPath = data.javaPath || "";
 
-                 
                 const mediaRes = await fetch(
                     `/api/instances/${instanceId}/files?path=.`,
                 );
                 if (mediaRes.ok) {
                     const files = await mediaRes.json();
                     jarFiles = files.filter(
-                        (  f) =>
-                            !f.isDir && f.name.endsWith(".jar"),
+                        (f) => !f.isDir && f.name.endsWith(".jar"),
                     );
-                     
+
                     if (!jarFiles.find((f) => f.name === jarFile)) {
                         jarFiles = [...jarFiles, { name: jarFile }];
                     }
@@ -56,15 +55,13 @@
                     maxMemory: parseInt(String(maxMemory)),
                     javaArgs: javaArgs,
                     jarFile: jarFile,
+                    javaPath: javaPath,
                 }),
             });
             if (!res.ok) throw new Error(await res.text());
             addToast("Settings saved", "success");
         } catch (e) {
-            addToast(
-                "Failed to save settings: " +   (e).message,
-                "error",
-            );
+            addToast("Failed to save settings: " + e.message, "error");
         } finally {
             saving = false;
         }
@@ -82,7 +79,6 @@
         >
             <h2 class="text-xl font-bold text-white mb-4">Java Settings</h2>
 
-            
             <div class="space-y-2">
                 <label
                     for="jar"
@@ -104,7 +100,6 @@
                 </div>
             </div>
 
-            
             <div class="space-y-2">
                 <label
                     for="memory"
@@ -129,7 +124,6 @@
                 </div>
             </div>
 
-            
             <div class="space-y-2">
                 <label
                     for="args"
@@ -149,7 +143,26 @@
                 </div>
             </div>
 
-            
+            <div class="space-y-2">
+                <label
+                    for="javapath"
+                    class="block text-sm font-medium text-gray-400"
+                >
+                    Java Path
+                </label>
+                <input
+                    id="javapath"
+                    type="text"
+                    bind:value={javaPath}
+                    placeholder="java (or /path/to/java)"
+                    class="bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white w-full focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all font-mono text-sm"
+                />
+                <div class="text-xs text-gray-500">
+                    Path to the Java executable. Leave empty to use system
+                    default.
+                </div>
+            </div>
+
             <div class="pt-4 flex justify-end">
                 <button
                     on:click={saveSettings}

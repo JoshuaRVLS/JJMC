@@ -63,12 +63,13 @@ func (h *InstanceHandler) UpdateSettings(c *fiber.Ctx) error {
 		MaxMemory int    `json:"maxMemory"`
 		JavaArgs  string `json:"javaArgs"`
 		JarFile   string `json:"jarFile"`
+		JavaPath  string `json:"javaPath"`
 	}
 	if err := c.BodyParser(&payload); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
 	}
 
-	if err := h.Manager.UpdateSettings(id, payload.MaxMemory, payload.JavaArgs, payload.JarFile); err != nil {
+	if err := h.Manager.UpdateSettings(id, payload.MaxMemory, payload.JavaArgs, payload.JarFile, payload.JavaPath); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"status": "updated"})

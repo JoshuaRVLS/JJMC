@@ -22,6 +22,7 @@ type Manager struct {
 	startCommand string
 	maxMemory    int
 	javaArgs     string
+	javaPath     string
 
 	broadcast chan string
 	logBuffer []string
@@ -71,6 +72,12 @@ func (m *Manager) SetJavaArgs(args string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.javaArgs = args
+}
+
+func (m *Manager) SetJavaPath(path string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.javaPath = path
 }
 
 func (m *Manager) GetWorkDir() string {

@@ -55,6 +55,7 @@ func NewInstanceManager(baseDir string, tm *services.TemplateManager, silent boo
 			MaxMemory: instModel.MaxMemory,
 			JavaArgs:  instModel.JavaArgs,
 			JarFile:   instModel.JarFile,
+			JavaPath:  instModel.JavaPath,
 		}, mgr)
 
 		instance.Manager.SetWorkDir(dir)
@@ -65,6 +66,7 @@ func NewInstanceManager(baseDir string, tm *services.TemplateManager, silent boo
 		}
 		instance.Manager.SetMaxMemory(model.MaxMemory)
 		instance.Manager.SetJavaArgs(model.JavaArgs)
+		instance.Manager.SetJavaPath(model.JavaPath)
 
 		im.instances[model.ID] = instance
 	}
@@ -115,7 +117,7 @@ func (im *InstanceManager) ListInstances() []*Instance {
 	return list
 }
 
-func (im *InstanceManager) UpdateSettings(id string, maxMemory int, javaArgs, jarFile string) error {
+func (im *InstanceManager) UpdateSettings(id string, maxMemory int, javaArgs, jarFile, javaPath string) error {
 	im.mu.Lock()
 	defer im.mu.Unlock()
 
@@ -128,6 +130,7 @@ func (im *InstanceManager) UpdateSettings(id string, maxMemory int, javaArgs, ja
 		MaxMemory: maxMemory,
 		JavaArgs:  javaArgs,
 		JarFile:   jarFile,
+		JavaPath:  javaPath,
 	}).Error
 	if err != nil {
 		return fmt.Errorf("failed to update db: %v", err)
@@ -136,11 +139,13 @@ func (im *InstanceManager) UpdateSettings(id string, maxMemory int, javaArgs, ja
 	inst.MaxMemory = maxMemory
 	inst.JavaArgs = javaArgs
 	inst.JarFile = jarFile
+	inst.JavaPath = javaPath
 	inst.Manager.SetMaxMemory(maxMemory)
 	inst.Manager.SetJavaArgs(javaArgs)
 	if jarFile != "" {
 		inst.Manager.SetJar(jarFile)
 	}
+	inst.Manager.SetJavaPath(javaPath)
 
 	return nil
 }

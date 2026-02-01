@@ -12,5 +12,6 @@ func (inst *Instance) Save() error {
 		MaxMemory: inst.MaxMemory,
 		JavaArgs:  inst.JavaArgs,
 		JarFile:   inst.JarFile,
+		JavaPath:  inst.JavaPath,
 	}).Error
 }

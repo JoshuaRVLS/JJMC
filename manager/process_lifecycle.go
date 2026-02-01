@@ -81,7 +81,14 @@ func (m *Manager) Start() error {
 
 		args = append(args, "-jar", m.jarName, "nogui")
 
-		m.cmd = exec.Command("java", args...)
+		args = append(args, "-jar", m.jarName, "nogui")
+
+		javaBin := m.javaPath
+		if javaBin == "" {
+			javaBin = "java"
+		}
+
+		m.cmd = exec.Command(javaBin, args...)
 	}
 
 	m.cmd.Dir = m.workDir
