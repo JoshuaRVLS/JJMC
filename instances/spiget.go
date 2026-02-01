@@ -151,3 +151,32 @@ func (c *SpigetClient) DownloadResource(resourceID int, w io.Writer) error {
 	_, err = io.Copy(w, resp.Body)
 	return err
 }
+
+type SpigetVersion struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+	Date int64  `json:"date"`
+}
+
+func (c *SpigetClient) GetResourceVersions(resourceID int) ([]SpigetVersion, error) {
+	reqUrl := fmt.Sprintf("%s/resources/%d/versions?size=100&sort=-id", c.BaseURL, resourceID)
+	resp, err := http.Get(reqUrl)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("spiget api returned %d", resp.StatusCode)
+	}
+
+	var versions []SpigetVersion
+	if err := json.NewDecoder(resp.Body).Decode(&versions); err != nil {
+		return nil, err
+	}
+	return versions, nil
+}
+
+func (c *SpigetClient) GetVersionDownloadURL(resourceID int, versionID int) string {
+	return fmt.Sprintf("%s/resources/%d/versions/%d/download", c.BaseURL, resourceID, versionID)
+}

@@ -35,6 +35,12 @@
     let hasMore = true;
     let sortBy = "relevance"; // relevance, downloads, follows, newest, updated
 
+    /** @type {string | null} */
+    let viewingVersionsId = null;
+    /** @type {Array<any>} */
+    let versionsList = [];
+    let loadingVersions = false;
+
     /** @type {IntersectionObserver} */
     let observer;
     /** @type {HTMLElement} */
@@ -49,6 +55,34 @@
             }
         } catch (e) {
             console.error("Failed to fetch installed mods:", e);
+        }
+    }
+
+    /** @param {string} projectId */
+    async function fetchVersions(projectId) {
+        loadingVersions = true;
+        versionsList = [];
+        try {
+            let typeParam = activeTab === "plugin" ? "plugin" : "mod";
+            // If viewing modpack, treat as mod for now or disable?
+            // Modpack versions are usually just the pack versions.
+            // Modrinth "project_type" handles this.
+
+            const res = await fetch(
+                `/api/instances/${instanceId}/mods/${projectId}/versions?type=${typeParam}`,
+            );
+            if (res.ok) {
+                versionsList = await res.json();
+            } else {
+                addToast("Failed to load versions", "error");
+            }
+        } catch (e) {
+            addToast(
+                "Error loading versions: " + /** @type {Error} */ (e).message,
+                "error",
+            );
+        } finally {
+            loadingVersions = false;
         }
     }
 
@@ -109,6 +143,8 @@
     // Trigger search when tab or sort changes
     $: if (activeTab || sortBy) {
         search(true);
+        // Reset version view when changing context
+        viewingVersionsId = null;
     }
 
     onMount(() => {
@@ -131,19 +167,26 @@
     });
 
     /** @param {string} projectId */
-    async function installMod(projectId) {
-        installingId = projectId;
+    /** @param {string} [versionId] */
+    async function installMod(projectId, versionId = "") {
+        installingId = projectId; // We use project ID for loading state on card
         try {
             let typeParam = activeTab === "plugin" ? "plugin" : "mod";
 
             const res = await fetch(`/api/instances/${instanceId}/mods`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ projectId, resourceType: typeParam }),
+                body: JSON.stringify({
+                    projectId,
+                    resourceType: typeParam,
+                    versionId,
+                }),
             });
             if (res.ok) {
                 addToast("Installed successfully", "success");
                 fetchInstalled();
+                // If installed specific version, maybe close version list?
+                // viewingVersionsId = null;
             } else {
                 const err = await res.json();
                 addToast(
@@ -375,7 +418,7 @@
                                     <div
                                         class="w-16 h-16 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400"
                                     >
-                                        {#if activeTab === "mod"}
+                                        {#if activeTab === "mod" || activeTab === "plugin"}
                                             <svg
                                                 class="w-8 h-8"
                                                 fill="none"
@@ -486,6 +529,210 @@
                             {/if}
                         </div>
 
+                        <!-- Versions Modal -->
+                        {#if viewingVersionsId === item.project_id}
+                            <div
+                                class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+                                role="button"
+                                tabindex="0"
+                                on:click|stopPropagation={() =>
+                                    (viewingVersionsId = null)}
+                                on:keydown={(e) =>
+                                    e.key === "Escape" &&
+                                    (viewingVersionsId = null)}
+                                aria-label="Close modal"
+                            >
+                                <div
+                                    class="bg-gray-900 border border-white/10 rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col m-4 animate-in zoom-in-95 duration-200 cursor-auto"
+                                    role="dialog"
+                                    aria-modal="true"
+                                    on:click|stopPropagation
+                                    on:keydown|stopPropagation
+                                >
+                                    <!-- Header -->
+                                    <div
+                                        class="p-4 border-b border-white/10 flex justify-between items-center bg-black/20 rounded-t-2xl"
+                                    >
+                                        <div>
+                                            <h3
+                                                class="text-white font-bold text-lg"
+                                            >
+                                                {item.title}
+                                            </h3>
+                                            <p class="text-gray-400 text-xs">
+                                                Select a version to install
+                                            </p>
+                                        </div>
+                                        <button
+                                            class="text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-lg transition-colors"
+                                            aria-label="Close versions"
+                                            on:click={() =>
+                                                (viewingVersionsId = null)}
+                                        >
+                                            <svg
+                                                class="w-5 h-5"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M6 18L18 6M6 6l12 12"
+                                                />
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    <!-- Version List -->
+                                    <div
+                                        class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2"
+                                    >
+                                        {#if loadingVersions}
+                                            <div
+                                                class="flex flex-col items-center justify-center py-12 text-gray-400"
+                                            >
+                                                <svg
+                                                    class="animate-spin w-8 h-8 text-indigo-500 mb-3"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <circle
+                                                        class="opacity-25"
+                                                        cx="12"
+                                                        cy="12"
+                                                        r="10"
+                                                        stroke="currentColor"
+                                                        stroke-width="4"
+                                                    ></circle>
+                                                    <path
+                                                        class="opacity-75"
+                                                        fill="currentColor"
+                                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                    ></path>
+                                                </svg>
+                                                <span
+                                                    class="text-sm font-medium"
+                                                    >Loading versions...</span
+                                                >
+                                            </div>
+                                        {:else if versionsList.length === 0}
+                                            <div
+                                                class="flex flex-col items-center justify-center py-12 text-gray-500"
+                                            >
+                                                <svg
+                                                    class="w-12 h-12 mb-3 bg-white/5 p-2 rounded-xl"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="1.5"
+                                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                                                    />
+                                                </svg>
+                                                <p class="text-sm font-medium">
+                                                    No compatible versions
+                                                    found.
+                                                </p>
+                                                <p class="text-xs mt-1">
+                                                    Try changing your Minecraft
+                                                    version filter.
+                                                </p>
+                                            </div>
+                                        {:else}
+                                            {#each versionsList as ver}
+                                                <div
+                                                    class="group flex items-center justify-between p-3 rounded-xl bg-black/20 hover:bg-indigo-500/10 border border-white/5 hover:border-indigo-500/30 transition-all"
+                                                >
+                                                    <div
+                                                        class="min-w-0 flex-1 mr-4"
+                                                    >
+                                                        <div
+                                                            class="flex items-center gap-2 mb-0.5"
+                                                        >
+                                                            <span
+                                                                class="text-sm font-bold text-gray-200 truncate"
+                                                                >{ver.version_number}</span
+                                                            >
+                                                            <span
+                                                                class="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-gray-400 capitalize"
+                                                                >{ver.version_type ||
+                                                                    "release"}</span
+                                                            >
+                                                        </div>
+                                                        <div
+                                                            class="flex items-center gap-2 text-xs text-gray-500"
+                                                        >
+                                                            <span
+                                                                >{new Date(
+                                                                    ver.date_published ||
+                                                                        Date.now(),
+                                                                ).toLocaleDateString(
+                                                                    undefined,
+                                                                    {
+                                                                        year: "numeric",
+                                                                        month: "short",
+                                                                        day: "numeric",
+                                                                    },
+                                                                )}</span
+                                                            >
+                                                            {#if ver.loaders}
+                                                                <span>•</span>
+                                                                <span
+                                                                    class="truncate max-w-[150px]"
+                                                                    >{ver.loaders.join(
+                                                                        ", ",
+                                                                    )}</span
+                                                                >
+                                                            {/if}
+                                                        </div>
+                                                    </div>
+
+                                                    <button
+                                                        on:click|stopPropagation={() =>
+                                                            installMod(
+                                                                item.project_id,
+                                                                ver.id,
+                                                            )}
+                                                        class="shrink-0 bg-white/5 hover:bg-indigo-600 hover:text-white text-gray-300 px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 group-hover:shadow-lg group-hover:shadow-indigo-500/20"
+                                                    >
+                                                        <svg
+                                                            class="w-4 h-4"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            viewBox="0 0 24 24"
+                                                        >
+                                                            <path
+                                                                stroke-linecap="round"
+                                                                stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                                            />
+                                                        </svg>
+                                                        Install
+                                                    </button>
+                                                </div>
+                                            {/each}
+                                        {/if}
+                                    </div>
+
+                                    <!-- Footer -->
+                                    <div
+                                        class="p-3 bg-black/40 text-center text-[10px] text-gray-500 border-t border-white/5 rounded-b-2xl"
+                                    >
+                                        Showing compatible versions for {activeTab ===
+                                        "plugin"
+                                            ? "Plugins"
+                                            : "Mods"}
+                                    </div>
+                                </div>
+                            </div>
+                        {/if}
+
                         <!-- Install Button -->
                         <div
                             class="mt-auto flex justify-between items-center bg-black/20 -mx-4 -mb-4 px-4 py-2.5 border-t border-white/5"
@@ -495,75 +742,101 @@
                                     item.date_modified,
                                 ).toLocaleDateString()}</span
                             >
-                            <button
-                                on:click={() => {
-                                    if (
-                                        activeTab === "mod" &&
-                                        installedIds.has(item.project_id)
-                                    ) {
-                                        uninstallMod(item.project_id);
-                                    } else if (activeTab === "mod") {
-                                        installMod(item.project_id);
-                                    } else {
-                                        installModpack(item.project_id);
-                                    }
-                                }}
-                                disabled={installingId === item.project_id ||
-                                    installingId !== null}
-                                class="flex items-center gap-2 {activeTab ===
-                                    'mod' && installedIds.has(item.project_id)
-                                    ? 'bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20'
-                                    : 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'} px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
-                            >
-                                {#if installingId === item.project_id}
-                                    <svg
-                                        class="animate-spin w-3 h-3"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        ><circle
-                                            class="opacity-25"
-                                            cx="12"
-                                            cy="12"
-                                            r="10"
-                                            stroke="currentColor"
-                                            stroke-width="4"
-                                        ></circle><path
-                                            class="opacity-75"
-                                            fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                        ></path></svg
+                            <div class="flex gap-2">
+                                {#if activeTab !== "modpack"}
+                                    <button
+                                        on:click|stopPropagation={() => {
+                                            if (
+                                                viewingVersionsId ===
+                                                item.project_id
+                                            ) {
+                                                viewingVersionsId = null;
+                                            } else {
+                                                viewingVersionsId =
+                                                    item.project_id;
+                                                fetchVersions(item.project_id);
+                                            }
+                                        }}
+                                        class="bg-white/5 hover:bg-white/10 text-gray-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border border-white/5"
                                     >
-                                    Processing...
-                                {:else if activeTab === "mod" && installedIds.has(item.project_id)}
-                                    <svg
-                                        class="w-3 h-3"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                        ><path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                        ></path></svg
-                                    >
-                                    Uninstall
-                                {:else}
-                                    <svg
-                                        class="w-3 h-3"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                        ><path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                                        ></path></svg
-                                    >
-                                    Install
+                                        Versions
+                                    </button>
                                 {/if}
-                            </button>
+
+                                <button
+                                    on:click|stopPropagation={() => {
+                                        if (
+                                            (activeTab === "mod" ||
+                                                activeTab === "plugin") &&
+                                            installedIds.has(item.project_id)
+                                        ) {
+                                            uninstallMod(item.project_id);
+                                        } else if (activeTab === "modpack") {
+                                            installModpack(item.project_id);
+                                        } else {
+                                            installMod(item.project_id);
+                                        }
+                                    }}
+                                    disabled={installingId ===
+                                        item.project_id ||
+                                        installingId !== null}
+                                    class="flex items-center gap-2 {(activeTab ===
+                                        'mod' ||
+                                        activeTab === 'plugin') &&
+                                    installedIds.has(item.project_id)
+                                        ? 'bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20'
+                                        : 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'} px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
+                                >
+                                    {#if installingId === item.project_id}
+                                        <svg
+                                            class="animate-spin w-3 h-3"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            ><circle
+                                                class="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                stroke-width="4"
+                                            ></circle><path
+                                                class="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                            ></path></svg
+                                        >
+                                        Processing...
+                                    {:else if (activeTab === "mod" || activeTab === "plugin") && installedIds.has(item.project_id)}
+                                        <svg
+                                            class="w-3 h-3"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                            ><path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                            ></path></svg
+                                        >
+                                        Uninstall
+                                    {:else}
+                                        <svg
+                                            class="w-3 h-3"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                            ><path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                            ></path></svg
+                                        >
+                                        Install
+                                    {/if}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 {/each}

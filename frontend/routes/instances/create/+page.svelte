@@ -87,7 +87,7 @@
             border: "border-yellow-500/50",
         },
         bukkit: {
-            icon: Box,
+            image: "/bukkit.png",
             color: "text-red-400",
             bg: "bg-red-900/20",
             border: "border-red-500/50",

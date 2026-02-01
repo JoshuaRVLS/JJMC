@@ -39,6 +39,22 @@ func (h *InstanceHandler) SearchMods(c *fiber.Ctx) error {
 	return c.JSON(results)
 }
 
+func (h *InstanceHandler) GetModVersions(c *fiber.Ctx) error {
+	inst, err := h.Manager.GetInstance(c.Params("id"))
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "Instance not found"})
+	}
+
+	projectId := c.Params("projectId")
+	resourceType := c.Query("type", "mod")
+
+	versions, err := inst.GetModVersions(projectId, resourceType)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(versions)
+}
+
 func (h *InstanceHandler) InstallMod(c *fiber.Ctx) error {
 	inst, err := h.Manager.GetInstance(c.Params("id"))
 	if err != nil {
@@ -48,6 +64,7 @@ func (h *InstanceHandler) InstallMod(c *fiber.Ctx) error {
 	var payload struct {
 		ProjectID    string `json:"projectId"`
 		ResourceType string `json:"resourceType"` // "mod" or "plugin"
+		VersionID    string `json:"versionId"`
 	}
 	if err := c.BodyParser(&payload); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
@@ -62,7 +79,7 @@ func (h *InstanceHandler) InstallMod(c *fiber.Ctx) error {
 		}
 	}
 
-	if err := inst.InstallMod(payload.ProjectID, payload.ResourceType); err != nil {
+	if err := inst.InstallMod(payload.ProjectID, payload.ResourceType, payload.VersionID); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"status": "installed"})

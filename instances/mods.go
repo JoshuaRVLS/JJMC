@@ -45,6 +45,7 @@ type ProjectVersion struct {
 	ID            string `json:"id"`
 	ProjectID     string `json:"project_id"`
 	VersionNumber string `json:"version_number"`
+	DatePublished string `json:"date_published"`
 	Files         []struct {
 		Url      string `json:"url"`
 		Filename string `json:"filename"`
@@ -191,8 +192,75 @@ func (inst *Instance) SearchMods(query string, resourceType string, offset int, 
 	return hits, nil
 }
 
+// GetModVersions fetches compatible versions for a project
+func (inst *Instance) GetModVersions(projectId string, resourceType string) ([]interface{}, error) {
+	if resourceType == "plugin" {
+		client := NewSpigetClient()
+		var id int
+		if _, err := fmt.Sscanf(projectId, "%d", &id); err != nil {
+			return nil, fmt.Errorf("invalid spiget resource id: %s", projectId)
+		}
+		versions, err := client.GetResourceVersions(id)
+		if err != nil {
+			return nil, err
+		}
+		var result []interface{}
+		for _, v := range versions {
+			result = append(result, map[string]interface{}{
+				"id":             fmt.Sprintf("%d", v.ID),
+				"name":           v.Name,
+				"version_number": v.Name, // Spiget "name" is often the version string
+				"date_published": v.Date * 1000,
+			})
+		}
+		return result, nil
+	}
+
+	// Modrinth
+	loader := inst.Type
+	mcVersion := inst.Version
+
+	u, _ := url.Parse(fmt.Sprintf("https://api.modrinth.com/v2/project/%s/version", projectId))
+	q := u.Query()
+	// Filter by game version if possible, but user might want to see all?
+	// Usually better to show compatible ones.
+	q.Set("game_versions", fmt.Sprintf("[\"%s\"]", mcVersion))
+
+	if loader != "vanilla" && loader != "" && loader != "spigot" && loader != "paper" {
+		q.Set("loaders", fmt.Sprintf("[\"%s\"]", loader))
+	}
+	u.RawQuery = q.Encode()
+
+	resp, err := http.Get(u.String())
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("modrinth api error: %d", resp.StatusCode)
+	}
+
+	var versions []ProjectVersion
+	if err := json.NewDecoder(resp.Body).Decode(&versions); err != nil {
+		return nil, err
+	}
+
+	var result []interface{}
+	for _, v := range versions {
+		result = append(result, map[string]interface{}{
+			"id":             v.ID,
+			"name":           v.VersionNumber, // or Name
+			"version_number": v.VersionNumber,
+			"date_published": v.DatePublished, // Modrinth has this field, need to add to struct if missing
+			"files":          v.Files,
+		})
+	}
+	return result, nil
+}
+
 // InstallMod downloads the latest compatible version of a mod
-func (inst *Instance) InstallMod(projectId string, resourceType string) error {
+func (inst *Instance) InstallMod(projectId string, resourceType string, versionId string) error {
 	if resourceType == "plugin" {
 		client := NewSpigetClient()
 		var id int
@@ -206,7 +274,6 @@ func (inst *Instance) InstallMod(projectId string, resourceType string) error {
 		}
 
 		safeName := strings.ReplaceAll(res.Name, " ", "_")
-		// Remove other unsafe chars
 		safeName = strings.Map(func(r rune) rune {
 			if strings.ContainsRune(`\/:*?"<>|`, r) {
 				return -1
@@ -219,10 +286,22 @@ func (inst *Instance) InstallMod(projectId string, resourceType string) error {
 		os.MkdirAll(pluginsDir, 0755)
 
 		targetPath := filepath.Join(pluginsDir, fileName)
+
+		downloadUrl := client.GetDownloadURL(id)
+		// If versionId is provided, use specific version URL
+		if versionId != "" {
+			var vid int
+			if _, err := fmt.Sscanf(versionId, "%d", &vid); err == nil {
+				downloadUrl = client.GetVersionDownloadURL(id, vid)
+				// Might want to append version to filename to distinguish?
+				// But Spiget doesn't give filename for version easily without HEAD request.
+				// Let's assume user wants to overwrite or we keep same name convention for now.
+			}
+		}
+
 		inst.Manager.Broadcast(fmt.Sprintf("Downloading plugin %s...", fileName))
 
-		// Use inst.downloadFile to get progress
-		err = inst.downloadFile(targetPath, client.GetDownloadURL(id))
+		err = inst.downloadFile(targetPath, downloadUrl)
 		if err != nil {
 			return err
 		}
@@ -234,7 +313,6 @@ func (inst *Instance) InstallMod(projectId string, resourceType string) error {
 			json.Unmarshal(data, &plugins)
 		}
 
-		// Check if already exists, update if so
 		found := false
 		for i, p := range plugins {
 			if p.ID == projectId {
@@ -256,9 +334,31 @@ func (inst *Instance) InstallMod(projectId string, resourceType string) error {
 		return os.WriteFile(metaPath, data, 0644)
 	}
 
-	ver, err := inst.getCompatibleVersion(projectId)
-	if err != nil {
-		return err
+	// Modrinth
+	var ver *ProjectVersion
+	var err error
+
+	if versionId != "" {
+		// Get specific version
+		u := fmt.Sprintf("https://api.modrinth.com/v2/version/%s", versionId)
+		resp, err := http.Get(u)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("failed to get version %s", versionId)
+		}
+		ver = &ProjectVersion{}
+		if err := json.NewDecoder(resp.Body).Decode(ver); err != nil {
+			return err
+		}
+	} else {
+		// Get latest compatible
+		ver, err = inst.getCompatibleVersion(projectId)
+		if err != nil {
+			return err
+		}
 	}
 
 	var fileUrl, fileName string
@@ -437,7 +537,9 @@ func (inst *Instance) getCompatibleVersion(projectId string) (*ProjectVersion, e
 	q := u.Query()
 	q.Set("game_versions", fmt.Sprintf("[\"%s\"]", mcVersion))
 
-	if loader != "vanilla" && loader != "" {
+	q.Set("game_versions", fmt.Sprintf("[\"%s\"]", mcVersion))
+
+	if loader != "vanilla" && loader != "" && loader != "spigot" && loader != "paper" && loader != "bukkit" {
 		q.Set("loaders", fmt.Sprintf("[\"%s\"]", loader))
 	}
 	u.RawQuery = q.Encode()
@@ -487,73 +589,66 @@ func (inst *Instance) downloadFile(path string, url string) error {
 }
 
 func (inst *Instance) GetInstalledMods() ([]string, error) {
-	if inst.Type == "spigot" {
-		metaPath := filepath.Join(inst.Directory, "installed_plugins.json")
+	var ids []string
+
+	// 1. Check for installed plugins (Spigot/Paper/Bukkit)
+	metaPath := filepath.Join(inst.Directory, "installed_plugins.json")
+	if _, err := os.Stat(metaPath); err == nil {
 		var plugins []InstalledPlugin
 		if data, err := os.ReadFile(metaPath); err == nil {
 			json.Unmarshal(data, &plugins)
+			for _, p := range plugins {
+				ids = append(ids, p.ID)
+			}
 		}
-		var ids []string
-		for _, p := range plugins {
-			ids = append(ids, p.ID)
-		}
-		return ids, nil
 	}
 
+	// 2. Check for installed mods (Modrinth)
 	modsDir := filepath.Join(inst.Directory, "mods")
 	files, err := os.ReadDir(modsDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return []string{}, nil
+	if err == nil {
+		var hashes []string
+		for _, f := range files {
+			if f.IsDir() || !strings.HasSuffix(f.Name(), ".jar") {
+				continue
+			}
+
+			path := filepath.Join(modsDir, f.Name())
+			h, err := hashFile(path)
+			if err == nil {
+				hashes = append(hashes, h)
+			}
 		}
-		return nil, err
-	}
 
-	var hashes []string
-	for _, f := range files {
-		if f.IsDir() || !strings.HasSuffix(f.Name(), ".jar") {
-			continue
-		}
+		if len(hashes) > 0 {
+			payload, _ := json.Marshal(map[string]interface{}{
+				"hashes":    hashes,
+				"algorithm": "sha1",
+			})
 
-		path := filepath.Join(modsDir, f.Name())
-		h, err := hashFile(path)
-		if err == nil {
-			hashes = append(hashes, h)
-		}
-	}
+			resp, err := http.Post("https://api.modrinth.com/v2/version_files", "application/json", bytes.NewBuffer(payload))
+			if err == nil {
+				defer resp.Body.Close()
+				if resp.StatusCode == http.StatusOK {
+					var result map[string]struct {
+						ProjectID string `json:"project_id"`
+					}
+					if err := json.NewDecoder(resp.Body).Decode(&result); err == nil {
+						installed := make(map[string]bool)
+						// Add existing plugin IDs to map to prevent duplicates if any overlap (unlikely)
+						for _, id := range ids {
+							installed[id] = true
+						}
 
-	if len(hashes) == 0 {
-		return []string{}, nil
-	}
-
-	payload, _ := json.Marshal(map[string]interface{}{
-		"hashes":    hashes,
-		"algorithm": "sha1",
-	})
-
-	resp, err := http.Post("https://api.modrinth.com/v2/version_files", "application/json", bytes.NewBuffer(payload))
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("modrinth hash query failed")
-	}
-
-	var result map[string]struct {
-		ProjectID string `json:"project_id"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, err
-	}
-
-	installed := make(map[string]bool)
-	var ids []string
-	for _, v := range result {
-		if !installed[v.ProjectID] {
-			installed[v.ProjectID] = true
-			ids = append(ids, v.ProjectID)
+						for _, v := range result {
+							if !installed[v.ProjectID] {
+								installed[v.ProjectID] = true
+								ids = append(ids, v.ProjectID)
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 

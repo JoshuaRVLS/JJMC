@@ -75,6 +75,7 @@ func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManag
 	mods.Post("/", instHandler.InstallMod)
 	mods.Delete("/", instHandler.UninstallMod)
 	mods.Get("/search", instHandler.SearchMods)
+	mods.Get("/:projectId/versions", instHandler.GetModVersions)
 
 	inst.Post("/modpacks", instHandler.InstallModpack)
 
