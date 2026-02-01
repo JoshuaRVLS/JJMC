@@ -3,9 +3,8 @@
     import { Server, FolderInput, Check, ArrowRight } from "lucide-svelte";
     import { createEventDispatcher } from "svelte";
 
-     
     export let name;
-     
+
     export let importMode;
 
     const dispatch = createEventDispatcher();
@@ -34,7 +33,6 @@
                 bind:value={name}
                 class="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-lg placeholder-gray-600"
                 placeholder="My Awesome Server"
-                autofocus
                 on:keydown={(e) => e.key === "Enter" && handleNext()}
             />
         </div>

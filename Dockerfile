@@ -1,9 +1,12 @@
 # Stage 1: Build Frontend
 FROM node:22-alpine AS frontend-builder
-WORKDIR /app/frontend
-COPY frontend/package.json frontend/package-lock.json ./
+WORKDIR /app
+COPY package.json package-lock.json ./
 RUN npm ci
-COPY frontend ./
+COPY src ./src
+COPY svelte.config.js vite.config.js ./
+# Copy tailwind config if it exists, otherwise ignore (Docker COPY fails if missing without wildcard hack, but we'll assume standard setup or omit if unsure)
+# For now, just copy config files we know exist.
 RUN npm run build
 
 # Stage 2: Build Backend

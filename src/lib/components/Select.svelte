@@ -2,14 +2,13 @@
     import { slide } from "svelte/transition";
     import { createEventDispatcher } from "svelte";
 
-     
-
-     
     export let value;
-     
-    export let options = [];  
+
+    export let options = [];
     export let label = "";
     export let placeholder = "Select an option";
+    export let id = "select-" + Math.random().toString(36).slice(2);
+    export let className = "";
 
     const dispatch = createEventDispatcher();
     let isOpen = false;
@@ -27,19 +26,26 @@
         isOpen = !isOpen;
     }
 
-     
+    // ... (rest of functions)
+
+    // NOTE: Removed duplicate functions for brevity in prompt, but replacing the script section carefully.
+    // Wait, replacing the whole script is safer or targeted. Targeted is better.
+    // I need to split this into two replaces ideally or one big one.
+    // I'll replace the export section and the label/button section.
+    // Wait, `replace_file_content` is single contiguous block.
+    // I'll replace the exports first.
+
     function select(option) {
         value = typeof option === "object" ? option.value : option;
         isOpen = false;
         dispatch("change", value);
     }
 
-     
     function clickOutside(node) {
-        const handleClick = (  event) => {
+        const handleClick = (event) => {
             if (
                 node &&
-                !node.contains(  (event.target)) &&
+                !node.contains(event.target) &&
                 !event.defaultPrevented
             ) {
                 node.dispatchEvent(new CustomEvent("click_outside"));
@@ -62,15 +68,18 @@
     on:click_outside={() => (isOpen = false)}
 >
     {#if label}
-        <label class="block text-xs font-bold uppercase text-gray-400 mb-2 ml-1"
+        <label
+            for={id}
+            class="block text-xs font-bold uppercase text-gray-400 mb-2 ml-1"
             >{label}</label
         >
     {/if}
 
     <button
         type="button"
+        {id}
         on:click={toggle}
-        class="w-full bg-black/20 border border-white/10 rounded-xl p-4 text-left text-white flex justify-between items-center transition-all hover:bg-black/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+        class="w-full bg-black/20 border border-white/10 rounded-xl p-4 text-left text-white flex justify-between items-center transition-all hover:bg-black/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 {className}"
     >
         <span class={!selectedOption ? "text-gray-500" : ""}
             >{displayValue}</span

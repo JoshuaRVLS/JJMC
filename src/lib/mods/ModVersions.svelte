@@ -1,11 +1,10 @@
 <script>
-     
     export let item;
-     
+
     export let versionsList;
-     
+
     export let loadingVersions;
-     
+
     export let activeTab;
 
     import { createEventDispatcher } from "svelte";
@@ -15,7 +14,6 @@
         dispatch("close");
     }
 
-     
     function install(projectId, versionId) {
         dispatch("install", { projectId, versionId });
     }
@@ -24,7 +22,7 @@
 <div
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
     role="button"
-    tabindex="0"
+    tabindex="-1"
     on:click|stopPropagation={close}
     on:keydown={(e) => e.key === "Escape" && close()}
     aria-label="Close modal"
@@ -32,11 +30,11 @@
     <div
         class="bg-gray-900 border border-white/10 rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col m-4 animate-in zoom-in-95 duration-200 cursor-auto"
         role="dialog"
+        tabindex="-1"
         aria-modal="true"
         on:click|stopPropagation
         on:keydown|stopPropagation
     >
-        
         <div
             class="p-4 border-b border-white/10 flex justify-between items-center bg-black/20 rounded-t-2xl"
         >
@@ -67,7 +65,6 @@
             </button>
         </div>
 
-        
         <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
             {#if loadingVersions}
                 <div
@@ -180,7 +177,6 @@
             {/if}
         </div>
 
-        
         <div
             class="p-3 bg-black/40 text-center text-[10px] text-gray-500 border-t border-white/5 rounded-b-2xl"
         >

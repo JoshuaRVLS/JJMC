@@ -7,7 +7,7 @@
 
     let loading = false;
     let config = {
-        provider: "playit",  
+        provider: "ngrok",
         token: "",
     };
 
@@ -19,7 +19,6 @@
         config: { provider: "", token: "" },
     };
 
-     
     let pollInterval;
 
     async function loadStatus() {
@@ -28,10 +27,8 @@
             if (res.ok) {
                 status = await res.json();
 
-                 
                 if (status.config) {
                     if (status.config.provider) {
-                         
                         if (!config.provider || !status.running) {
                             config.provider = status.config.provider;
                         }
@@ -52,7 +49,6 @@
 
         try {
             if (status.running) {
-                 
                 const res = await fetch(
                     `/api/instances/${instanceId}/tunnel/stop`,
                     { method: "POST" },
@@ -60,12 +56,6 @@
                 if (!res.ok) throw await res.text();
                 addToast("Tunnel stopped", "success");
             } else {
-                 
-                if (!config.token && config.provider === "playit") {
-                     
-                    return addToast("Please enter a token/secret", "error");
-                }
-
                 const res = await fetch(
                     `/api/instances/${instanceId}/tunnel/start`,
                     {
@@ -123,30 +113,18 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            
             <div class="space-y-6">
                 <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-2"
-                        >Provider</label
+                    <span class="block text-sm font-medium text-gray-400 mb-2"
+                        >Provider</span
                     >
-                    <div class="grid grid-cols-2 gap-3">
-                        <button
-                            class="px-4 py-3 rounded-xl border text-sm font-bold transition-all
-                            {config.provider === 'playit'
-                                ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
-                                : 'bg-gray-800/50 border-gray-700 text-gray-400 hover:bg-gray-800'}"
-                            disabled={status.running}
-                            on:click={() => (config.provider = "playit")}
-                        >
-                            Playit.gg
-                        </button>
+                    <div class="grid grid-cols-1 gap-3">
                         <button
                             class="px-4 py-3 rounded-xl border text-sm font-bold transition-all
                             {config.provider === 'ngrok'
                                 ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-400'
                                 : 'bg-gray-800/50 border-gray-700 text-gray-400 hover:bg-gray-800'}"
-                            disabled={status.running}
-                            on:click={() => (config.provider = "ngrok")}
+                            disabled={true}
                         >
                             Ngrok
                         </button>
@@ -154,10 +132,11 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-2">
-                        {config.provider === "playit"
-                            ? "Secret Key (Requires 'playit' binary)"
-                            : "Auth Token (Optional)"}
+                    <label
+                        for="tunnel-token"
+                        class="block text-sm font-medium text-gray-400 mb-2"
+                    >
+                        Auth Token (Optional)
                     </label>
                     <div class="relative">
                         <div
@@ -167,19 +146,16 @@
                         </div>
                         <input
                             type="password"
+                            id="tunnel-token"
                             bind:value={config.token}
                             disabled={status.running}
                             class="w-full bg-gray-950 border border-gray-800 rounded-xl py-2.5 pl-10 pr-4 text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-colors placeholder-gray-700"
-                            placeholder={config.provider === "playit"
-                                ? "Enter your playit agent secret..."
-                                : "Enter ngrok authtoken (auto-installed if missing)..."}
+                            placeholder="Enter ngrok authtoken (auto-installed if missing)..."
                         />
                     </div>
                     <p class="text-xs text-gray-500 mt-2 flex gap-1">
                         <Info class="w-3 h-3 translate-y-px" />
-                        {config.provider === "playit"
-                            ? "Get your secret from the playit.gg dashboard."
-                            : "We will automatically install ngrok if it's not found."}
+                        We will automatically install ngrok if it's not found.
                     </p>
                 </div>
 
@@ -203,7 +179,6 @@
                 </div>
             </div>
 
-            
             <div
                 class="bg-black/40 rounded-xl border border-white/5 p-4 flex flex-col min-h-[300px]"
             >
@@ -255,7 +230,6 @@
 </div>
 
 <style>
-     
     .custom-scrollbar::-webkit-scrollbar {
         width: 6px;
     }

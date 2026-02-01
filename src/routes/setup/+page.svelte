@@ -80,7 +80,6 @@
                     bind:value={password}
                     class="w-full bg-gray-800 border border-gray-700 rounded-md py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                     placeholder="Min. 8 characters"
-                    autofocus
                 />
             </div>
 

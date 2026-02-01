@@ -3,13 +3,12 @@
     import { HardDrive, Download, Box, ArrowRight } from "lucide-svelte";
     import { createEventDispatcher } from "svelte";
 
-     
     export let importMode;
-     
+
     export let sourcePath;
-     
+
     export let type;
-     
+
     export let typeOptions;
     export let showDirPicker = false;
 
@@ -36,7 +35,9 @@
         <h2 class="text-3xl font-bold text-white mb-6">Locate Server</h2>
         <div class="space-y-4">
             <div>
-                <label class="block text-sm font-medium text-gray-400 mb-2"
+                <label
+                    for="server-path"
+                    class="block text-sm font-medium text-gray-400 mb-2"
                     >Folder Path</label
                 >
                 <div class="flex gap-2">
@@ -48,6 +49,7 @@
                         </div>
                         <input
                             type="text"
+                            id="server-path"
                             bind:value={sourcePath}
                             class="w-full bg-gray-800 border border-gray-700 text-white rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all font-mono text-sm"
                             placeholder="/absolute/path/to/server"

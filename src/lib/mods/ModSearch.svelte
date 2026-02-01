@@ -1,16 +1,15 @@
 <script>
-     
     export let mode;
-     
+
     export let activeTab;
-     
+
     export let sortBy;
-     
+
     export let query;
-     
+
     export let loading;
-     
-    export let type;  
+
+    export let type;
 
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
@@ -19,7 +18,6 @@
         dispatch("search");
     }
 
-     
     function handleKeydown(e) {
         if (e.key === "Enter") search();
     }
@@ -79,7 +77,6 @@
     </div>
 </div>
 
-
 <div class="flex gap-2 mb-6">
     <div class="relative flex-1">
         <input
@@ -90,7 +87,7 @@
                 ? type === "spigot"
                     ? "Search for plugins..."
                     : "Search for mods..."
-                : "Search for modpacks..."}
+                : "Search for plugins..."}
             class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 pl-11 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all"
         />
         <svg

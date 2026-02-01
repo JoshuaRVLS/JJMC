@@ -1,26 +1,21 @@
 <script>
     import { onMount, onDestroy } from "svelte";
 
-     
     export let instanceId;
-    export let status = "Offline";
 
-     
     let logs = [];
     let command = "";
-     
+
     let socket;
-     
+
     let consoleDiv;
     let connected = false;
 
-     
     function connect() {
         if (!instanceId) return;
 
-         
         const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-         
+
         const wsUrl = `${protocol}//${window.location.host}/ws/instances/${instanceId}/console`;
 
         socket = new WebSocket(wsUrl);
@@ -29,7 +24,7 @@
             connected = true;
         };
 
-        socket.onmessage = (  event) => {
+        socket.onmessage = (event) => {
             logs = [...logs, event.data];
             scrollToBottom();
         };
@@ -44,12 +39,10 @@
         };
     }
 
-     
     onMount(() => {
         connect();
     });
 
-     
     $: if (instanceId) {
         if (socket) socket.close();
         connect();
@@ -70,9 +63,6 @@
     async function sendCommand() {
         if (!command.trim()) return;
 
-         
-         
-
         try {
             await fetch(`/api/instances/${instanceId}/command`, {
                 method: "POST",
@@ -85,7 +75,6 @@
         }
     }
 
-     
     function handleKeydown(e) {
         if (e.key === "Enter") {
             sendCommand();
@@ -100,24 +89,20 @@
         }
     }
 
-     
     function formatLog(text) {
         if (!text) return "";
 
-         
         text = text
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;");
 
-         
         const urlRegex = /(https?:\/\/[^\s]+)/g;
         text = text.replace(
             urlRegex,
             '<a href="$1" target="_blank" rel="noopener noreferrer" class="console-link underline decoration-indigo-500/50 hover:decoration-indigo-400 text-indigo-300 hover:text-indigo-200 transition-colors cursor-pointer" title="Ctrl + Click to open">$1</a>',
         );
 
-         
         const ansiRegex = /\x1b\[([0-9;]*)m/g;
 
         let html = "";
@@ -126,7 +111,6 @@
         let match;
 
         while ((match = ansiRegex.exec(text)) !== null) {
-             
             html += text.substring(lastIndex, match.index);
             lastIndex = ansiRegex.lastIndex;
 
@@ -136,17 +120,14 @@
                 const code = codes[i];
 
                 if (code === 0) {
-                     
                     while (styleStack.length > 0) {
                         html += "</span>";
                         styleStack.pop();
                     }
                 } else if (code === 1) {
-                     
                     html += "<span class='font-bold'>";
                     styleStack.push("span");
                 } else if (code === 38 && codes[i + 1] === 2) {
-                     
                     const r = codes[i + 2];
                     const g = codes[i + 3];
                     const b = codes[i + 4];
@@ -154,7 +135,6 @@
                     styleStack.push("span");
                     i += 4;
                 } else if (code === 48 && codes[i + 1] === 2) {
-                     
                     const r = codes[i + 2];
                     const g = codes[i + 3];
                     const b = codes[i + 4];
@@ -162,7 +142,6 @@
                     styleStack.push("span");
                     i += 4;
                 } else if (code >= 30 && code <= 37) {
-                     
                     const colors = [
                         "black",
                         "red",
@@ -172,9 +151,9 @@
                         "magenta",
                         "cyan",
                         "white",
-                        "bright-black",  
+                        "bright-black",
                     ];
-                     
+
                     const map = [
                         "#000000",
                         "#ef4444",
@@ -188,7 +167,6 @@
                     html += `<span style="color: ${map[code - 30]}">`;
                     styleStack.push("span");
                 } else if (code >= 90 && code <= 97) {
-                     
                     const map = [
                         "#6b7280",
                         "#f87171",
@@ -202,13 +180,11 @@
                     html += `<span style="color: ${map[code - 90]}">`;
                     styleStack.push("span");
                 }
-                 
             }
         }
 
         html += text.substring(lastIndex);
 
-         
         while (styleStack.length > 0) {
             html += "</span>";
             styleStack.pop();
@@ -221,17 +197,14 @@
 <div
     class="flex flex-col h-full bg-slate-950/80 backdrop-blur-xl rounded-2xl overflow-hidden border border-white/5 shadow-2xl font-mono text-sm group relative"
 >
-    
     <div
         class="absolute inset-0 pointer-events-none bg-linear-to-tr from-indigo-500/5 via-transparent to-emerald-500/5 opacity-50"
     ></div>
 
-    
     <div
         class="flex justify-between items-center px-5 py-3 bg-white/5 border-b border-white/5 relative z-10"
     >
         <div class="flex items-center gap-3">
-            
             <svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="w-4 h-4 text-gray-400"
@@ -276,7 +249,8 @@
         </div>
     </div>
 
-    
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
     <div
         bind:this={consoleDiv}
         on:click={handleConsoleClick}
@@ -304,7 +278,6 @@
         {/each}
     </div>
 
-    
     <div class="p-4 bg-white/2 border-t border-white/5 relative z-10">
         <div
             class="group/input flex items-center gap-3 bg-black/40 rounded-xl px-4 py-3 border border-white/5 focus-within:border-indigo-500/50 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all duration-300 shadow-inner"

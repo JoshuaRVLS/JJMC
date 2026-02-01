@@ -70,10 +70,7 @@ func (tm *TunnelManager) Start(provider, token string) error {
 	tm.SaveConfig()
 
 	var cmd *exec.Cmd
-	if provider == "playit" {
-
-		cmd = exec.Command("playit", "--secret", token)
-	} else if provider == "ngrok" {
+	if provider == "ngrok" {
 
 		ngrokPath := GetNgrokPath()
 
@@ -151,11 +148,6 @@ func (tm *TunnelManager) Start(provider, token string) error {
 					if match := reTui.FindString(line); match != "" {
 						tm.Status.PublicAddress = match
 					}
-				}
-			} else if provider == "playit" {
-
-				if match, _ := regexp.MatchString(`.*\.gl\.joinmc\.link.*`, line); match {
-					tm.Status.PublicAddress = line
 				}
 			}
 			tm.Mu.Unlock()

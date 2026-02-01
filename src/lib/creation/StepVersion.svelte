@@ -4,11 +4,10 @@
     import Select from "$lib/components/Select.svelte";
     import { createEventDispatcher } from "svelte";
 
-     
     export let type;
-     
+
     export let version;
-     
+
     export let versionOptions;
 
     const dispatch = createEventDispatcher();
@@ -50,10 +49,13 @@
         </div>
     {:else}
         <div class="space-y-4">
-            <label class="block text-sm font-medium text-gray-400"
+            <label
+                for="version-select"
+                class="block text-sm font-medium text-gray-400"
                 >Minecraft Version</label
             >
             <Select
+                id="version-select"
                 options={versionOptions}
                 bind:value={version}
                 placeholder="Loading versions..."

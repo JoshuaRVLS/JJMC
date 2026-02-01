@@ -17,7 +17,7 @@
             });
 
             if (res.ok) {
-                window.location.href = "/";  
+                window.location.href = "/";
             } else {
                 const data = await res.json();
                 addToast(data.error || "Login failed", "error");
@@ -29,8 +29,6 @@
         }
     }
 
-     
-     
     onMount(async () => {
         const res = await fetch("/api/auth/status");
         if (res.ok) {
@@ -64,7 +62,6 @@
                     bind:value={password}
                     class="w-full bg-gray-800 border border-gray-700 rounded-md py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="Enter password"
-                    autofocus
                 />
             </div>
 
