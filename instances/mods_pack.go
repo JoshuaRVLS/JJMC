@@ -120,14 +120,25 @@ func (inst *Instance) InstallModpack(projectId string) error {
 
 	// Re-install loader if needed (optional but good idea)
 	vm := NewVersionsManager(inst.Manager)
+	var jarName string
 	if inst.Type == "fabric" {
 		vm.InstallFabric(inst.Version)
+		jarName = "fabric.jar"
 	} else if inst.Type == "quilt" {
 		vm.InstallQuilt(inst.Version)
+		jarName = "quilt.jar"
 	} else if inst.Type == "forge" {
 		vm.InstallForge(inst.Version)
+		jarName = "forge.jar"
 	} else if inst.Type == "neoforge" {
 		vm.InstallNeoForge(inst.Version)
+		jarName = "neoforge.jar"
+	}
+
+	if jarName != "" {
+		inst.JarFile = jarName
+		inst.Save()
+		inst.Manager.SetJar(jarName)
 	}
 
 	inst.Manager.Broadcast("Modpack installed successfully.")

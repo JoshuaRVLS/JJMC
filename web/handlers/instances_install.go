@@ -64,6 +64,8 @@ func (h *InstanceHandler) ChangeType(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": fmt.Sprintf("Reset successful, but install failed: %v", installErr)})
 	}
 
+	inst.JarFile = jarName
+	inst.Save()
 	inst.Manager.SetJar(jarName)
 	return c.JSON(fiber.Map{"status": "changed"})
 }
@@ -83,62 +85,50 @@ func (h *InstanceHandler) Install(c *fiber.Ctx) error {
 	}
 
 	vm := instances.NewVersionsManager(inst.Manager)
+	var jarName string
 
 	if payload.Type == "fabric" {
 		if err := vm.InstallFabric(payload.Version); err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 		}
-		inst.Manager.SetJar("fabric.jar")
-		return c.JSON(fiber.Map{"status": "installed", "jar": "fabric.jar"})
-	}
-
-	if payload.Type == "quilt" {
+		jarName = "fabric.jar"
+	} else if payload.Type == "quilt" {
 		if err := vm.InstallQuilt(payload.Version); err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 		}
-		inst.Manager.SetJar("quilt.jar")
-		return c.JSON(fiber.Map{"status": "installed", "jar": "quilt.jar"})
-	}
-
-	if payload.Type == "forge" {
+		jarName = "quilt.jar"
+	} else if payload.Type == "forge" {
 		if err := vm.InstallForge(payload.Version); err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 		}
-		inst.Manager.SetJar("forge.jar")
-		return c.JSON(fiber.Map{"status": "installed", "jar": "forge.jar"})
-	}
-
-	if payload.Type == "neoforge" {
+		jarName = "forge.jar"
+	} else if payload.Type == "neoforge" {
 		if err := vm.InstallNeoForge(payload.Version); err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 		}
-		inst.Manager.SetJar("neoforge.jar")
-		return c.JSON(fiber.Map{"status": "installed", "jar": "neoforge.jar"})
-	}
-
-	if payload.Type == "spigot" {
-		if err := vm.InstallSpigot(payload.Version); err != nil {
-			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		jarName = "neoforge.jar"
+	} else if payload.Type == "spigot" || payload.Type == "bukkit" || payload.Type == "paper" {
+		// These methods return error
+		if payload.Type == "spigot" {
+			if err := vm.InstallSpigot(payload.Version); err != nil {
+				return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+			}
+		} else if payload.Type == "bukkit" {
+			if err := vm.InstallCraftBukkit(payload.Version); err != nil {
+				return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+			}
+		} else {
+			if err := vm.InstallPaper(payload.Version); err != nil {
+				return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+			}
 		}
-		inst.Manager.SetJar("server.jar")
-		return c.JSON(fiber.Map{"status": "installed", "jar": "server.jar"})
+		jarName = "server.jar"
+	} else {
+		return c.Status(400).JSON(fiber.Map{"error": "Unsupported version type"})
 	}
 
-	if payload.Type == "bukkit" {
-		if err := vm.InstallCraftBukkit(payload.Version); err != nil {
-			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-		}
-		inst.Manager.SetJar("server.jar")
-		return c.JSON(fiber.Map{"status": "installed", "jar": "server.jar"})
-	}
-
-	if payload.Type == "paper" {
-		if err := vm.InstallPaper(payload.Version); err != nil {
-			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-		}
-		inst.Manager.SetJar("server.jar")
-		return c.JSON(fiber.Map{"status": "installed", "jar": "server.jar"})
-	}
-
-	return c.Status(400).JSON(fiber.Map{"error": "Unsupported version type"})
+	inst.JarFile = jarName
+	inst.Save()
+	inst.Manager.SetJar(jarName)
+	return c.JSON(fiber.Map{"status": "installed", "jar": jarName})
 }
