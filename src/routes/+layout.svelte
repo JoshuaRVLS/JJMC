@@ -18,10 +18,12 @@
 		Server,
 		LayoutGrid,
 		LogOut,
+		Coffee,
 		ArrowLeft,
 		Loader2,
 		Archive,
 		Globe,
+		Calendar,
 	} from "lucide-svelte";
 
 	let instances = [];
@@ -202,6 +204,17 @@
 								Console
 							</a>
 							<a
+								href="/instances/{currentInstanceId}?tab=schedules"
+								class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 {$page.url.searchParams.get(
+									'tab',
+								) === 'schedules'
+									? 'bg-indigo-500/10 text-indigo-400 ring-1 ring-indigo-500/20'
+									: 'hover:bg-white/5 hover:text-white'}"
+							>
+								<Calendar class="w-4 h-4" />
+								Schedules
+							</a>
+							<a
 								href="/instances/{currentInstanceId}?tab=files"
 								class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 {$page.url.searchParams.get(
 									'tab',
@@ -288,6 +301,17 @@
 							>
 								<FileCog class="w-4 h-4" />
 								Configs
+							</a>
+							<a
+								href="/instances/{currentInstanceId}?tab=java"
+								class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 {$page.url.searchParams.get(
+									'tab',
+								) === 'java'
+									? 'bg-indigo-500/10 text-indigo-400 ring-1 ring-indigo-500/20'
+									: 'hover:bg-white/5 hover:text-white'}"
+							>
+								<Coffee class="w-4 h-4" />
+								Java
 							</a>
 							<a
 								href="/instances/{currentInstanceId}?tab=backups"

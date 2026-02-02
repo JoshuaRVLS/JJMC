@@ -18,12 +18,27 @@
 
     /** @type {FileEntry[]} */
     let jarFiles = [];
+    let installedRuntimes = [];
+    let selectedJavaMode = "";
     let loading = true;
     let saving = false;
+
+    async function loadRuntimes() {
+        try {
+            const res = await fetch("/api/java/installed");
+            if (res.ok) {
+                installedRuntimes = (await res.json()) || [];
+            }
+        } catch (e) {
+            console.error("Failed to load runtimes", e);
+        }
+    }
 
     async function loadSettings() {
         loading = true;
         try {
+            await loadRuntimes();
+
             const res = await fetch(`/api/instances/${instanceId}`);
             if (res.ok) {
                 const data = await res.json();
@@ -31,6 +46,18 @@
                 javaArgs = data.javaArgs || "";
                 jarFile = data.jarFile || "server.jar";
                 javaPath = data.javaPath || "";
+
+                // Determine mode
+                const knownRuntime = installedRuntimes.find(
+                    (r) => r.path === javaPath,
+                );
+                if (javaPath === "") {
+                    selectedJavaMode = "";
+                } else if (knownRuntime) {
+                    selectedJavaMode = javaPath;
+                } else {
+                    selectedJavaMode = "custom";
+                }
 
                 const mediaRes = await fetch(
                     `/api/instances/${instanceId}/files?path=.`,
@@ -52,6 +79,10 @@
         } finally {
             loading = false;
         }
+    }
+
+    $: if (selectedJavaMode !== "custom") {
+        javaPath = selectedJavaMode;
     }
 
     async function saveSettings() {
@@ -157,18 +188,34 @@
                     for="javapath"
                     class="block text-sm font-medium text-gray-400"
                 >
-                    Java Path
+                    Java Runtime
                 </label>
-                <input
-                    id="javapath"
-                    type="text"
-                    bind:value={javaPath}
-                    placeholder="java (or /path/to/java)"
-                    class="bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white w-full focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all font-mono text-sm"
-                />
+                <div class="flex flex-col gap-2">
+                    <select
+                        bind:value={selectedJavaMode}
+                        class="bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white w-full focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all"
+                    >
+                        <option value="">System Default</option>
+                        {#each installedRuntimes as runtime}
+                            <option value={runtime.path}
+                                >Java {runtime.version} ({runtime.name})</option
+                            >
+                        {/each}
+                        <option value="custom">Custom Path...</option>
+                    </select>
+
+                    {#if selectedJavaMode === "custom"}
+                        <input
+                            id="javapath"
+                            type="text"
+                            bind:value={javaPath}
+                            placeholder="/path/to/java"
+                            class="bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white w-full focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all font-mono text-sm"
+                        />
+                    {/if}
+                </div>
                 <div class="text-xs text-gray-500">
-                    Path to the Java executable. Leave empty to use system
-                    default.
+                    Select the Java version to use for this server.
                 </div>
             </div>
 

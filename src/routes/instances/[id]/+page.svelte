@@ -13,19 +13,19 @@
     import TypeSettings from "$lib/TypeSettings.svelte";
     import Backups from "$lib/Backups.svelte";
     import PortForward from "$lib/PortForward.svelte";
+    import Schedules from "$lib/Schedules.svelte";
+    import Resources from "$lib/Resources.svelte";
+    import JavaSettings from "$lib/JavaSettings.svelte";
 
-     
     $: instanceId = $page.params.id || "";
 
     let status = "Offline";
     let type = "";
-     
+
     let interval;
 
-     
     $: activeTab = $page.url.searchParams.get("tab") || "console";
 
-     
     function setTab(tab) {
         const url = new URL($page.url);
         url.searchParams.set("tab", tab);
@@ -62,9 +62,7 @@
 </script>
 
 <div class="h-full flex flex-col p-6 gap-6">
-    
     <header class="flex justify-between items-center">
-        
         <div class="flex items-center gap-4">
             <a
                 href="/instances"
@@ -88,7 +86,7 @@
                 <h2 class="text-xl font-bold text-white tracking-tight">
                     {instanceId}
                 </h2>
-                
+
                 <div
                     class="flex items-center gap-2 text-xs font-mono text-gray-400"
                 >
@@ -118,47 +116,54 @@
         </div>
     </header>
 
-    
     <div class="flex-1 min-h-0 flex flex-col">
         {#if activeTab === "console"}
-            <div class="flex-1 grid grid-rows-[1fr_auto] gap-6 min-h-0">
-                
-                <div class="min-h-0 relative">
-                    <Console {instanceId} {status} />
+            <div class="flex-1 grid grid-cols-[1fr_300px] gap-6 min-h-0">
+                <div class="flex flex-col gap-6 min-h-0">
+                    <div class="flex-1 min-h-0 relative">
+                        <Console {instanceId} {status} />
+                    </div>
                 </div>
 
-                
-                <div
-                    class="relative z-10 bg-gray-900/60 backdrop-blur-xl border border-white/5 rounded-2xl p-6 flex justify-between items-center shadow-lg"
-                >
-                    <div class="flex items-center gap-3">
+                <div class="flex flex-col gap-6 min-h-0 overflow-y-auto">
+                    <div class="h-48 shrink-0">
+                        <Resources {instanceId} />
+                    </div>
+
+                    <div
+                        class="relative z-10 bg-gray-900/60 backdrop-blur-xl border border-white/5 rounded-2xl p-6 flex flex-col gap-6 shadow-lg"
+                    >
                         <div
-                            class="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400"
+                            class="flex items-center gap-3 border-b border-white/5 pb-4"
                         >
-                            <svg
-                                class="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                ><path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-                                /></svg
+                            <div
+                                class="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400"
                             >
+                                <svg
+                                    class="w-5 h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                    ><path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+                                    /></svg
+                                >
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold text-white">
+                                    Control Panel
+                                </div>
+                                <div class="text-xs text-gray-500">
+                                    Manage server state
+                                </div>
+                            </div>
                         </div>
                         <div>
-                            <div class="text-sm font-bold text-white">
-                                Control Panel
-                            </div>
-                            <div class="text-xs text-gray-500">
-                                Manage server state
-                            </div>
+                            <Controls {instanceId} {status} />
                         </div>
-                    </div>
-                    <div>
-                        <Controls {instanceId} {status} />
                     </div>
                 </div>
             </div>
@@ -186,6 +191,10 @@
             <Backups {instanceId} />
         {:else if activeTab === "portforward"}
             <PortForward {instanceId} />
+        {:else if activeTab === "schedules"}
+            <Schedules {instanceId} />
+        {:else if activeTab === "java"}
+            <JavaSettings />
         {/if}
     </div>
 </div>
