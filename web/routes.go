@@ -22,7 +22,8 @@ func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManag
 	app.Use(cors.New())
 	app.Use(compress.New())
 	app.Use(helmet.New(helmet.Config{
-		ContentSecurityPolicy: "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https://cdn.modrinth.com https://git.io https://avatars.githubusercontent.com https://static.spigotmc.org https://www.spigotmc.org https://secure.gravatar.com https://minotar.net; font-src 'self' data:; connect-src 'self' ws: wss:;",
+		ContentSecurityPolicy:     "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https://cdn.modrinth.com https://git.io https://avatars.githubusercontent.com https://static.spigotmc.org https://www.spigotmc.org https://secure.gravatar.com https://minotar.net https://i.imgur.com; font-src 'self' data:; connect-src 'self' ws: wss:;",
+		CrossOriginEmbedderPolicy: "unsafe-none",
 	}))
 	app.Use(middleware.AuthMiddleware(authManager))
 
