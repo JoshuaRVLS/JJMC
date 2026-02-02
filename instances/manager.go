@@ -69,6 +69,7 @@ func NewInstanceManager(baseDir string, tm *services.TemplateManager, silent boo
 		instance.Manager.SetJavaArgs(model.JavaArgs)
 		instance.Manager.SetJavaPath(model.JavaPath)
 		instance.Manager.SetWebhookURL(model.WebhookURL)
+		instance.Manager.SetInstanceInfo(model.ID, model.Name, model.Type, model.Version)
 
 		im.instances[model.ID] = instance
 	}
@@ -151,6 +152,8 @@ func (im *InstanceManager) UpdateSettings(id string, maxMemory int, javaArgs, ja
 	}
 	inst.Manager.SetJavaPath(javaPath)
 	inst.Manager.SetWebhookURL(webhookUrl)
+	// Update info just in case, though name/ID/Type/Version usually don't change here
+	inst.Manager.SetInstanceInfo(inst.ID, inst.Name, inst.Type, inst.Version)
 
 	return nil
 }
@@ -184,6 +187,7 @@ func (inst *Instance) Reset(serverType, version string) error {
 
 	inst.Type = serverType
 	inst.Version = version
+	inst.Manager.SetInstanceInfo(inst.ID, inst.Name, serverType, version)
 
 	err := database.DB.Model(&models.InstanceModel{}).Where("id = ?", inst.ID).Updates(map[string]interface{}{
 		"type":    serverType,

@@ -48,7 +48,7 @@ func (m *Manager) Start() error {
 	}
 
 	// Use payload helper directly since we already hold the lock
-	sendWebhookPayload(m.webhookURL, "Starting")
+	sendWebhookPayload(m.webhookURL, "Starting", m.id, m.name, m.serverType, m.version)
 
 	if m.tailCmd != nil {
 		if m.tailCmd.Process != nil {

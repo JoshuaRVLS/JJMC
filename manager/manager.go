@@ -3,10 +3,12 @@ package manager
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 
@@ -42,6 +44,12 @@ type Manager struct {
 	silent    bool
 
 	webhookURL string
+
+	// Metadata
+	id         string
+	name       string
+	serverType string
+	version    string
 
 	// Control
 	ctx    context.Context
@@ -121,22 +129,72 @@ func (m *Manager) SetWebhookURL(url string) {
 	m.webhookURL = url
 }
 
+func (m *Manager) SetInstanceInfo(id, name, serverType, version string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.id = id
+	m.name = name
+	m.serverType = serverType
+	m.version = version
+}
+
 func (m *Manager) sendWebhook(event string) {
 	m.mu.Lock()
 	url := m.webhookURL
+	id := m.id
+	name := m.name
+	st := m.serverType
+	v := m.version
 	m.mu.Unlock()
-	sendWebhookPayload(url, event)
+	sendWebhookPayload(url, event, id, name, st, v)
 }
 
-func sendWebhookPayload(url, event string) {
+type discordEmbed struct {
+	Title       string         `json:"title"`
+	Description string         `json:"description"`
+	Color       int            `json:"color"`
+	Fields      []discordField `json:"fields"`
+}
+
+type discordField struct {
+	Name   string `json:"name"`
+	Value  string `json:"value"`
+	Inline bool   `json:"inline"`
+}
+
+type discordPayload struct {
+	Embeds []discordEmbed `json:"embeds"`
+}
+
+func sendWebhookPayload(url, event, id, name, serverType, version string) {
 	if url == "" {
 		return
 	}
 
 	go func() {
-		// Simple JSON payload for Discord
-		payload := fmt.Sprintf(`{"content": "Server **%s**"}`, event)
-		req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(payload)))
+		color := 3066993 // Green
+		if event == "Stopped" || event == "Crashed" {
+			color = 15158332 // Red
+		}
+
+		payloadObj := discordPayload{
+			Embeds: []discordEmbed{
+				{
+					Title:       fmt.Sprintf("Server %s", event),
+					Description: fmt.Sprintf("Server **%s** has %s.", name, strings.ToLower(event)),
+					Color:       color,
+					Fields: []discordField{
+						{Name: "Server Name", Value: name, Inline: true},
+						{Name: "ID", Value: id, Inline: true},
+						{Name: "Type", Value: serverType, Inline: true},
+						{Name: "Version", Value: version, Inline: true},
+					},
+				},
+			},
+		}
+
+		data, _ := json.Marshal(payloadObj)
+		req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
 		if err != nil {
 			fmt.Printf("Failed to create webhook request: %v\n", err)
 			return
