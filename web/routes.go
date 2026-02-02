@@ -7,18 +7,36 @@ import (
 	"jjmc/services/scheduler"
 	"jjmc/web/handlers"
 	"jjmc/web/middleware"
+	"time"
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/helmet"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 )
 
 func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManager *instances.InstanceManager, scheduler *scheduler.Scheduler, javaManager *java_manager.JavaManager) {
 
 	app.Use(cors.New())
 	app.Use(compress.New())
+	app.Use(helmet.New())
 	app.Use(middleware.AuthMiddleware(authManager))
+
+	// Rate Limiter for Login
+	loginLimiter := limiter.New(limiter.Config{
+		Max:        5,
+		Expiration: 1 * time.Minute,
+		KeyGenerator: func(c *fiber.Ctx) string {
+			return c.IP()
+		},
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+				"error": "Too many login attempts, please try again later",
+			})
+		},
+	})
 
 	authHandler := handlers.NewAuthHandler(authManager)
 	systemHandler := handlers.NewSystemHandler()
@@ -28,7 +46,7 @@ func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManag
 	authGroup := app.Group("/api/auth")
 	authGroup.Get("/status", authHandler.GetStatus)
 	authGroup.Post("/setup", authHandler.Setup)
-	authGroup.Post("/login", authHandler.Login)
+	authGroup.Post("/login", loginLimiter, authHandler.Login)
 	authGroup.Post("/logout", authHandler.Logout)
 
 	sysGroup := app.Group("/api/system")

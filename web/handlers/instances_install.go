@@ -3,9 +3,12 @@ package handlers
 import (
 	"fmt"
 	"jjmc/instances"
+	"regexp"
 
 	"github.com/gofiber/fiber/v2"
 )
+
+var versionRegex = regexp.MustCompile(`^[a-zA-Z0-9\._-]+$`)
 
 func (h *InstanceHandler) ChangeType(c *fiber.Ctx) error {
 	id := c.Params("id")
@@ -20,6 +23,10 @@ func (h *InstanceHandler) ChangeType(c *fiber.Ctx) error {
 	}
 	if err := c.BodyParser(&payload); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
+	}
+
+	if !versionRegex.MatchString(payload.Version) {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid version format"})
 	}
 
 	if err := inst.Reset(payload.Type, payload.Version); err != nil {
@@ -82,6 +89,10 @@ func (h *InstanceHandler) Install(c *fiber.Ctx) error {
 	}
 	if err := c.BodyParser(&payload); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
+	}
+
+	if !versionRegex.MatchString(payload.Version) {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid version format"})
 	}
 
 	vm := instances.NewVersionsManager(inst.Manager)
