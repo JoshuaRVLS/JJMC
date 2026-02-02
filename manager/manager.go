@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"context"
 	"io"
 	"os/exec"
 	"sync"
@@ -35,6 +36,10 @@ type Manager struct {
 	logBuffer []string
 	pid       int
 	silent    bool
+
+	// Control
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 func NewManager() *Manager {
@@ -51,7 +56,7 @@ func NewManager() *Manager {
 	}
 	go m.handleBroadcast()
 	go m.handleStatsBroadcast()
-	go m.CollectStats()
+	// Stats collection is now started when the server starts
 	return m
 }
 

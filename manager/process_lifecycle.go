@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -127,6 +128,10 @@ func (m *Manager) Start() error {
 	go m.streamOutput(stdout, logFile)
 	go m.streamOutput(stderr, logFile)
 
+	// Start stats collection
+	m.ctx, m.cancel = context.WithCancel(context.Background())
+	go m.CollectStats(m.ctx)
+
 	go func() {
 		m.cmd.Wait()
 		m.mu.Lock()
@@ -136,6 +141,10 @@ func (m *Manager) Start() error {
 		m.mu.Unlock()
 		if logFile != nil {
 			logFile.Close()
+		}
+		// Stop stats collection
+		if m.cancel != nil {
+			m.cancel()
 		}
 		m.broadcast <- "Server stopped"
 	}()

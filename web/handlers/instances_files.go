@@ -28,11 +28,14 @@ func (h *InstanceHandler) ReadFile(c *fiber.Ctx) error {
 	if path == "" {
 		return c.Status(400).JSON(fiber.Map{"error": "Path required"})
 	}
-	content, err := inst.ReadFile(path)
+
+	file, err := inst.ReadFileStream(path)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.SendString(string(content))
+	defer file.Close()
+
+	return c.SendStream(file)
 }
 
 func (h *InstanceHandler) WriteFile(c *fiber.Ctx) error {

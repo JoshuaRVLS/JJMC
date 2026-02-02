@@ -16,6 +16,15 @@ func Read(rootDir, relPath string) ([]byte, error) {
 	return os.ReadFile(targetPath)
 }
 
+func GetStream(rootDir, relPath string) (*os.File, error) {
+	cleanPath := filepath.Clean(relPath)
+	if strings.Contains(cleanPath, "..") {
+		return nil, fmt.Errorf("invalid path")
+	}
+	targetPath := filepath.Join(rootDir, cleanPath)
+	return os.Open(targetPath)
+}
+
 func Write(rootDir, relPath string, data []byte) error {
 	cleanPath := filepath.Clean(relPath)
 	if strings.Contains(cleanPath, "..") {

@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -43,24 +44,25 @@ func (m *Manager) handleStatsBroadcast() {
 	}
 }
 
-func (m *Manager) CollectStats() {
+func (m *Manager) CollectStats(ctx context.Context) {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
 	var lastPid int
 	var proc *process.Process
 
-	for range ticker.C {
-		if !m.IsRunning() {
-			// Send zero stats if not running
+	for {
+		select {
+		case <-ctx.Done():
+			// Context cancelled, stop collecting
 			m.StatsBroadcast <- ProcessStats{
 				CPU:    0,
 				Memory: 0,
 				Time:   time.Now().Unix(),
 			}
-			lastPid = 0
-			proc = nil
-			continue
+			return
+		case <-ticker.C:
+			// Continue with collection
 		}
 
 		m.mu.Lock()

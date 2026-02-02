@@ -3,6 +3,7 @@ package instances
 import (
 	"jjmc/files"
 	"mime/multipart"
+	"os"
 )
 
 func (i *Instance) ListFiles(relPath string) ([]files.FileInfo, error) {
@@ -11,6 +12,10 @@ func (i *Instance) ListFiles(relPath string) ([]files.FileInfo, error) {
 
 func (i *Instance) ReadFile(relPath string) ([]byte, error) {
 	return files.Read(i.Directory, relPath)
+}
+
+func (i *Instance) ReadFileStream(relPath string) (*os.File, error) {
+	return files.GetStream(i.Directory, relPath)
 }
 
 func (i *Instance) WriteFile(relPath string, data []byte) error {
