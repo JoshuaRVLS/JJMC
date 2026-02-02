@@ -12,5 +12,12 @@ export default defineConfig({
                 ws: true
             }
         }
+    },
+    optimizeDeps: {
+        include: ['chart.js', 'lucide-svelte']
+    },
+    build: {
+        target: 'esnext',
+        minify: 'esbuild' // faster than terser
     }
 });

@@ -222,10 +222,11 @@
 
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-1"
+                    <label for="schedule-name" class="block text-sm font-medium text-gray-400 mb-1"
                         >Name</label
                     >
                     <input
+                        id="schedule-name"
                         type="text"
                         bind:value={newSchedule.name}
                         placeholder="Daily Restart"
@@ -234,11 +235,12 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-1"
+                    <label for="schedule-cron" class="block text-sm font-medium text-gray-400 mb-1"
                         >Cron Expression</label
                     >
                     <div class="flex gap-2">
                         <input
+                            id="schedule-cron"
                             type="text"
                             bind:value={newSchedule.cronExpression}
                             placeholder="0 0 * * *"
@@ -257,10 +259,11 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-1"
+                    <label for="schedule-type" class="block text-sm font-medium text-gray-400 mb-1"
                         >Type</label
                     >
                     <select
+                        id="schedule-type"
                         bind:value={newSchedule.type}
                         class="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-500 transition-colors"
                     >
@@ -275,10 +278,12 @@
                 {#if newSchedule.type === "command"}
                     <div>
                         <label
+                            for="schedule-payload"
                             class="block text-sm font-medium text-gray-400 mb-1"
                             >Command</label
                         >
                         <input
+                            id="schedule-payload"
                             type="text"
                             bind:value={newSchedule.payload}
                             placeholder="say Hello World"

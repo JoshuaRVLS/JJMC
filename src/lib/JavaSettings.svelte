@@ -176,8 +176,8 @@
 
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-2"
-                        >Select Version</label
+                    <span class="block text-sm font-medium text-gray-400 mb-2"
+                        >Select Version</span
                     >
                     <div class="grid grid-cols-2 gap-2">
                         {#each availableVersions as version}
