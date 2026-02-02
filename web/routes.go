@@ -3,6 +3,8 @@ package web
 import (
 	"jjmc/auth"
 	"jjmc/instances"
+	"jjmc/services/java_manager"
+	"jjmc/services/scheduler"
 	"jjmc/web/handlers"
 	"jjmc/web/middleware"
 
@@ -12,7 +14,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
-func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManager *instances.InstanceManager) {
+func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManager *instances.InstanceManager, scheduler *scheduler.Scheduler, javaManager *java_manager.JavaManager) {
 
 	app.Use(cors.New())
 	app.Use(compress.New())
@@ -21,6 +23,7 @@ func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManag
 	authHandler := handlers.NewAuthHandler(authManager)
 	systemHandler := handlers.NewSystemHandler()
 	instHandler := handlers.NewInstanceHandler(instanceManager)
+	scheduleHandler := handlers.NewScheduleHandler(scheduler)
 
 	authGroup := app.Group("/api/auth")
 	authGroup.Get("/status", authHandler.GetStatus)
@@ -40,6 +43,12 @@ func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManag
 	mpGroup := app.Group("/api/modpacks")
 	mpGroup.Get("/search", modpackHandler.Search)
 
+	javaHandler := handlers.NewJavaHandler(javaManager)
+	javaGroup := app.Group("/api/java")
+	javaGroup.Get("/installed", javaHandler.ListInstalled)
+	javaGroup.Post("/install", javaHandler.Install)
+	javaGroup.Delete("/:name", javaHandler.Delete)
+
 	instGroup := app.Group("/api/instances")
 	instGroup.Get("/", instHandler.List)
 	instGroup.Post("/", instHandler.Create)
@@ -55,6 +64,13 @@ func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManag
 	inst.Post("/restart", instHandler.Restart)
 	inst.Post("/command", instHandler.Command)
 	inst.Post("/install", instHandler.Install)
+
+	// Schedules
+	schedules := inst.Group("/schedules")
+	schedules.Get("/", scheduleHandler.List)
+	schedules.Post("/", scheduleHandler.Create)
+	schedules.Put("/:scheduleId", scheduleHandler.Update)
+	schedules.Delete("/:scheduleId", scheduleHandler.Delete)
 
 	files := inst.Group("/files")
 	files.Get("/", instHandler.ListFiles)
@@ -105,6 +121,8 @@ func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManag
 			}
 		}
 	}))
+
+	app.Get("/ws/instances/:id/stats", websocket.New(instHandler.StatsWebSocket))
 
 	RegisterBackupRoutes(app, authManager, instanceManager)
 }

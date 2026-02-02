@@ -13,6 +13,8 @@ import (
 	"jjmc/pkg/logger"
 	"jjmc/pkg/signals"
 	"jjmc/services"
+	"jjmc/services/java_manager"
+	"jjmc/services/scheduler"
 	"jjmc/web"
 
 	"jjmc/rcon"
@@ -43,11 +45,42 @@ func main() {
 		*silent,
 	)
 
+	taskExecutor := func(instanceID string, taskType string, payload string) error {
+		inst, err := instanceManager.GetInstance(instanceID)
+		if err != nil {
+			return err
+		}
+
+		switch taskType {
+		case "command":
+			return inst.Manager.WriteCommand(payload)
+		case "restart":
+			return inst.Manager.Restart()
+		case "start":
+			return inst.Manager.Start()
+		case "stop":
+			return inst.Manager.Stop()
+		case "backup":
+			// Assuming backup logic is accessible or via BackupManager
+			// For now, let's just log it or call a backup function if we have one exposed
+			logger.Warn("Backup schedule type not fully implemented in executor yet")
+			return nil
+		default:
+			return fmt.Errorf("unknown task type: %s", taskType)
+		}
+	}
+
+	schedulerService := scheduler.NewScheduler(database.DB, taskExecutor)
+
+	schedulerService.Start()
+
+	javaManager := java_manager.NewJavaManager("./runtimes")
+
 	app := fiber.New(fiber.Config{
 		DisableStartupMessage: true,
 	})
 
-	web.RegisterRoutes(app, authManager, instanceManager)
+	web.RegisterRoutes(app, authManager, instanceManager, schedulerService, javaManager)
 
 	app.Static("/_app", "./build/_app", fiber.Static{
 		Compress:      true,
@@ -154,6 +187,7 @@ func main() {
 	sftpServer.Close()
 	telnetServer.Close()
 	rconServer.Close()
+	schedulerService.Stop()
 
 	logger.Info("Shutdown complete.")
 }

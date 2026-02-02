@@ -4,6 +4,8 @@ import (
 	"io"
 	"os/exec"
 	"sync"
+
+	"github.com/gofiber/contrib/websocket"
 )
 
 type ConsoleClient interface {
@@ -15,7 +17,12 @@ type Manager struct {
 	tailCmd *exec.Cmd
 	stdin   io.WriteCloser
 	clients map[ConsoleClient]bool
-	mu      sync.Mutex
+
+	// Stats
+	StatsClients   map[*websocket.Conn]bool
+	StatsBroadcast chan interface{}
+
+	mu sync.Mutex
 
 	workDir      string
 	jarName      string
@@ -38,8 +45,13 @@ func NewManager() *Manager {
 		workDir:   ".",
 		maxMemory: 2048,
 		logBuffer: make([]string, 0, 100),
+
+		StatsClients:   make(map[*websocket.Conn]bool),
+		StatsBroadcast: make(chan interface{}),
 	}
 	go m.handleBroadcast()
+	go m.handleStatsBroadcast()
+	go m.CollectStats()
 	return m
 }
 
