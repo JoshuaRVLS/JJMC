@@ -81,11 +81,13 @@ func (m *Manager) Start() error {
 
 		args = append(args, "-jar", m.jarName, "nogui")
 
-		args = append(args, "-jar", m.jarName, "nogui")
-
 		javaBin := m.javaPath
 		if javaBin == "" {
 			javaBin = "java"
+		} else {
+			if info, err := os.Stat(javaBin); err == nil && info.IsDir() {
+				javaBin = fmt.Sprintf("%s/bin/java", javaBin)
+			}
 		}
 
 		m.cmd = exec.Command(javaBin, args...)
