@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import { addToast } from "$lib/stores/toast";
 
+    /** @type {string} */
     export let instanceId;
 
     let maxMemory = 2048;
@@ -9,6 +10,13 @@
     let jarFile = "server.jar";
     let javaPath = "";
 
+    /**
+     * @typedef {Object} FileEntry
+     * @property {string} name
+     * @property {boolean} [isDir]
+     */
+
+    /** @type {FileEntry[]} */
     let jarFiles = [];
     let loading = true;
     let saving = false;
@@ -28,6 +36,7 @@
                     `/api/instances/${instanceId}/files?path=.`,
                 );
                 if (mediaRes.ok) {
+                    /** @type {FileEntry[]} */
                     const files = await mediaRes.json();
                     jarFiles = files.filter(
                         (f) => !f.isDir && f.name.endsWith(".jar"),
@@ -38,7 +47,7 @@
                     }
                 }
             }
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             addToast("Failed to load settings", "error");
         } finally {
             loading = false;
@@ -60,7 +69,7 @@
             });
             if (!res.ok) throw new Error(await res.text());
             addToast("Settings saved", "success");
-        } catch (e) {
+        } catch (/** @type {any} */ e) {
             addToast("Failed to save settings: " + e.message, "error");
         } finally {
             saving = false;
