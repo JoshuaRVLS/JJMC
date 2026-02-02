@@ -85,6 +85,13 @@ type AdoptiumRelease struct {
 
 func (m *JavaManager) DownloadVersion(version int) error {
 	fmt.Printf("[JavaManager] Starting download for version %d\n", version)
+
+	// Check if already installed
+	expectedDir := filepath.Join(m.RuntimesDir, fmt.Sprintf("java-%d-hotspot", version))
+	if _, err := os.Stat(expectedDir); err == nil {
+		return fmt.Errorf("java %d is already installed", version)
+	}
+
 	m.mu.Lock()
 	if _, exists := m.installing[version]; exists {
 		m.mu.Unlock()

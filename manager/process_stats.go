@@ -47,6 +47,9 @@ func (m *Manager) CollectStats() {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
+	var lastPid int
+	var proc *process.Process
+
 	for range ticker.C {
 		if !m.IsRunning() {
 			// Send zero stats if not running
@@ -55,6 +58,8 @@ func (m *Manager) CollectStats() {
 				Memory: 0,
 				Time:   time.Now().Unix(),
 			}
+			lastPid = 0
+			proc = nil
 			continue
 		}
 
@@ -66,10 +71,14 @@ func (m *Manager) CollectStats() {
 			continue
 		}
 
-		proc, err := process.NewProcess(int32(pid))
-		if err != nil {
-			fmt.Printf("Error creating process: %v\n", err)
-			continue
+		if pid != lastPid || proc == nil {
+			p, err := process.NewProcess(int32(pid))
+			if err != nil {
+				fmt.Printf("Error creating process: %v\n", err)
+				continue
+			}
+			proc = p
+			lastPid = pid
 		}
 
 		cpu, _ := proc.Percent(0)

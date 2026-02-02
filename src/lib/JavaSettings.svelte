@@ -181,14 +181,27 @@
                     >
                     <div class="grid grid-cols-2 gap-2">
                         {#each availableVersions as version}
+                            {@const isInstalled = runtimes.some(
+                                (r) => r.version === version,
+                            )}
                             <button
-                                on:click={() => (selectedVersion = version)}
+                                on:click={() =>
+                                    !isInstalled && (selectedVersion = version)}
+                                disabled={isInstalled}
                                 class="px-4 py-3 rounded-lg border transition-all text-sm font-bold {selectedVersion ===
                                 version
                                     ? 'bg-indigo-500/10 border-indigo-500 text-indigo-400'
-                                    : 'bg-black/20 border-white/5 text-gray-400 hover:border-white/10'}"
+                                    : isInstalled
+                                      ? 'bg-gray-800/50 border-transparent text-gray-600 cursor-not-allowed opacity-50'
+                                      : 'bg-black/20 border-white/5 text-gray-400 hover:border-white/10'}"
                             >
                                 Java {version}
+                                {#if isInstalled}
+                                    <span
+                                        class="block text-[10px] font-normal mt-1"
+                                        >(Installed)</span
+                                    >
+                                {/if}
                             </button>
                         {/each}
                     </div>
