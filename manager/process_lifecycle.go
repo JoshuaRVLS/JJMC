@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -51,7 +53,7 @@ func (m *Manager) Start() error {
 		m.tailCmd = nil
 	}
 
-	logPath := fmt.Sprintf("%s/server.log", m.workDir)
+	logPath := filepath.Join(m.workDir, "server.log")
 	logFile, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Printf("Failed to open log file: %v\n", err)
@@ -68,7 +70,11 @@ func (m *Manager) Start() error {
 		cmdStr = strings.ReplaceAll(cmdStr, "${MAX_MEMORY}", strconv.Itoa(mem))
 		cmdStr = strings.ReplaceAll(cmdStr, "${JAVA_ARGS}", m.javaArgs)
 
-		m.cmd = exec.Command("sh", "-c", cmdStr)
+		if runtime.GOOS == "windows" {
+			m.cmd = exec.Command("cmd", "/C", cmdStr)
+		} else {
+			m.cmd = exec.Command("sh", "-c", cmdStr)
+		}
 	} else {
 		var args []string
 		args = append(args, fmt.Sprintf("-Xmx%dM", mem))
@@ -86,7 +92,7 @@ func (m *Manager) Start() error {
 			javaBin = "java"
 		} else {
 			if info, err := os.Stat(javaBin); err == nil && info.IsDir() {
-				javaBin = fmt.Sprintf("%s/bin/java", javaBin)
+				javaBin = filepath.Join(javaBin, "bin", "java")
 			}
 		}
 
@@ -116,7 +122,7 @@ func (m *Manager) Start() error {
 	}
 
 	m.pid = m.cmd.Process.Pid
-	os.WriteFile(fmt.Sprintf("%s/server.pid", m.workDir), []byte(fmt.Sprintf("%d", m.pid)), 0644)
+	os.WriteFile(filepath.Join(m.workDir, "server.pid"), []byte(fmt.Sprintf("%d", m.pid)), 0644)
 
 	go m.streamOutput(stdout, logFile)
 	go m.streamOutput(stderr, logFile)
@@ -126,7 +132,7 @@ func (m *Manager) Start() error {
 		m.mu.Lock()
 		m.cmd = nil
 		m.pid = 0
-		os.Remove(fmt.Sprintf("%s/server.pid", m.workDir))
+		os.Remove(filepath.Join(m.workDir, "server.pid"))
 		m.mu.Unlock()
 		if logFile != nil {
 			logFile.Close()
@@ -157,9 +163,9 @@ func (m *Manager) Stop() error {
 		process, err := os.FindProcess(m.pid)
 		if err == nil {
 
-			process.Signal(syscall.SIGTERM)
+			process.Signal(os.Interrupt)
 			m.pid = 0
-			os.Remove(fmt.Sprintf("%s/server.pid", m.workDir))
+			os.Remove(filepath.Join(m.workDir, "server.pid"))
 			return nil
 		}
 	}
@@ -208,7 +214,7 @@ func (m *Manager) WriteCommand(cmd string) error {
 
 func (m *Manager) loadPid() {
 
-	data, err := os.ReadFile(fmt.Sprintf("%s/server.pid", m.workDir))
+	data, err := os.ReadFile(filepath.Join(m.workDir, "server.pid"))
 	if err == nil {
 		pid, err := strconv.Atoi(string(data))
 		if err == nil {
@@ -218,7 +224,7 @@ func (m *Manager) loadPid() {
 				m.startTailing()
 			} else {
 
-				os.Remove(fmt.Sprintf("%s/server.pid", m.workDir))
+				os.Remove(filepath.Join(m.workDir, "server.pid"))
 			}
 		}
 	}
