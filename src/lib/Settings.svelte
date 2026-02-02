@@ -9,6 +9,7 @@
     let javaArgs = "";
     let jarFile = "server.jar";
     let javaPath = "";
+    let webhookUrl = "";
 
     /**
      * @typedef {Object} FileEntry
@@ -46,6 +47,7 @@
                 javaArgs = data.javaArgs || "";
                 jarFile = data.jarFile || "server.jar";
                 javaPath = data.javaPath || "";
+                webhookUrl = data.webhookUrl || "";
 
                 // Determine mode
                 const knownRuntime = installedRuntimes.find(
@@ -96,6 +98,7 @@
                     javaArgs: javaArgs,
                     jarFile: jarFile,
                     javaPath: javaPath,
+                    webhookUrl: webhookUrl,
                 }),
             });
             if (!res.ok) throw new Error(await res.text());
@@ -137,6 +140,26 @@
                 </select>
                 <div class="text-xs text-gray-500">
                     Select the server JAR file to execute.
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label
+                    for="webhook"
+                    class="block text-sm font-medium text-gray-400"
+                >
+                    Discord Webhook URL
+                </label>
+                <input
+                    id="webhook"
+                    type="text"
+                    bind:value={webhookUrl}
+                    placeholder="https://discord.com/api/webhooks/..."
+                    class="bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white w-full focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all font-mono text-sm"
+                />
+                <div class="text-xs text-gray-500">
+                    Send server status notifications (Start, Stop, Crash) to a
+                    Discord channel.
                 </div>
             </div>
 

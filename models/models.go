@@ -12,6 +12,7 @@ type Instance struct {
 	JarFile      string `json:"jarFile"`
 	JavaPath     string `json:"javaPath"`
 	StartCommand string `json:"startCommand"`
+	WebhookURL   string `json:"webhookUrl"`
 }
 
 type InstanceModel struct {
@@ -24,5 +25,6 @@ type InstanceModel struct {
 	JarFile      string
 	JavaPath     string
 	StartCommand string
+	WebhookURL   string
 	CreatedAt    int64
 }

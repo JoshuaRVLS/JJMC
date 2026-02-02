@@ -1,10 +1,14 @@
 package manager
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"io"
+	"net/http"
 	"os/exec"
 	"sync"
+	"time"
 
 	"github.com/gofiber/contrib/websocket"
 )
@@ -36,6 +40,8 @@ type Manager struct {
 	logBuffer []string
 	pid       int
 	silent    bool
+
+	webhookURL string
 
 	// Control
 	ctx    context.Context
@@ -107,4 +113,39 @@ func (m *Manager) SetSilent(silent bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.silent = silent
+}
+
+func (m *Manager) SetWebhookURL(url string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.webhookURL = url
+}
+
+func (m *Manager) sendWebhook(event string) {
+	m.mu.Lock()
+	url := m.webhookURL
+	m.mu.Unlock()
+
+	if url == "" {
+		return
+	}
+
+	go func() {
+		// Simple JSON payload for Discord
+		payload := fmt.Sprintf(`{"content": "Server **%s**"}`, event)
+		req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(payload)))
+		if err != nil {
+			fmt.Printf("Failed to create webhook request: %v\n", err)
+			return
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		client := &http.Client{Timeout: 5 * time.Second}
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Printf("Failed to send webhook: %v\n", err)
+			return
+		}
+		defer resp.Body.Close()
+	}()
 }

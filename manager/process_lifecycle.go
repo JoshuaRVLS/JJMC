@@ -47,6 +47,8 @@ func (m *Manager) Start() error {
 		return fmt.Errorf("server is already running")
 	}
 
+	m.sendWebhook("Starting")
+
 	if m.tailCmd != nil {
 		if m.tailCmd.Process != nil {
 			m.tailCmd.Process.Kill()
@@ -147,6 +149,7 @@ func (m *Manager) Start() error {
 			m.cancel()
 		}
 		m.broadcast <- "Server stopped"
+		m.sendWebhook("Stopped")
 	}()
 
 	return nil

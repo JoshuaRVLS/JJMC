@@ -47,15 +47,16 @@ func NewInstanceManager(baseDir string, tm *services.TemplateManager, silent boo
 
 		instModel := model
 		instance := NewInstance(&models.Instance{
-			ID:        instModel.ID,
-			Name:      instModel.Name,
-			Directory: dir,
-			Type:      instModel.Type,
-			Version:   instModel.Version,
-			MaxMemory: instModel.MaxMemory,
-			JavaArgs:  instModel.JavaArgs,
-			JarFile:   instModel.JarFile,
-			JavaPath:  instModel.JavaPath,
+			ID:         instModel.ID,
+			Name:       instModel.Name,
+			Directory:  dir,
+			Type:       instModel.Type,
+			Version:    instModel.Version,
+			MaxMemory:  instModel.MaxMemory,
+			JavaArgs:   instModel.JavaArgs,
+			JarFile:    instModel.JarFile,
+			JavaPath:   instModel.JavaPath,
+			WebhookURL: instModel.WebhookURL,
 		}, mgr)
 
 		instance.Manager.SetWorkDir(dir)
@@ -67,6 +68,7 @@ func NewInstanceManager(baseDir string, tm *services.TemplateManager, silent boo
 		instance.Manager.SetMaxMemory(model.MaxMemory)
 		instance.Manager.SetJavaArgs(model.JavaArgs)
 		instance.Manager.SetJavaPath(model.JavaPath)
+		instance.Manager.SetWebhookURL(model.WebhookURL)
 
 		im.instances[model.ID] = instance
 	}
@@ -117,7 +119,7 @@ func (im *InstanceManager) ListInstances() []*Instance {
 	return list
 }
 
-func (im *InstanceManager) UpdateSettings(id string, maxMemory int, javaArgs, jarFile, javaPath string) error {
+func (im *InstanceManager) UpdateSettings(id string, maxMemory int, javaArgs, jarFile, javaPath, webhookUrl string) error {
 	im.mu.Lock()
 	defer im.mu.Unlock()
 
@@ -127,10 +129,11 @@ func (im *InstanceManager) UpdateSettings(id string, maxMemory int, javaArgs, ja
 	}
 
 	err := database.DB.Model(&models.InstanceModel{}).Where("id = ?", id).Updates(models.InstanceModel{
-		MaxMemory: maxMemory,
-		JavaArgs:  javaArgs,
-		JarFile:   jarFile,
-		JavaPath:  javaPath,
+		MaxMemory:  maxMemory,
+		JavaArgs:   javaArgs,
+		JarFile:    jarFile,
+		JavaPath:   javaPath,
+		WebhookURL: webhookUrl,
 	}).Error
 	if err != nil {
 		return fmt.Errorf("failed to update db: %v", err)
@@ -140,12 +143,14 @@ func (im *InstanceManager) UpdateSettings(id string, maxMemory int, javaArgs, ja
 	inst.JavaArgs = javaArgs
 	inst.JarFile = jarFile
 	inst.JavaPath = javaPath
+	inst.WebhookURL = webhookUrl
 	inst.Manager.SetMaxMemory(maxMemory)
 	inst.Manager.SetJavaArgs(javaArgs)
 	if jarFile != "" {
 		inst.Manager.SetJar(jarFile)
 	}
 	inst.Manager.SetJavaPath(javaPath)
+	inst.Manager.SetWebhookURL(webhookUrl)
 
 	return nil
 }
