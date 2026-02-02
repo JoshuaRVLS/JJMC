@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/gofiber/contrib/websocket"
@@ -26,8 +27,12 @@ func (m *Manager) UnregisterStatsClient(c *websocket.Conn) {
 }
 
 func (m *Manager) handleStatsBroadcast() {
+	fmt.Println("Starting handleStatsBroadcast")
 	for stats := range m.StatsBroadcast {
 		m.mu.Lock()
+		if len(m.StatsClients) > 0 {
+			fmt.Printf("Broadcasting stats to %d clients\n", len(m.StatsClients))
+		}
 		for client := range m.StatsClients {
 			if err := client.WriteJSON(stats); err != nil {
 				client.Close()
@@ -63,6 +68,7 @@ func (m *Manager) CollectStats() {
 
 		proc, err := process.NewProcess(int32(pid))
 		if err != nil {
+			fmt.Printf("Error creating process: %v\n", err)
 			continue
 		}
 
@@ -72,6 +78,8 @@ func (m *Manager) CollectStats() {
 		if memInfo != nil {
 			mem = memInfo.RSS
 		}
+
+		fmt.Printf("Stats: CPU=%.2f, Mem=%d\n", cpu, mem)
 
 		m.StatsBroadcast <- ProcessStats{
 			CPU:    cpu,
