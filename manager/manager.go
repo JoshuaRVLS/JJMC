@@ -125,7 +125,10 @@ func (m *Manager) sendWebhook(event string) {
 	m.mu.Lock()
 	url := m.webhookURL
 	m.mu.Unlock()
+	sendWebhookPayload(url, event)
+}
 
+func sendWebhookPayload(url, event string) {
 	if url == "" {
 		return
 	}

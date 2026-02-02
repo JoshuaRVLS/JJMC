@@ -47,7 +47,8 @@ func (m *Manager) Start() error {
 		return fmt.Errorf("server is already running")
 	}
 
-	m.sendWebhook("Starting")
+	// Use payload helper directly since we already hold the lock
+	sendWebhookPayload(m.webhookURL, "Starting")
 
 	if m.tailCmd != nil {
 		if m.tailCmd.Process != nil {
