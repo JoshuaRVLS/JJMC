@@ -66,12 +66,13 @@ func (h *InstanceHandler) UpdateSettings(c *fiber.Ctx) error {
 		JavaPath   string `json:"javaPath"`
 		WebhookURL string `json:"webhookUrl"`
 		Group      string `json:"group"`
+		FolderID   string `json:"folderId"`
 	}
 	if err := c.BodyParser(&payload); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
 	}
 
-	if err := h.Manager.UpdateSettings(id, payload.MaxMemory, payload.JavaArgs, payload.JarFile, payload.JavaPath, payload.WebhookURL, payload.Group); err != nil {
+	if err := h.Manager.UpdateSettings(id, payload.MaxMemory, payload.JavaArgs, payload.JarFile, payload.JavaPath, payload.WebhookURL, payload.Group, payload.FolderID); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"status": "updated"})

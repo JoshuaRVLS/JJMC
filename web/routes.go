@@ -43,6 +43,13 @@ func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManag
 
 	authHandler := handlers.NewAuthHandler(authManager)
 	systemHandler := handlers.NewSystemHandler()
+	// Folder Routes
+	folderHandler := &handlers.FolderHandler{}
+	app.Get("/api/folders", folderHandler.List)
+	app.Post("/api/folders", folderHandler.Create)
+	app.Delete("/api/folders/:id", folderHandler.Delete)
+	app.Patch("/api/folders/:id", folderHandler.Rename)
+
 	instHandler := handlers.NewInstanceHandler(instanceManager)
 	scheduleHandler := handlers.NewScheduleHandler(scheduler)
 

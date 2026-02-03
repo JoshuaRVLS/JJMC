@@ -14,6 +14,7 @@ type Instance struct {
 	StartCommand string `json:"startCommand"`
 	WebhookURL   string `json:"webhookUrl"`
 	Group        string `json:"group"`
+	FolderID     string `json:"folderId"`
 }
 
 type InstanceModel struct {
@@ -28,5 +29,6 @@ type InstanceModel struct {
 	StartCommand string
 	WebhookURL   string
 	Group        string
+	FolderID     string // Links to models.Folder.ID
 	CreatedAt    int64
 }
