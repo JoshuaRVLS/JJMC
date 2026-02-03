@@ -48,9 +48,9 @@ COPY templates ./templates
 EXPOSE 3001 2024
 
 # Create data directories
-RUN mkdir -p instances servers backups .tools
+RUN mkdir -p data/instances data/backups .tools
 
 # Volume for persistent data
-VOLUME ["/app/instances", "/app/servers", "/app/backups", "/app/jjmc.db"]
+VOLUME ["/app/data"]
 
 CMD ["./jjmc"]

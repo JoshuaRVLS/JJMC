@@ -11,7 +11,7 @@ import (
 type Backup = backup.Backup
 
 func (im *InstanceManager) GetBackupDir(instanceID string) string {
-	return filepath.Join("backups", instanceID)
+	return filepath.Join("data", "backups", instanceID)
 }
 
 func (im *InstanceManager) CreateBackup(instanceID string) error {

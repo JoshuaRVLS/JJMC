@@ -40,7 +40,7 @@ func main() {
 	}
 
 	instanceManager := instances.NewInstanceManager(
-		"./servers",
+		"./data/instances",
 		templateManager,
 		*silent,
 	)
@@ -148,7 +148,7 @@ func main() {
 		}
 	}
 
-	sftpServer := sftp.NewSFTPServer("0.0.0.0:2022", "./instances", authManager)
+	sftpServer := sftp.NewSFTPServer("0.0.0.0:2022", "./data/instances", authManager)
 	go func() {
 		if err := sftpServer.Start(); err != nil {
 			logger.Error("SFTP Server failed to start", "error", err)

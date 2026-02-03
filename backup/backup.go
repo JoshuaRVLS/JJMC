@@ -17,7 +17,7 @@ type Backup struct {
 }
 
 func GetBackupDir(instanceDir string) string {
-	return filepath.Join("backups", filepath.Base(instanceDir))
+	return filepath.Join("data", "backups", filepath.Base(instanceDir))
 }
 
 // Create creates a zip backup of the instance directory
