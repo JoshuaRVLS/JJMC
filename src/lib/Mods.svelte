@@ -1,17 +1,16 @@
 <script>
     import { onMount } from "svelte";
     import { addToast } from "$lib/stores/toast";
+    import { askConfirm } from "$lib/stores/confirm";
     import ModSearch from "./mods/ModSearch.svelte";
     import Modlist from "./mods/Modlist.svelte";
 
-     
     export let instanceId;
     export let type = "";
-    export let mode = "mod";  
+    export let mode = "mod";
 
-    let activeTab = mode === "plugin" ? "plugin" : "mod";  
+    let activeTab = mode === "plugin" ? "plugin" : "mod";
 
-     
     $: if (mode) {
         if (mode === "plugin" && activeTab !== "plugin") {
             activeTab = "plugin";
@@ -25,27 +24,25 @@
     }
 
     let query = "";
-     
+
     let results = [];
-     
+
     let installedIds = new Set();
     let loading = false;
     let loadingMore = false;
-     
+
     let installingId = null;
     let offset = 0;
     let hasMore = true;
-    let sortBy = "relevance";  
+    let sortBy = "relevance";
 
-     
     let viewingVersionsId = null;
-     
+
     let versionsList = [];
     let loadingVersions = false;
 
-     
     let observer;
-     
+
     let sentinel;
 
     async function fetchInstalled() {
@@ -60,15 +57,11 @@
         }
     }
 
-     
     async function fetchVersions(projectId) {
         loadingVersions = true;
         versionsList = [];
         try {
             let typeParam = activeTab === "plugin" ? "plugin" : "mod";
-             
-             
-             
 
             const res = await fetch(
                 `/api/instances/${instanceId}/mods/${projectId}/versions?type=${typeParam}`,
@@ -79,10 +72,7 @@
                 addToast("Failed to load versions", "error");
             }
         } catch (e) {
-            addToast(
-                "Error loading versions: " +   (e).message,
-                "error",
-            );
+            addToast("Error loading versions: " + e.message, "error");
         } finally {
             loadingVersions = false;
         }
@@ -98,12 +88,8 @@
             loadingMore = true;
         }
 
-         
-         
-         
-         
         let typeParam = activeTab === "plugin" ? "plugin" : activeTab;
-        if (typeParam === "mod" && mode === "plugin") typeParam = "plugin";  
+        if (typeParam === "mod" && mode === "plugin") typeParam = "plugin";
 
         try {
             const res = await fetch(
@@ -142,10 +128,9 @@
         search(false);
     }
 
-     
     $: if (activeTab || sortBy) {
         search(true);
-         
+
         viewingVersionsId = null;
     }
 
@@ -168,10 +153,8 @@
         };
     });
 
-     
-     
     async function installMod(projectId, versionId = "") {
-        installingId = projectId;  
+        installingId = projectId;
         try {
             let typeParam = activeTab === "plugin" ? "plugin" : "mod";
 
@@ -187,8 +170,6 @@
             if (res.ok) {
                 addToast("Installed successfully", "success");
                 fetchInstalled();
-                 
-                 
             } else {
                 const err = await res.json();
                 addToast(
@@ -197,19 +178,23 @@
                 );
             }
         } catch (e) {
-            addToast(
-                "Error installing: " +   (e).message,
-                "error",
-            );
+            addToast("Error installing: " + e.message, "error");
         } finally {
             installingId = null;
         }
     }
 
-     
     async function uninstallMod(projectId) {
-        if (!confirm("Are you sure you want to uninstall this?")) return;
-        installingId = projectId;  
+        if (
+            !(await askConfirm({
+                title: "Uninstall Mod",
+                message: "Are you sure you want to uninstall this mod?",
+                dangerous: true,
+                confirmText: "Uninstall",
+            }))
+        )
+            return;
+        installingId = projectId;
         try {
             let typeParam = activeTab === "plugin" ? "plugin" : "mod";
 
@@ -232,21 +217,21 @@
                 );
             }
         } catch (e) {
-            addToast(
-                "Error uninstalling: " +   (e).message,
-                "error",
-            );
+            addToast("Error uninstalling: " + e.message, "error");
         } finally {
             installingId = null;
         }
     }
 
-     
     async function installModpack(projectId) {
         if (
-            !confirm(
-                "Warning: Installing a modpack will DELETE all current mods in the 'mods' folder. Continue?",
-            )
+            !(await askConfirm({
+                title: "Install Modpack",
+                message:
+                    "Warning: Installing a modpack will DELETE all current mods in the 'mods' folder. Continue?",
+                dangerous: true,
+                confirmText: "Install Modpack",
+            }))
         ) {
             return;
         }
@@ -271,10 +256,7 @@
                 );
             }
         } catch (e) {
-            addToast(
-                "Error installing: " +   (e).message,
-                "error",
-            );
+            addToast("Error installing: " + e.message, "error");
         } finally {
             installingId = null;
         }

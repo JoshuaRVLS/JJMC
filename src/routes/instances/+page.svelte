@@ -1,6 +1,7 @@
 <script>
     import { onMount } from "svelte";
     import { askConfirm } from "$lib/stores/confirm.js";
+    import { askInput } from "$lib/stores/input.js";
     import { addToast } from "$lib/stores/toast.js";
 
     import { onDestroy } from "svelte";
@@ -40,7 +41,11 @@
     });
 
     async function createFolder() {
-        const name = prompt("Enter folder name:");
+        const name = await askInput({
+            title: "Create Folder",
+            placeholder: "Folder Name",
+            confirmText: "Create",
+        });
         if (!name) return;
 
         try {
@@ -62,9 +67,13 @@
 
     async function deleteFolder(id) {
         if (
-            !confirm(
-                "Delete this folder? Instances inside will be moved to Uncategorized.",
-            )
+            !(await askConfirm({
+                title: "Delete Folder",
+                message:
+                    "Delete this folder? Instances inside will be moved to Uncategorized.",
+                dangerous: true,
+                confirmText: "Delete",
+            }))
         )
             return;
         try {

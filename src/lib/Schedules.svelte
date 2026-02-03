@@ -10,6 +10,7 @@
         Database,
     } from "lucide-svelte";
     import { addToast } from "$lib/stores/toast";
+    import { askConfirm } from "$lib/stores/confirm";
 
     export let instanceId;
 
@@ -72,7 +73,15 @@
     }
 
     async function deleteSchedule(id) {
-        if (!confirm("Are you sure you want to delete this schedule?")) return;
+        if (
+            !(await askConfirm({
+                title: "Delete Schedule",
+                message: "Are you sure you want to delete this schedule?",
+                dangerous: true,
+                confirmText: "Delete",
+            }))
+        )
+            return;
 
         try {
             const res = await fetch(
@@ -222,7 +231,9 @@
 
             <div class="space-y-4">
                 <div>
-                    <label for="schedule-name" class="block text-sm font-medium text-gray-400 mb-1"
+                    <label
+                        for="schedule-name"
+                        class="block text-sm font-medium text-gray-400 mb-1"
                         >Name</label
                     >
                     <input
@@ -235,7 +246,9 @@
                 </div>
 
                 <div>
-                    <label for="schedule-cron" class="block text-sm font-medium text-gray-400 mb-1"
+                    <label
+                        for="schedule-cron"
+                        class="block text-sm font-medium text-gray-400 mb-1"
                         >Cron Expression</label
                     >
                     <div class="flex gap-2">
@@ -259,7 +272,9 @@
                 </div>
 
                 <div>
-                    <label for="schedule-type" class="block text-sm font-medium text-gray-400 mb-1"
+                    <label
+                        for="schedule-type"
+                        class="block text-sm font-medium text-gray-400 mb-1"
                         >Type</label
                     >
                     <select
