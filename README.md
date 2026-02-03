@@ -1,52 +1,66 @@
 <div align="center">
   <img src="website/logo.png" alt="JJMC Logo" width="200"/>
   <h1>JJMC</h1>
+  <p><b>A modern, powerful, and stupidly simple Minecraft Server Manager.</b></p>
 </div>
 
-A simple and modern Minecraft Server Manager.
+---
 
-## Features
+JJMC isn't just another server wrapper. It's built to make running one server (or fifty) actually enjoyable. Whether you're hosting a private SMP for friends or managing a complex modded network, we've got you covered.
 
-### 🖥️ Dashboard & Instance Management
-- **Create Instantly:** Deploy servers in seconds with support for Vanilla, Fabric, Forge, NeoForge, Quilt, and Paper.
-- **Import Existing:** Easily import existing server folders.
-- **Server Versions:** Automatic fetching of latest Minecraft and Loader versions.
-- **Java Manager:** Built-in manager to download, install, and switch between multiple Java runtimes (8, 11, 17, 21) effortlessly.
+## ✨ Features
 
-### ⚙️ advanced Control
-- **Live Console:** Real-time server console with color support and command input.
-- **Process Management:** Start, stop, restart, and kill server processes.
-- **Resource Monitoring:** Real-time CPU and Memory usage tracking.
-- **Crash Detection:** Automatic restart on server crash.
+### 🚀 **Instance Management**
+Stop fighting with JAR files and command lines.
+- **Support for Everything**: Native support for **Vanilla**, **Fabric**, **Forge**, **NeoForge**, **Quilt**, and **Paper**. 
+- **Spigot BuildTools**: We handle the annoying BuildTools compilation for you automatically.
+- **Version Fetching**: Always see the latest valid game and loader versions.
+- **Import/Export**: Drag and drop existing server folders to import them in seconds.
+- **Folders & Organization**: Group your instances into folders (like "SMPs", "Test Servers") so your dashboard stays clean.
 
-### 📂 File System
-- **File Manager:** Built-in web-based file explorer.
-- **Editor:** Edit configuration files directly in the browser.
-- **Archives:** Compress and decompress files/folders.
-- **Upload/Download:** Easy file transfer.
+### 🛠️ **Modding Made Easy**
+- **Modrinth & Spiget Integration**: Search, install, and update Mods and Plugins directly from the dashboard.
+- **Modpacks**: One-click install for popular modpacks.
+- **Packwiz Support**: Building your own pack? We support Packwiz natively for easy updates and distribution.
+- **Version Awareness**: We only show you mods that actually match your Minecraft version.
 
-### 🧩 Mods & Plugins
-- **Mod Manager:** Search and install mods directly from Modrinth and CurseForge (planned).
-- **Plugin Manager:** Manage plugins for Paper/Spigot servers.
-- **Modpacks:** One-click install for popular modpacks.
+### 🌐 **Networking & Access**
+- **Ngrok Tunneling**: Don't want to port forward? Generate a free tunnel URL instantly so friends can join without messing with your router.
+- **Port Forwarding Helper**: Tools to help you manage standard port forwarding if you prefer the classic route.
+- **RCON Support**: Enable and configure RCON for remote console access.
 
-### 📅 Scheduling & Automation
-- **Task Scheduler:** Schedule recurring commands (e.g., "say Hello", "stop", "backup").
-- **CRON Support:** Flexible scheduling options.
+### 🎮 **Advanced Control**
+- **Java Manager**: Download and swap between Java 8, 11, 17, and 21 on the fly. No more "Java version mismatch" errors.
+- **Live Console**: A beautiful, color-coded terminal that supports command history and clickable links.
+- **Crash Detection**: If your server dies, we'll catch it and can auto-restart it for you.
+- **Docker Support**: Run everything in a container for maximum isolation.
 
-### 🛡️ Security & Backups
-- **Backups:** Create and restore server backups.
-- **Authentication:** Secure login system.
+### 📂 **Full File System Access**
+- **Web File Manager**: Browse, delete, and rename files without FTP.
+- **Editor**: Edit `server.properties`, configs, and JSON files right in the browser with syntax highlighting.
+- **Archives**: Zip up worlds to share or unzip downloaded maps instantly.
+- **Drag & Drop Upload**: Just drag files into the browser to upload them.
 
-## How to run
-Simply run the script for your OS:
-- **Linux**: `./run.sh`
-- **Windows**: `run.bat` or `run.ps1`
+### 🤖 **Automation & Monitoring**
+- **Task Scheduler**: Set up recurring tasks like generic restarts, "Say Hello" messages, or backups using Cron syntax.
+- **Discord Webhooks**: Get rich notifications in your Discord server when your server starts, stops, or crashes (with status colors!).
+- **Resource Monitoring**: Watch CPU and RAM usage in real-time to spot lag before it happens.
+- **Backups**: One-click backups and restores. Never lose your world again.
 
-The script will automatically set up the portable Go and Node.js toolchains if needed.
+## 🏁 Getting Started
 
-## Advanced Usage & Docker
-For instructions on running with **Docker**, or using **RCON**, **Telnet**, and **SFTP**, please see the [Tutorial & Usage Guide](TUTORIAL.md).
+### Linux / macOS
+```bash
+./run.sh
+```
+
+### Windows
+Double click `run.bat` or `run.ps1`.
+
+That's it. The script handles downloading the portable Go and Node.js runtimes so you don't even need to install them globally.
+
+## 🐳 Docker
+Prefer containers? Check [TUTORIAL.md](TUTORIAL.md) for our Docker Compose setup.
 
 ## License
 MIT
