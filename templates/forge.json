@@ -9,6 +9,13 @@
         {
             "type": "download",
             "options": {
+                "url": "${VANILLA_URL}",
+                "target": "minecraft_server.${MC_VERSION}.jar"
+            }
+        },
+        {
+            "type": "download",
+            "options": {
                 "url": "https://maven.minecraftforge.net/net/minecraftforge/forge/${FULL_VERSION}/forge-${FULL_VERSION}-installer.jar",
                 "target": "installer.jar"
             }
@@ -29,6 +36,24 @@
             "type": "command",
             "options": {
                 "command": "rm installer.jar"
+            }
+        },
+        {
+            "type": "command",
+            "options": {
+                "command": "printf '#!/bin/bash\\nif [ -f \"user_jvm_args.txt\" ]; then\\n  java @user_jvm_args.txt @libraries/net/minecraftforge/forge/${FULL_VERSION}/unix_args.txt \"$@\"\\nelse\\n  JAR=$(find . -maxdepth 1 -name \"forge-*-universal.jar\" -o -name \"forge-*.jar\" | grep -v \"installer\" | head -n 1)\\n  if [ -n \"$JAR\" ]; then\\n    java -Xmx4G -jar \"$JAR\" nogui \"$@\"\\n  else\\n    echo \"Forge jar not found!\"\\n    exit 1\\n  fi\\nfi\\n' > run.sh"
+            }
+        },
+        {
+            "type": "command",
+            "options": {
+                "command": "chmod +x run.sh"
+            }
+        },
+        {
+            "type": "command",
+            "options": {
+                "command": "ls -la"
             }
         }
     ],

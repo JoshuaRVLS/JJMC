@@ -39,21 +39,22 @@ SKIP_BUILD=false
 BUILD_BINARY=false
 ARGS=()
 
-# Parse arguments
-for arg in "$@"; do
-    case $arg in
-        --skip-build)
-            SKIP_BUILD=true
-            shift
-            ;;
-        --build)
-            BUILD_BINARY=true
-            shift
-            ;;
-        *)
-            ARGS+=("$arg")
-            ;;
-    esac
+# Parse arguments properly
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --skip-build)
+      SKIP_BUILD=true
+      shift
+      ;;
+    --build)
+      BUILD_BINARY=true
+      shift
+      ;;
+    *)
+      ARGS+=("$1")
+      shift
+      ;;
+  esac
 done
 
 if [ "$SKIP_BUILD" = false ]; then

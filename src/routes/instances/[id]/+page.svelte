@@ -15,7 +15,6 @@
     import PortForward from "$lib/PortForward.svelte";
     import Schedules from "$lib/Schedules.svelte";
     import Resources from "$lib/Resources.svelte";
-    import Resources from "$lib/Resources.svelte";
     import JavaSettings from "$lib/JavaSettings.svelte";
     import VelocityConfig from "$lib/VelocityConfig.svelte";
 

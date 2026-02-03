@@ -30,6 +30,15 @@ func (inst *Instance) InstallFromTemplate(tmpl models.Template, version string) 
 		vars["MC_VERSION"] = version
 		vars["FORGE_VERSION"] = forgeVer
 		vars["FULL_VERSION"] = fmt.Sprintf("%s-%s", version, forgeVer)
+
+		// Resolve Vanilla URL for pre-downloading (fixes older Forge installers)
+		inst.Manager.Broadcast("Resolving Vanilla version...")
+		url, err := ResolveVanillaVersion(version)
+		if err == nil {
+			vars["VANILLA_URL"] = url
+		} else {
+			inst.Manager.Broadcast(fmt.Sprintf("Warning: Failed to resolve vanilla version: %v", err))
+		}
 	} else if tmpl.ID == "neoforge" {
 		inst.Manager.Broadcast("Resolving NeoForge version...")
 		neoVer, err := ResolveNeoForgeVersion(version)
@@ -90,6 +99,8 @@ func (inst *Instance) InstallFromTemplate(tmpl models.Template, version string) 
 
 			// If we have a resolved URL for vanilla, use it
 			if val, ok := vars["URL"]; ok && tmpl.ID == "vanilla" {
+				url = val
+			} else if val, ok := vars["VANILLA_URL"]; ok && strings.Contains(url, "${VANILLA_URL}") {
 				url = val
 			}
 
