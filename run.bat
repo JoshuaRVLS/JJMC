@@ -5,7 +5,6 @@ setlocal
 set "ROOT_DIR=%~dp0"
 
 :: 1. Attempt to add existing local tools to PATH (Run 1)
-:: We use set "VAR=VAL" to safely handle spaces and special characters
 if exist "%ROOT_DIR%.tools\go\bin" set "PATH=%ROOT_DIR%.tools\go\bin;%PATH%"
 if exist "%ROOT_DIR%.tools\node" set "PATH=%ROOT_DIR%.tools\node;%PATH%"
 
@@ -28,9 +27,7 @@ if %TOOLS_MISSING% equ 1 (
     )
 )
 
-:: 4. Re-apply path updates (Run 2) - This must be outside the if block above
-:: This ensures that if we just installed them, they are added to PATH now.
-:: Doing this outside the block prevents syntax errors if PATH contains parenthesis (e.g. "Program Files (x86)")
+:: 4. Re-apply path updates (Run 2)
 if exist "%ROOT_DIR%.tools\go\bin" set "PATH=%ROOT_DIR%.tools\go\bin;%PATH%"
 if exist "%ROOT_DIR%.tools\node" set "PATH=%ROOT_DIR%.tools\node;%PATH%"
 
@@ -47,23 +44,43 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo Checking dependencies...
-if not exist "node_modules\" (
-    echo Installing frontend dependencies...
-    call npm install
+:: Parse Arguments
+set SKIP_BUILD=0
+set BUILD_BINARY=0
+set "ARGS="
+
+:parse_args
+if "%~1"=="" goto end_parse_args
+if "%~1"=="--skip-build" (
+    set SKIP_BUILD=1
+) else if "%~1"=="--build" (
+    set BUILD_BINARY=1
+) else (
+    set "ARGS=%ARGS% %1"
+)
+shift
+goto parse_args
+:end_parse_args
+
+if %SKIP_BUILD% equ 0 (
+    echo Checking dependencies...
+    if not exist "node_modules\" (
+        echo Installing frontend dependencies...
+        call npm install
+    )
+
+    echo Building frontend...
+    call npm run build
+) else (
+    echo Skipping frontend build...
 )
 
-echo Building frontend...
-call npm run build
-
 echo Starting JJMC...
-if "%1"=="--build" (
+if %BUILD_BINARY% equ 1 (
     go build -o bin\jjmc.exe main.go
-    shift
-    bin\jjmc.exe %*
+    bin\jjmc.exe %ARGS%
 ) else (
-    go run main.go %*
+    go run main.go %ARGS%
 )
 
 if %errorlevel% neq 0 pause
-
