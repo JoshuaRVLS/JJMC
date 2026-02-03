@@ -122,13 +122,40 @@ func (inst *Instance) InstallMod(projectId string, resourceType string, versionI
 		return fmt.Errorf("no files found for version %s", ver.ID)
 	}
 
-	modsDir := filepath.Join(inst.Directory, "mods")
+	// Check for Velocity instance type to determine directory
+	targetDir := "mods"
+	if inst.Type == "velocity" {
+		targetDir = "plugins"
+	}
+
+	modsDir := filepath.Join(inst.Directory, targetDir)
 	os.MkdirAll(modsDir, 0755)
 
 	targetPath := filepath.Join(modsDir, fileName)
 	inst.Manager.Broadcast(fmt.Sprintf("Downloading mod %s...", fileName))
 
-	return inst.downloadFile(targetPath, fileUrl)
+	if err := inst.downloadFile(targetPath, fileUrl); err != nil {
+		return err
+	}
+
+	// Handle Dependencies
+	for _, dep := range ver.Dependencies {
+		if dep.DependencyType == "required" && dep.ProjectID != "" {
+			inst.Manager.Broadcast(fmt.Sprintf("Installing dependency %s...", dep.ProjectID))
+			// Recursively install dependency. We don't specify versionId to let it find compatible one.
+			// Or if versionID is present in dependency, utilize it?
+			// Modrinth dependency usually has version_id or project_id.
+			// If version_id is set, use it.
+			if err := inst.InstallMod(dep.ProjectID, "mod", dep.VersionID); err != nil {
+				inst.Manager.Broadcast(fmt.Sprintf("Failed to install dependency %s: %v", dep.ProjectID, err))
+				// We don't hard fail on dependency failure, just warn? or hard fail?
+				// Let's log it but continue for now to avoid total failure chain.
+				fmt.Printf("Dependency error: %v\n", err)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (inst *Instance) UninstallMod(projectId string, resourceType string) error {

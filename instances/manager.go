@@ -57,6 +57,7 @@ func NewInstanceManager(baseDir string, tm *services.TemplateManager, silent boo
 			JarFile:    instModel.JarFile,
 			JavaPath:   instModel.JavaPath,
 			WebhookURL: instModel.WebhookURL,
+			Group:      instModel.Group,
 		}, mgr)
 
 		instance.Manager.SetWorkDir(dir)
@@ -120,7 +121,7 @@ func (im *InstanceManager) ListInstances() []*Instance {
 	return list
 }
 
-func (im *InstanceManager) UpdateSettings(id string, maxMemory int, javaArgs, jarFile, javaPath, webhookUrl string) error {
+func (im *InstanceManager) UpdateSettings(id string, maxMemory int, javaArgs, jarFile, javaPath, webhookUrl, group string) error {
 	im.mu.Lock()
 	defer im.mu.Unlock()
 
@@ -135,6 +136,7 @@ func (im *InstanceManager) UpdateSettings(id string, maxMemory int, javaArgs, ja
 		JarFile:    jarFile,
 		JavaPath:   javaPath,
 		WebhookURL: webhookUrl,
+		Group:      group,
 	}).Error
 	if err != nil {
 		return fmt.Errorf("failed to update db: %v", err)
@@ -145,6 +147,7 @@ func (im *InstanceManager) UpdateSettings(id string, maxMemory int, javaArgs, ja
 	inst.JarFile = jarFile
 	inst.JavaPath = javaPath
 	inst.WebhookURL = webhookUrl
+	inst.Group = group
 	inst.Manager.SetMaxMemory(maxMemory)
 	inst.Manager.SetJavaArgs(javaArgs)
 	if jarFile != "" {

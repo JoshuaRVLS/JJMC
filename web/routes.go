@@ -146,4 +146,5 @@ func RegisterRoutes(app *fiber.App, authManager *auth.AuthManager, instanceManag
 	app.Get("/ws/instances/:id/stats", websocket.New(instHandler.StatsWebSocket))
 
 	RegisterBackupRoutes(app, authManager, instanceManager)
+	handlers.RegisterNetworkRoutes(app, instanceManager)
 }

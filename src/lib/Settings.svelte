@@ -10,6 +10,7 @@
     let jarFile = "server.jar";
     let javaPath = "";
     let webhookUrl = "";
+    let group = "";
 
     /**
      * @typedef {Object} FileEntry
@@ -48,6 +49,7 @@
                 jarFile = data.jarFile || "server.jar";
                 javaPath = data.javaPath || "";
                 webhookUrl = data.webhookUrl || "";
+                group = data.group || "";
 
                 // Determine mode
                 const knownRuntime = installedRuntimes.find(
@@ -99,6 +101,7 @@
                     jarFile: jarFile,
                     javaPath: javaPath,
                     webhookUrl: webhookUrl,
+                    group: group,
                 }),
             });
             if (!res.ok) throw new Error(await res.text());
@@ -371,6 +374,60 @@
                             ></textarea>
                             <p class="text-xs text-gray-500">
                                 Advanced startup flags for the JVM.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Integrations -->
+                <div
+                    class="bg-gray-900/60 backdrop-blur-xl border border-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-6"
+                >
+                    <div
+                        class="flex items-center gap-3 border-b border-white/5 pb-4"
+                    >
+                        <div
+                            class="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400"
+                        >
+                            <svg
+                                class="w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                ><path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                                /></svg
+                            >
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">
+                                Organization
+                            </h3>
+                            <p class="text-xs text-gray-500">
+                                Group and categorize this instance
+                            </p>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="space-y-2">
+                            <label
+                                for="group"
+                                class="block text-sm font-medium text-gray-300"
+                                >Folder / Group</label
+                            >
+                            <input
+                                id="group"
+                                type="text"
+                                bind:value={group}
+                                placeholder="e.g. Lobby Servers"
+                                class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white font-mono text-sm focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 focus:outline-none transition-all"
+                            />
+                            <p class="text-xs text-gray-500">
+                                Instances with the same folder name will be
+                                grouped together.
                             </p>
                         </div>
                     </div>

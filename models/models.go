@@ -13,6 +13,7 @@ type Instance struct {
 	JavaPath     string `json:"javaPath"`
 	StartCommand string `json:"startCommand"`
 	WebhookURL   string `json:"webhookUrl"`
+	Group        string `json:"group"`
 }
 
 type InstanceModel struct {
@@ -26,5 +27,6 @@ type InstanceModel struct {
 	JavaPath     string
 	StartCommand string
 	WebhookURL   string
+	Group        string
 	CreatedAt    int64
 }

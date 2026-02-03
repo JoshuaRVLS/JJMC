@@ -1,0 +1,17 @@
+{
+    "name": "Velocity",
+    "type": "velocity",
+    "run": {
+        "command": "java -Xmx512M -jar velocity.jar",
+        "stop": "end"
+    },
+    "install": [
+        {
+            "type": "download",
+            "options": {
+                "url": "https://api.papermc.io/v2/projects/velocity/versions/${VERSION}/builds/${BUILD}/downloads/velocity-${VERSION}-${BUILD}.jar",
+                "target": "server.jar"
+            }
+        }
+    ]
+}

@@ -37,6 +37,14 @@ func (inst *Instance) InstallFromTemplate(tmpl models.Template, version string) 
 			return err
 		}
 		vars["NEOFORGE_VERSION"] = neoVer
+	} else if tmpl.ID == "velocity" || tmpl.ID == "paper" {
+		// Resolve PaperMC project builds
+		inst.Manager.Broadcast(fmt.Sprintf("Resolving %s build...", tmpl.ID))
+		build, err := ResolvePaperBuild(tmpl.ID, version)
+		if err != nil {
+			return err
+		}
+		vars["BUILD"] = build
 	}
 
 	for _, step := range tmpl.Install {
