@@ -45,6 +45,13 @@ func (inst *Instance) InstallFromTemplate(tmpl models.Template, version string) 
 			return err
 		}
 		vars["BUILD"] = build
+	} else if tmpl.ID == "vanilla" {
+		inst.Manager.Broadcast("Resolving Vanilla version...")
+		url, err := ResolveVanillaVersion(version)
+		if err != nil {
+			return err
+		}
+		vars["URL"] = url
 	}
 
 	for _, step := range tmpl.Install {
@@ -79,6 +86,11 @@ func (inst *Instance) InstallFromTemplate(tmpl models.Template, version string) 
 
 			for k, v := range vars {
 				url = strings.ReplaceAll(url, "${"+k+"}", v)
+			}
+
+			// If we have a resolved URL for vanilla, use it
+			if val, ok := vars["URL"]; ok && tmpl.ID == "vanilla" {
+				url = val
 			}
 
 			target, ok := step.Options["target"]
