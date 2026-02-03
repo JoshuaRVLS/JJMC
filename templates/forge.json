@@ -16,6 +16,12 @@
         {
             "type": "command",
             "options": {
+                "command": "rm -f forge-*.jar"
+            }
+        },
+        {
+            "type": "command",
+            "options": {
                 "command": "java -jar installer.jar --installServer"
             }
         },

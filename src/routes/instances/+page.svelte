@@ -14,8 +14,6 @@
     let draggingInstanceId = null;
 
     async function loadData() {
-        if (!instances.length) loading = true;
-
         try {
             const [instRes, folderRes] = await Promise.all([
                 fetch("/api/instances"),
