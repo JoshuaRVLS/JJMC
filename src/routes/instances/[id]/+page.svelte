@@ -15,7 +15,9 @@
     import PortForward from "$lib/PortForward.svelte";
     import Schedules from "$lib/Schedules.svelte";
     import Resources from "$lib/Resources.svelte";
+    import Resources from "$lib/Resources.svelte";
     import JavaSettings from "$lib/JavaSettings.svelte";
+    import VelocityConfig from "$lib/VelocityConfig.svelte";
 
     $: instanceId = $page.params.id || "";
 
@@ -170,7 +172,11 @@
         {:else if activeTab === "files"}
             <Files {instanceId} />
         {:else if activeTab === "properties"}
-            <ServerProperties {instanceId} />
+            {#if type === "velocity"}
+                <VelocityConfig {instanceId} />
+            {:else}
+                <ServerProperties {instanceId} />
+            {/if}
         {:else if activeTab === "whitelist"}
             <PlayerList {instanceId} type="whitelist" />
         {:else if activeTab === "ops"}

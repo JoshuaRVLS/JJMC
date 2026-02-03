@@ -234,7 +234,9 @@
 									: 'hover:bg-white/5 hover:text-white'}"
 							>
 								<Settings2 class="w-4 h-4" />
-								Properties
+								{currentInstanceType === "velocity"
+									? "Config"
+									: "Properties"}
 							</a>
 							<a
 								href="/instances/{currentInstanceId}?tab=whitelist"
@@ -269,17 +271,19 @@
 								<Settings class="w-4 h-4" />
 								Settings
 							</a>
-							<a
-								href="/instances/{currentInstanceId}?tab=mods"
-								class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 {$page.url.searchParams.get(
-									'tab',
-								) === 'mods'
-									? 'bg-indigo-500/10 text-indigo-400 ring-1 ring-indigo-500/20'
-									: 'hover:bg-white/5 hover:text-white'}"
-							>
-								<Puzzle class="w-4 h-4" />
-								Mods
-							</a>
+							{#if currentInstanceType !== "velocity"}
+								<a
+									href="/instances/{currentInstanceId}?tab=mods"
+									class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 {$page.url.searchParams.get(
+										'tab',
+									) === 'mods'
+										? 'bg-indigo-500/10 text-indigo-400 ring-1 ring-indigo-500/20'
+										: 'hover:bg-white/5 hover:text-white'}"
+								>
+									<Puzzle class="w-4 h-4" />
+									Mods
+								</a>
+							{/if}
 							<a
 								href="/instances/{currentInstanceId}?tab=plugins"
 								class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 {$page.url.searchParams.get(
