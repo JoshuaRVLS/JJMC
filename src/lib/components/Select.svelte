@@ -28,15 +28,6 @@
         isOpen = !isOpen;
     }
 
-    // ... (rest of functions)
-
-    // NOTE: Removed duplicate functions for brevity in prompt, but replacing the script section carefully.
-    // Wait, replacing the whole script is safer or targeted. Targeted is better.
-    // I need to split this into two replaces ideally or one big one.
-    // I'll replace the export section and the label/button section.
-    // Wait, `replace_file_content` is single contiguous block.
-    // I'll replace the exports first.
-
     /**
      * @param {any} option
      */
@@ -90,13 +81,13 @@
         type="button"
         {id}
         on:click={toggle}
-        class="w-full bg-black/20 border border-white/10 rounded-xl p-4 text-left text-white flex justify-between items-center transition-all hover:bg-black/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 {className}"
+        class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-left text-white flex justify-between items-center transition-all hover:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 cursor-pointer {className}"
     >
-        <span class={!selectedOption ? "text-gray-500" : ""}
-            >{displayValue}</span
-        >
+        <span class="block truncate {!selectedOption ? 'text-gray-500' : ''}">
+            {displayValue}
+        </span>
         <svg
-            class="w-4 h-4 text-gray-500 transition-transform duration-200 {isOpen
+            class="w-4 h-4 text-gray-500 transition-transform duration-200 flex-shrink-0 ml-2 {isOpen
                 ? 'rotate-180'
                 : ''}"
             fill="none"
@@ -114,24 +105,25 @@
 
     {#if isOpen}
         <div
-            class="absolute z-50 w-full mt-2 bg-gray-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden backdrop-blur-xl"
+            class="absolute w-full mt-2 bg-[#111827] border border-white/10 rounded-xl shadow-2xl overflow-hidden"
+            style="z-index: 9999;"
             transition:slide={{ duration: 200 }}
         >
             <div class="max-h-60 overflow-y-auto py-1">
                 {#each options as option}
                     <button
                         type="button"
-                        class="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-indigo-500/20 hover:text-white transition-colors flex items-center justify-between group"
-                        on:click={() => select(option)}
+                        class="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-indigo-500/20 hover:text-white transition-colors flex items-center justify-between group cursor-pointer"
+                        on:click|stopPropagation={() => select(option)}
                     >
-                        <span
+                        <span class="truncate"
                             >{typeof option === "object"
                                 ? option.label
                                 : option}</span
                         >
                         {#if (typeof option === "object" ? option.value : option) === value}
                             <svg
-                                class="w-4 h-4 text-indigo-400"
+                                class="w-4 h-4 text-indigo-400 flex-shrink-0 ml-2"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
