@@ -1,20 +1,19 @@
 <script>
     import { onMount } from "svelte";
 
-     
     export let value = "";
-     
+
     export let language = "json";
-     
+
     export let readonly = false;
 
-     
+    /** @type {HTMLElement} */
     let preElement;
-     
+
+    /** @type {HTMLTextAreaElement} */
     let textareaElement;
 
-     
-     
+    /** @param {string} code */
     function highlight(code) {
         if (!code) return "";
 
@@ -31,34 +30,35 @@
                     let cls = "text-indigo-400"; // number
                     if (/^"/.test(match)) {
                         if (/:$/.test(match)) {
-                            cls = "text-sky-400 font-bold";  
+                            cls = "text-sky-400 font-bold";
                         } else {
-                            cls = "text-emerald-400";  
+                            cls = "text-emerald-400";
                         }
                     } else if (/true|false/.test(match)) {
-                        cls = "text-rose-400 font-bold";  
+                        cls = "text-rose-400 font-bold";
                     } else if (/null/.test(match)) {
-                        cls = "text-gray-500 font-bold";  
+                        cls = "text-gray-500 font-bold";
                     }
                     return `<span class="${cls}">${match}</span>`;
                 },
             );
         } else if (language === "toml" || language === "properties") {
-             
-             
-             
-             
-             
-             
-             
-             
-             
-             
             const tokenRegex =
                 /("(\\.|[^"\\])*")|(#.*$)|(^\[.*\]$)|(^\s*[a-zA-Z0-9_\-.]+(?=\s*=))|(\b(true|false)\b)|(\b\d+\b)/gm;
 
             html = html.replace(
                 tokenRegex,
+                /**
+                 * @param {string} match
+                 * @param {string} str
+                 * @param {string} strInner
+                 * @param {string} comment
+                 * @param {string} section
+                 * @param {string} key
+                 * @param {string} bool
+                 * @param {string} boolInner
+                 * @param {string} num
+                 */
                 (
                     match,
                     str,
@@ -173,13 +173,11 @@
 </script>
 
 <div class="relative w-full h-full font-mono text-sm group">
-    
     <pre
         bind:this={preElement}
-        class="absolute inset-0 m-0 p-4 pointer-events-none overflow-hidden bg-[#0b0e14] text-gray-300 whitespace-pre-wrap break-words"
+        class="absolute inset-0 m-0 p-4 pointer-events-none overflow-hidden bg-[#0b0e14] text-gray-300 whitespace-pre-wrap wrap-break-word"
         aria-hidden="true">{@html highlight(value)}<br /></pre>
 
-    
     <textarea
         bind:this={textareaElement}
         {value}

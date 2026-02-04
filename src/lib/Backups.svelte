@@ -12,8 +12,10 @@
     import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
     import { askConfirm } from "$lib/stores/confirm";
 
+    /** @type {string} */
     export let instanceId;
 
+    /** @type {any[]} */
     let backups = [];
     let loading = false;
     let creating = false;
@@ -55,6 +57,7 @@
         }
     }
 
+    /** @param {string} filename */
     async function restoreBackup(filename) {
         if (
             await askConfirm({
@@ -82,6 +85,7 @@
         }
     }
 
+    /** @param {string} filename */
     async function deleteBackup(filename) {
         if (
             await askConfirm({
@@ -108,6 +112,10 @@
         }
     }
 
+    /**
+     * @param {number} bytes
+     * @param {number} decimals
+     */
     function formatBytes(bytes, decimals = 2) {
         if (!+bytes) return "0 Bytes";
         const k = 1024;
@@ -117,6 +125,7 @@
         return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
     }
 
+    /** @param {string} dateStr */
     function formatDate(dateStr) {
         return new Date(dateStr).toLocaleString();
     }

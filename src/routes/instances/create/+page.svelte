@@ -27,6 +27,7 @@
     let type = "";
     let version = "";
 
+    /** @type {{value: string, label: string}[]} */
     let versionOptions = [];
     let loadingLoaders = false;
     let loadingVersions = false;
@@ -102,9 +103,12 @@
         },
     };
 
+    /** @type {Record<string, any>} */
+    const LOADER_META_TYPED = LOADER_META;
+
     $: typeOptions = typeOptions.map((opt) => ({
         ...opt,
-        ...(LOADER_META[opt.value] || LOADER_META.custom),
+        ...(LOADER_META_TYPED[opt.value] || LOADER_META.custom),
     }));
 
     async function loadLoaders() {
@@ -130,8 +134,10 @@
             if (res.ok) {
                 const data = await res.json();
                 versionOptions = data
-                    .filter((v) => v.version_type === "release")
-                    .map((v) => ({
+                    .filter(
+                        (/** @type {any} */ v) => v.version_type === "release",
+                    )
+                    .map((/** @type {any} */ v) => ({
                         value: v.version,
                         label: v.version,
                     }));

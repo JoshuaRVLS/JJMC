@@ -3,15 +3,14 @@
     import { addToast } from "$lib/stores/toast";
     import CodeEditor from "$lib/components/CodeEditor.svelte";
 
-     
+    /** @type {string} */
     export let instanceId;
 
-     
-
-     
+    /** @type {any[]} */
     let files = [];
     let loading = false;
-     
+
+    /** @type {any} */
     let viewingFile = null;
     let fileContent = "";
     let query = "";
@@ -19,14 +18,12 @@
     async function loadConfigs() {
         loading = true;
         try {
-             
             const res = await fetch(
                 `/api/instances/${instanceId}/files?path=config`,
             );
             if (res.ok) {
                 files = await res.json();
             } else {
-                 
                 files = [];
             }
         } catch (e) {
@@ -37,9 +34,9 @@
         }
     }
 
-     
+    /** @param {any} file */
     async function openFile(file) {
-        if (file.isDir) return;  
+        if (file.isDir) return;
 
         try {
             const path = `config/${file.name}`;
@@ -84,7 +81,7 @@
         }
     }
 
-     
+    /** @param {number} bytes */
     function formatSize(bytes) {
         if (bytes === 0) return "0 B";
         const k = 1024;
@@ -97,8 +94,6 @@
         (f) => !f.isDir && f.name.toLowerCase().includes(query.toLowerCase()),
     );
 
-     
-     
     let language = "json";
 
     $: if (viewingFile) {
@@ -176,7 +171,6 @@
         </div>
     {:else}
         <div class="flex flex-col gap-4 h-full">
-            
             <div class="relative">
                 <input
                     type="text"
@@ -199,7 +193,6 @@
                 </svg>
             </div>
 
-            
             <div
                 class="flex-1 bg-gray-900/50 rounded-xl border border-white/5 overflow-hidden flex flex-col"
             >

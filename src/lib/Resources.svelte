@@ -2,13 +2,19 @@
     import { onMount, onDestroy } from "svelte";
     import Chart from "chart.js/auto";
 
+    /** @type {string} */
     export let instanceId;
 
+    /** @type {HTMLCanvasElement} */
     let cpuCanvas;
+    /** @type {HTMLCanvasElement} */
     let memoryCanvas;
+    /** @type {Chart | null} */
     let cpuChart;
+    /** @type {Chart | null} */
     let memoryChart;
 
+    /** @type {WebSocket | null} */
     let socket;
     let connected = false;
 
@@ -98,13 +104,13 @@
                         },
                     ],
                 },
-                options: {
+                options: /** @type {any} */ ({
                     ...commonOptions,
                     scales: {
                         ...commonOptions.scales,
                         y: { ...commonOptions.scales.y, max: 100 },
                     },
-                },
+                }),
             });
         }
 
@@ -140,19 +146,24 @@
                         },
                     ],
                 },
-                options: commonOptions,
+                options: /** @type {any} */ (commonOptions),
             });
         }
     }
 
+    /**
+     * @param {Chart} chart
+     * @param {number} value
+     * @param {string} label
+     */
     function updateChart(chart, value, label) {
         if (!chart) return;
 
         const maxPoints = 50;
-        chart.data.labels.push(label);
+        chart.data.labels?.push(label);
         chart.data.datasets[0].data.push(value);
 
-        if (chart.data.labels.length > maxPoints) {
+        if (chart.data.labels && chart.data.labels.length > maxPoints) {
             chart.data.labels.shift();
             chart.data.datasets[0].data.shift();
         }
@@ -206,6 +217,16 @@
         if (cpuChart) cpuChart.destroy();
         if (memoryChart) memoryChart.destroy();
     });
+
+    $: cpuRaw = /** @type {any} */ (
+        cpuChart?.data?.datasets[0]?.data.slice(-1)[0]
+    );
+    $: cpuLabel = (typeof cpuRaw === "number" ? cpuRaw : 0).toFixed(1);
+
+    $: memoryRaw = /** @type {any} */ (
+        memoryChart?.data?.datasets[0]?.data.slice(-1)[0]
+    );
+    $: memoryLabel = (typeof memoryRaw === "number" ? memoryRaw : 0).toFixed(0);
 </script>
 
 <div class="grid grid-cols-2 gap-4 h-full">
@@ -219,8 +240,7 @@
                 CPU Usage
             </h3>
             <span class="text-indigo-400 font-mono text-xs font-bold">
-                {cpuChart?.data?.datasets[0]?.data.slice(-1)[0]?.toFixed(1) ||
-                    0}%
+                {cpuLabel}%
             </span>
         </div>
         <div class="flex-1 min-h-0 relative z-10">
@@ -242,9 +262,7 @@
                 Memory
             </h3>
             <span class="text-emerald-400 font-mono text-xs font-bold">
-                {memoryChart?.data?.datasets[0]?.data
-                    .slice(-1)[0]
-                    ?.toFixed(0) || 0} MB
+                {memoryLabel} MB
             </span>
         </div>
         <div class="flex-1 min-h-0 relative z-10">

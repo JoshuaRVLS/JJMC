@@ -1,15 +1,21 @@
 <script>
-    export let mode;
+    /** @type {string} */
+    export let mode = "mod";
 
+    /** @type {string} */
     export let activeTab;
 
+    /** @type {string} */
     export let sortBy;
 
+    /** @type {string} */
     export let query;
 
+    /** @type {boolean} */
     export let loading;
 
-    export let type;
+    /** @type {string} */
+    export let type = "";
 
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
@@ -18,6 +24,7 @@
         dispatch("search");
     }
 
+    /** @param {KeyboardEvent} e */
     function handleKeydown(e) {
         if (e.key === "Enter") search();
     }

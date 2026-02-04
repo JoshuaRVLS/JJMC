@@ -5,6 +5,7 @@
     import ModSearch from "./mods/ModSearch.svelte";
     import Modlist from "./mods/Modlist.svelte";
 
+    /** @type {string} */
     export let instanceId;
     export let type = "";
     export let mode = "mod";
@@ -25,24 +26,30 @@
 
     let query = "";
 
+    /** @type {any[]} */
     let results = [];
 
     let installedIds = new Set();
     let loading = false;
     let loadingMore = false;
 
+    /** @type {string | null} */
     let installingId = null;
     let offset = 0;
     let hasMore = true;
     let sortBy = "relevance";
 
+    /** @type {string | null} */
     let viewingVersionsId = null;
 
+    /** @type {any[]} */
     let versionsList = [];
     let loadingVersions = false;
 
+    /** @type {IntersectionObserver} */
     let observer;
 
+    /** @type {HTMLElement} */
     let sentinel;
 
     async function fetchInstalled() {
@@ -57,6 +64,7 @@
         }
     }
 
+    /** @param {string} projectId */
     async function fetchVersions(projectId) {
         loadingVersions = true;
         versionsList = [];
@@ -72,7 +80,8 @@
                 addToast("Failed to load versions", "error");
             }
         } catch (e) {
-            addToast("Error loading versions: " + e.message, "error");
+            const err = /** @type {Error} */ (e);
+            addToast("Error loading versions: " + err.message, "error");
         } finally {
             loadingVersions = false;
         }
@@ -153,6 +162,10 @@
         };
     });
 
+    /**
+     * @param {string} projectId
+     * @param {string} [versionId]
+     */
     async function installMod(projectId, versionId = "") {
         installingId = projectId;
         try {
@@ -178,12 +191,14 @@
                 );
             }
         } catch (e) {
-            addToast("Error installing: " + e.message, "error");
+            const err = /** @type {Error} */ (e);
+            addToast("Error installing: " + err.message, "error");
         } finally {
             installingId = null;
         }
     }
 
+    /** @param {string} projectId */
     async function uninstallMod(projectId) {
         if (
             !(await askConfirm({
@@ -217,12 +232,14 @@
                 );
             }
         } catch (e) {
-            addToast("Error uninstalling: " + e.message, "error");
+            const err = /** @type {Error} */ (e);
+            addToast("Error uninstalling: " + err.message, "error");
         } finally {
             installingId = null;
         }
     }
 
+    /** @param {string} projectId */
     async function installModpack(projectId) {
         if (
             !(await askConfirm({
@@ -256,7 +273,8 @@
                 );
             }
         } catch (e) {
-            addToast("Error installing: " + e.message, "error");
+            const err = /** @type {Error} */ (e);
+            addToast("Error installing: " + err.message, "error");
         } finally {
             installingId = null;
         }

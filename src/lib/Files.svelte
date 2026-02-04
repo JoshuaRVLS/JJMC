@@ -7,33 +7,38 @@
     import FileToolbar from "./files/FileToolbar.svelte";
     import FileTable from "./files/FileTable.svelte";
 
-     
+    /** @type {string} */
     export let instanceId;
 
-     
+    /**
+     * @typedef {Object} FileItem
+     * @property {string} name
+     * @property {boolean} isDir
+     * @property {number} size
+     * @property {string} mode
+     * @property {string} modTime
+     */
 
-     
+    /** @type {FileItem[]} */
     let files = [];
     let loading = true;
     let currentPath = ".";
-     
+
+    /** @type {FileItem | null} */
     let viewingFile = null;
     let fileContent = "";
-     
+
+    /** @type {{name: string, path: string}[]} */
     let breadcrumbs = [];
 
-     
-     
+    /** @type {Set<string>} */
     let selectedFiles = new Set();
-     
 
-     
     let isDraggingOver = false;
 
-     
     async function loadFiles(path = ".") {
         loading = true;
-        selectedFiles = new Set();  
+        selectedFiles = new Set();
         try {
             const res = await fetch(
                 `/api/instances/${instanceId}/files?path=${encodeURIComponent(
@@ -42,7 +47,7 @@
             );
             if (res.ok) {
                 files = await res.json();
-                 
+
                 files.sort((a, b) => {
                     if (a.isDir && !b.isDir) return -1;
                     if (!a.isDir && b.isDir) return 1;
@@ -50,7 +55,6 @@
                 });
                 currentPath = path;
 
-                 
                 const parts = path === "." ? [] : path.split("/");
                 breadcrumbs = [{ name: "Root", path: "." }];
                 let acc = "";
@@ -70,7 +74,9 @@
         }
     }
 
-     
+    /**
+     * @param {string} path
+     */
     function navigate(path) {
         loadFiles(path);
     }
@@ -83,14 +89,15 @@
         loadFiles(newPath);
     }
 
-     
+    /**
+     * @param {FileItem} file
+     */
     async function openFile(file) {
         if (file.isDir) {
             const newPath =
                 currentPath === "." ? file.name : `${currentPath}/${file.name}`;
             loadFiles(newPath);
         } else {
-             
             try {
                 const filePath =
                     currentPath === "."
@@ -158,7 +165,7 @@
             title: "Delete Files",
             message: `Are you sure you want to delete ${count} item(s)? This cannot be undone.`,
             confirmText: "Delete",
-            isDangerous: true,
+            dangerous: true,
         });
 
         if (!confirmed) return;
@@ -187,9 +194,11 @@
         loadFiles(currentPath);
     }
 
-     
+    /**
+     * @param {FileItem} file
+     * @param {Event} event
+     */
     function toggleSelection(file, event) {
-         
         if (selectedFiles.has(file.name)) {
             selectedFiles.delete(file.name);
         } else {
@@ -209,10 +218,7 @@
         try {
             const newPath =
                 currentPath === "." ? name : `${currentPath}/${name}`;
-             
-             
-             
-             
+
             const res = await fetch(
                 `/api/instances/${instanceId}/files/directory`,
                 {
@@ -265,7 +271,9 @@
         }
     }
 
-     
+    /**
+     * @param {FileList} fileList
+     */
     async function uploadFiles(fileList) {
         if (!fileList || fileList.length === 0) return;
 
@@ -295,13 +303,11 @@
         } catch (e) {
             addToast("Error uploading files", "error");
         }
-
-         
-         
     }
 
-     
-     
+    /**
+     * @param {DragEvent} e
+     */
     function onDragOver(e) {
         e.preventDefault();
         isDraggingOver = true;
@@ -369,7 +375,7 @@
 
             if (res.ok) {
                 addToast("Extraction started", "success");
-                 
+
                 setTimeout(() => loadFiles(currentPath), 2000);
             } else {
                 const err = await res.json();
@@ -382,13 +388,17 @@
         }
     }
 
-     
+    /**
+     * @param {DragEvent} e
+     */
     function onDragLeave(e) {
         e.preventDefault();
         isDraggingOver = false;
     }
 
-     
+    /**
+     * @param {DragEvent} e
+     */
     function onDrop(e) {
         e.preventDefault();
         isDraggingOver = false;
@@ -410,7 +420,6 @@
     role="region"
     aria-label="File Browser"
 >
-    
     {#if isDraggingOver}
         <div
             class="absolute inset-0 z-50 bg-indigo-500/20 backdrop-blur-sm border-2 border-dashed border-indigo-400 flex flex-col items-center justify-center text-white pointer-events-none"
@@ -452,7 +461,6 @@
             ></textarea>
         </div>
     {:else}
-        
         <FileToolbar
             {currentPath}
             {selectedFiles}
@@ -467,7 +475,6 @@
             on:uploadFiles={(e) => uploadFiles(e.detail)}
         />
 
-        
         <FileTable
             {files}
             {loading}

@@ -26,8 +26,10 @@
 		Calendar,
 	} from "lucide-svelte";
 
+	/** @type {any[]} */
 	let instances = [];
 
+	/** @type {ReturnType<typeof setInterval> | null} */
 	let pollInterval;
 
 	async function loadInstances() {
@@ -43,6 +45,7 @@
 
 	let isAuthChecked = false;
 
+	/** @type {string | null} */
 	let storedLaunchId = null;
 
 	async function checkAuth() {
@@ -122,6 +125,7 @@
 			? instanceMatch[1]
 			: null;
 
+	/** @type {any} */
 	$: currentInstanceObj = instances.find((i) => i.id === currentInstanceId);
 	$: currentInstanceName = currentInstanceObj?.name || currentInstanceId;
 	$: currentInstanceType = currentInstanceObj?.type;

@@ -3,15 +3,14 @@
     import { fade, scale } from "svelte/transition";
     import { tick } from "svelte";
 
-     
+    /** @type {HTMLInputElement} */
     let inputEl;
 
-     
     $: if ($inputState.active && inputEl) {
-        tick().then(() =>   (inputEl).focus());
+        tick().then(() => inputEl.focus());
     }
 
-     
+    /** @param {KeyboardEvent} e */
     function handleKeydown(e) {
         if (e.key === "Enter") {
             closeInput($inputState.value);

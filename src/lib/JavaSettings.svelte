@@ -3,6 +3,7 @@
     import { Plus, Trash2, Loader2, Download } from "lucide-svelte";
     import { addToast } from "$lib/stores/toast";
 
+    /** @type {any[]} */
     let runtimes = [];
     let loading = true;
     let installing = false;
@@ -55,6 +56,7 @@
         }
     }
 
+    /** @param {string} name */
     async function deleteRuntime(name) {
         if (!confirm(`Are you sure you want to delete ${name}?`)) return;
 

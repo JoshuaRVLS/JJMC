@@ -10,18 +10,19 @@
     import { createEventDispatcher } from "svelte";
     import FileBreadcrumbs from "./FileBreadcrumbs.svelte";
 
-     
     export let currentPath;
-     
+
     export let selectedFiles;
-     
+
     export let breadcrumbs;
 
     const dispatch = createEventDispatcher();
 
+    /** @param {Event} e */
     function handleFileUpload(e) {
-        if (e.target.files) {
-            dispatch("uploadFiles", e.target.files);
+        const target = /** @type {HTMLInputElement} */ (e.target);
+        if (target.files) {
+            dispatch("uploadFiles", target.files);
         }
     }
 </script>

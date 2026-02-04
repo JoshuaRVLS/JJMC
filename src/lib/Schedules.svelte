@@ -12,8 +12,10 @@
     import { addToast } from "$lib/stores/toast";
     import { askConfirm } from "$lib/stores/confirm";
 
+    /** @type {string} */
     export let instanceId;
 
+    /** @type {any[]} */
     let schedules = [];
     let loading = true;
     let isModalOpen = false;
@@ -72,6 +74,7 @@
         }
     }
 
+    /** @param {string} id */
     async function deleteSchedule(id) {
         if (
             !(await askConfirm({
@@ -107,6 +110,7 @@
         loadSchedules();
     });
 
+    /** @param {string} type */
     const getTypeIcon = (type) => {
         switch (type) {
             case "restart":

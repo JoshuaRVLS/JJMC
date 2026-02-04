@@ -23,10 +23,14 @@
     let status = "Offline";
     let type = "";
 
+    /** @type {ReturnType<typeof setInterval> | undefined} */
     let interval;
 
     $: activeTab = $page.url.searchParams.get("tab") || "console";
 
+    /**
+     * @param {string} tab
+     */
     function setTab(tab) {
         const url = new URL($page.url);
         url.searchParams.set("tab", tab);
@@ -48,7 +52,9 @@
                 type = data.type;
             }
         } catch (e) {
-            console.error("Status check failed", e);
+            /** @type {Error} */
+            const err = /** @type {Error} */ (e);
+            console.error("Status check failed", err);
         }
     }
 
@@ -122,7 +128,7 @@
             <div class="flex-1 grid grid-cols-[1fr_300px] gap-6 min-h-0">
                 <div class="flex flex-col gap-6 min-h-0">
                     <div class="flex-1 min-h-0 relative">
-                        <Console {instanceId} {status} />
+                        <Console {instanceId} />
                     </div>
                 </div>
 

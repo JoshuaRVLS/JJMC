@@ -9,6 +9,7 @@
     let version = "";
     let type = "";
 
+    /** @type {{value: string, label: string}[]} */
     let versions = [];
     let types = [
         { value: "", label: "Any Loader" },
@@ -19,7 +20,9 @@
     ];
 
     let loading = false;
+    /** @type {any[]} */
     let results = [];
+    /** @type {ReturnType<typeof setTimeout>} */
     let searchTimeout;
 
     async function loadVersions() {
@@ -30,8 +33,14 @@
                 versions = [
                     { value: "", label: "Any Version" },
                     ...data
-                        .filter((v) => v.version_type === "release")
-                        .map((v) => ({ value: v.version, label: v.version })),
+                        .filter(
+                            (/** @type {any} */ v) =>
+                                v.version_type === "release",
+                        )
+                        .map((/** @type {any} */ v) => ({
+                            value: v.version,
+                            label: v.version,
+                        })),
                 ];
             }
         } catch (e) {

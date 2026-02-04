@@ -4,6 +4,7 @@
 
     let name = "";
     let isCreating = false;
+    /** @type {string[]} */
     let versions = [];
     let selectedVersion = "1.21";
 
@@ -11,7 +12,7 @@
         const res = await fetch("/api/versions/game");
         if (res.ok) {
             const data = await res.json();
-            versions = data.map((v) => v.version);
+            versions = data.map((/** @type {any} */ v) => v.version);
 
             if (versions.length > 0) {
                 // Find if '1.21' exists, otherwise default to the first version
@@ -54,15 +55,15 @@
 
     <div class="bg-gray-800/50 p-6 rounded-xl border border-white/10 space-y-6">
         <div>
-            <label class="block text-sm font-medium text-gray-400 mb-2"
-                >Network Name</label
-            >
-            <input
-                bind:value={name}
-                type="text"
-                class="w-full bg-gray-900/50 border border-white/10 rounded-lg p-3 text-white focus:border-blue-500 outline-none"
-                placeholder="My Network"
-            />
+            <label class="block text-sm font-medium text-gray-400 mb-2">
+                Network Name
+                <input
+                    bind:value={name}
+                    type="text"
+                    class="w-full bg-gray-900/50 border border-white/10 rounded-lg p-3 text-white focus:border-blue-500 outline-none mt-2"
+                    placeholder="My Network"
+                />
+            </label>
         </div>
 
         <div class="grid grid-cols-2 gap-4">

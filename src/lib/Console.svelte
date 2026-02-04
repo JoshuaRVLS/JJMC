@@ -1,13 +1,17 @@
 <script>
     import { onMount, onDestroy } from "svelte";
 
+    /** @type {string} */
     export let instanceId;
 
+    /** @type {string[]} */
     let logs = [];
     let command = "";
 
+    /** @type {WebSocket | null} */
     let socket;
 
+    /** @type {HTMLElement} */
     let consoleDiv;
     let connected = false;
 
@@ -75,13 +79,16 @@
         }
     }
 
+    /** @param {KeyboardEvent} e */
     function handleKeydown(e) {
         if (e.key === "Enter") {
             sendCommand();
         }
     }
+    /** @param {MouseEvent} event */
     function handleConsoleClick(event) {
-        const link = event.target.closest("a.console-link");
+        const target = /** @type {HTMLElement | null} */ (event.target);
+        const link = target?.closest("a.console-link");
         if (link) {
             if (!event.ctrlKey && !event.metaKey) {
                 event.preventDefault();
@@ -89,6 +96,7 @@
         }
     }
 
+    /** @param {string} text */
     function formatLog(text) {
         if (!text) return "";
 
@@ -269,7 +277,7 @@
         {/if}
         {#each logs as log}
             <div
-                class="break-words font-medium leading-relaxed tracking-tight text-slate-300/90 hover:text-white transition-colors duration-150 animate-in fade-in slide-in-from-bottom-1"
+                class="wrap-break-word font-medium leading-relaxed tracking-tight text-slate-300/90 hover:text-white transition-colors duration-150 animate-in fade-in slide-in-from-bottom-1"
             >
                 <span class="text-indigo-400/50 mr-3 select-none text-xs"
                     >➜</span

@@ -19,7 +19,9 @@
      */
 
     /** @type {FileEntry[]} */
+    /** @type {FileEntry[]} */
     let jarFiles = [];
+    /** @type {any[]} */
     let installedRuntimes = [];
     let selectedJavaMode = "";
     let loading = true;
@@ -106,8 +108,9 @@
             });
             if (!res.ok) throw new Error(await res.text());
             addToast("Settings saved", "success");
-        } catch (/** @type {any} */ e) {
-            addToast("Failed to save settings: " + e.message, "error");
+        } catch (e) {
+            const err = /** @type {Error} */ (e);
+            addToast("Failed to save settings: " + err.message, "error");
         } finally {
             saving = false;
         }

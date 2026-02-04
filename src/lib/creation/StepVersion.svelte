@@ -4,10 +4,13 @@
     import Select from "$lib/components/Select.svelte";
     import { createEventDispatcher } from "svelte";
 
+    /** @type {string} */
     export let type;
 
+    /** @type {string} */
     export let version;
 
+    /** @type {any[]} */
     export let versionOptions;
 
     const dispatch = createEventDispatcher();

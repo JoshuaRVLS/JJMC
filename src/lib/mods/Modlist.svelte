@@ -3,41 +3,55 @@
     import ModCard from "./ModCard.svelte";
     import ModVersions from "./ModVersions.svelte";
 
-     
+    /** @type {any[]} */
     export let results;
-     
+
+    /** @type {boolean} */
     export let loading;
-     
+
+    /** @type {boolean} */
     export let loadingMore;
-     
+
+    /** @type {string} */
     export let query;
-     
+
+    /** @type {boolean} */
     export let hasMore;
-     
+
+    /** @type {Set<string>} */
     export let installedIds;
-     
+
+    /** @type {string | null} */
     export let installingId;
-     
+
+    /** @type {string} */
     export let activeTab;
-     
+
+    /** @type {string | null} */
     export let viewingVersionsId;
-     
+
+    /** @type {any[]} */
     export let versionsList;
-     
+
+    /** @type {boolean} */
     export let loadingVersions;
-     
+
+    /** @type {HTMLElement} */
     export let sentinel;
 
     const dispatch = createEventDispatcher();
 
+    /** @param {any} item */
     function viewVersions(item) {
         dispatch("viewVersions", item);
     }
 
+    /** @param {any} item */
     function install(item) {
         dispatch("install", item);
     }
 
+    /** @param {any} item */
     function uninstall(item) {
         dispatch("uninstall", item);
     }
@@ -46,6 +60,10 @@
         dispatch("closeVersions");
     }
 
+    /**
+     * @param {string} projectId
+     * @param {string} versionId
+     */
     function installVersion(projectId, versionId) {
         dispatch("installVersion", { projectId, versionId });
     }
@@ -92,7 +110,6 @@
             {/each}
         </div>
 
-        
         <div bind:this={sentinel} class="h-10 flex items-center justify-center">
             {#if loadingMore}
                 <div

@@ -4,12 +4,10 @@
     import Select from "$lib/components/Select.svelte";
     import { askConfirm } from "$lib/stores/confirm";
 
-     
+    /** @type {string} */
     export let instanceId;
 
-     
-
-     
+    /** @type {any[]} */
     let typeOptions = [];
     let loadingLoaders = false;
     let type = "";
@@ -19,7 +17,7 @@
     let currentType = "";
     let currentVersion = "";
 
-     
+    /** @type {any[]} */
     let versionOptions = [];
     let loadingVersions = false;
 
@@ -33,7 +31,7 @@
                 const data = await res.json();
                 currentType = data.type;
                 currentVersion = data.version;
-                 
+
                 if (!type) {
                     type = currentType;
                     version = currentVersion;
@@ -51,10 +49,10 @@
             if (res.ok) {
                 const data = await res.json();
                 const available = data
-                    .filter((  l) =>
+                    .filter((/** @type {any} */ l) =>
                         SUPPORTED_LOADERS.includes(l.name),
                     )
-                    .map((  l) => ({
+                    .map((/** @type {any} */ l) => ({
                         value: l.name,
                         label: l.name.charAt(0).toUpperCase() + l.name.slice(1),
                     }));
@@ -68,7 +66,7 @@
         } catch (e) {
             console.error("Failed to load loaders", e);
             addToast("Failed to load server types", "error");
-             
+
             typeOptions = [
                 { value: "fabric", label: "Fabric" },
                 { value: "quilt", label: "Quilt" },
@@ -89,24 +87,18 @@
         }
         loadingVersions = true;
         try {
-             
             const res = await fetch("/api/versions/game");
             if (res.ok) {
                 const data = await res.json();
                 versionOptions = data
                     .filter(
-                        (
-                              v,
-                        ) => v.version_type === "release",
+                        (/** @type {any} */ v) => v.version_type === "release",
                     )
-                    .map((  v) => ({
+                    .map((/** @type {any} */ v) => ({
                         value: v.version,
                         label: v.version,
                     }));
 
-                 
-                 
-                 
                 if (!version && versionOptions.length > 0) {
                     version = versionOptions[0].value;
                 }
@@ -119,7 +111,6 @@
         }
     }
 
-     
     $: if (type) {
         loadVersions();
     }
@@ -148,7 +139,7 @@
 
             if (res.ok) {
                 addToast("Server type changed successfully!", "success");
-                 
+
                 await loadInstanceDetails();
             } else {
                 const data = await res.json();
@@ -194,7 +185,6 @@
             </div>
 
             <div class="space-y-6">
-                
                 <div class="grid grid-cols-2 gap-4">
                     <div
                         class="bg-black/20 p-4 rounded-lg border border-white/5"
@@ -222,7 +212,6 @@
                     </div>
                 </div>
 
-                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <Select
@@ -245,7 +234,6 @@
                     {/if}
                 </div>
 
-                
                 <div class="pt-4 flex justify-end border-t border-white/5">
                     <button
                         on:click={changeType}

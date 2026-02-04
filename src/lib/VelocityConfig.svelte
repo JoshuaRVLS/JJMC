@@ -3,6 +3,7 @@
     import { addToast } from "$lib/stores/toast";
     import CodeEditor from "$lib/components/CodeEditor.svelte";
 
+    /** @type {string} */
     export let instanceId;
 
     let content = "";
@@ -26,7 +27,9 @@
                 }
             }
         } catch (e) {
-            console.error(e);
+            /** @type {Error} */
+            const err = /** @type {Error} */ (e);
+            console.error(err);
             addToast("Error loading configuration", "error");
         } finally {
             loading = false;

@@ -1,10 +1,14 @@
 <script>
+    /** @type {any} */
     export let item;
 
+    /** @type {any[]} */
     export let versionsList;
 
+    /** @type {boolean} */
     export let loadingVersions;
 
+    /** @type {string} */
     export let activeTab;
 
     import { createEventDispatcher } from "svelte";
@@ -14,6 +18,10 @@
         dispatch("close");
     }
 
+    /**
+     * @param {string} projectId
+     * @param {string} versionId
+     */
     function install(projectId, versionId) {
         dispatch("install", { projectId, versionId });
     }

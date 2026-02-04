@@ -10,6 +10,7 @@
 
     const dispatch = createEventDispatcher();
 
+    /** @param {number} bytes */
     function formatSize(bytes) {
         if (bytes === 0) return "0 B";
         const k = 1024;
@@ -18,6 +19,7 @@
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
     }
 
+    /** @param {number} ms */
     function formatDate(ms) {
         return new Date(ms).toLocaleString();
     }
@@ -26,10 +28,15 @@
         dispatch("toggleAll");
     }
 
+    /**
+     * @param {any} file
+     * @param {Event} event
+     */
     function toggleSelection(file, event) {
         dispatch("toggleSelection", { file, event });
     }
 
+    /** @param {any} file */
     function openFile(file) {
         dispatch("openFile", file);
     }
@@ -94,7 +101,7 @@
                                     />
                                 {:else}
                                     <File
-                                        class="w-5 h-5 text-gray-500 flex-shrink-0"
+                                        class="w-5 h-5 text-gray-500 shrink-0"
                                     />
                                 {/if}
                                 <span class="truncate">{file.name}</span>

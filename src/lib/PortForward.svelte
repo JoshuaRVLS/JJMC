@@ -19,6 +19,7 @@
         config: { provider: "", token: "" },
     };
 
+    /** @type {number | undefined} */
     let pollInterval;
 
     async function loadStatus() {

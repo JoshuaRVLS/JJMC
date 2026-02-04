@@ -2,11 +2,11 @@
     import { onMount } from "svelte";
     import { addToast } from "$lib/stores/toast";
 
-     
+    /** @type {string} */
     export let instanceId;
-    export let type = "whitelist";  
+    export let type = "whitelist";
 
-     
+    /** @type {any[]} */
     let players = [];
     let loading = true;
     let newPlayerName = "";
@@ -22,7 +22,7 @@
             );
             if (res.ok) {
                 const text = await res.text();
-                 
+
                 if (text.trim() === "") {
                     players = [];
                 } else {
@@ -31,7 +31,7 @@
             } else {
                 players = [];
             }
-        } catch (  e) {
+        } catch (e) {
             console.error(e);
             addToast(`Error loading ${title}`, "error");
         } finally {
@@ -70,8 +70,7 @@
             );
             if (res.ok) {
                 const text = await res.text();
-                 
-                 
+
                 const match = text.match(/online-mode\s*=\s*(false|true)/);
                 if (match && match[1] === "false") {
                     return false;
@@ -102,7 +101,6 @@
                     : {}),
             };
 
-             
             if (players.find((p) => p.uuid === newEntry.uuid)) {
                 addToast("Player already in list", "warning");
                 return;
@@ -111,13 +109,14 @@
             players = [...players, newEntry];
             newPlayerName = "";
             savePlayers();
-        } catch (  e) {
-            console.error(e);
-            addToast("Error: " + e.message + ". Check Online Mode?", "error");
+        } catch (e) {
+            const err = /** @type {Error} */ (e);
+            console.error(err);
+            addToast("Error: " + err.message + ". Check Online Mode?", "error");
         }
     }
 
-     
+    /** @param {string} uuid */
     function removePlayer(uuid) {
         players = players.filter((p) => p.uuid !== uuid);
         savePlayers();
@@ -131,7 +130,6 @@
 <div
     class="h-full flex flex-col bg-gray-900/50 rounded-xl overflow-hidden border border-white/5"
 >
-    
     <div
         class="flex items-center justify-between px-4 py-3 bg-white/5 border-b border-white/5"
     >
@@ -153,7 +151,6 @@
         </div>
     </div>
 
-    
     <div class="flex-1 overflow-y-auto p-4">
         {#if loading}
             <div class="flex items-center justify-center h-full text-gray-500">

@@ -2,9 +2,8 @@
     import { ArrowUp } from "lucide-svelte";
     import { createEventDispatcher } from "svelte";
 
-     
     export let currentPath;
-     
+
     export let breadcrumbs;
 
     const dispatch = createEventDispatcher();
@@ -13,6 +12,7 @@
         dispatch("navigateUp");
     }
 
+    /** @param {string} path */
     function navigate(path) {
         dispatch("navigate", path);
     }

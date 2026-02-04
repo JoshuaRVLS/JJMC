@@ -3,23 +3,22 @@
     import { addToast } from "$lib/stores/toast";
     import CodeEditor from "$lib/components/CodeEditor.svelte";
 
-     
+    /** @type {string} */
     export let instanceId;
 
-     
-
-     
+    /** @type {any[]} */
     let properties = [];
     let loading = true;
     let isRawMode = false;
     let rawContent = "";
     let searchQuery = "";
 
-     
     let originalRawContent = "";
 
-     
-     
+    /**
+     * @param {string} key
+     * @param {string} value
+     */
     function getInputType(key, value) {
         if (value === "true" || value === "false") return "boolean";
         if (
@@ -43,7 +42,6 @@
                 originalRawContent = text;
                 parseProperties(text);
             } else {
-                 
                 if (res.status === 404) {
                     addToast("server.properties not found", "error");
                 } else {
@@ -58,10 +56,11 @@
         }
     }
 
-     
+    /** @param {string} text */
     function parseProperties(text) {
         const lines = text.split("\n");
-         
+
+        /** @type {any[]} */
         const parsed = [];
 
         lines.forEach((line) => {
@@ -81,7 +80,6 @@
             }
         });
 
-         
         const rconProps = [
             { key: "enable-rcon", value: "false" },
             { key: "rcon.port", value: "25575" },
@@ -104,12 +102,6 @@
     }
 
     function syncToRaw() {
-         
-         
-         
-         
-         
-
         let content =
             "#Minecraft server properties\n#" + new Date().toISOString() + "\n";
         properties.forEach((p) => {
@@ -119,16 +111,14 @@
     }
 
     function syncToGui() {
-         
         parseProperties(rawContent);
     }
 
     async function saveProperties() {
-         
         let contentToSend = "";
         if (isRawMode) {
             contentToSend = rawContent;
-             
+
             syncToGui();
         } else {
             syncToRaw();
@@ -170,7 +160,6 @@
 <div
     class="h-full flex flex-col bg-gray-900/50 rounded-xl overflow-hidden border border-white/5"
 >
-    
     <div
         class="flex items-center justify-between px-4 py-3 bg-white/5 border-b border-white/5 gap-4"
     >
@@ -236,7 +225,6 @@
         </button>
     </div>
 
-    
     <div class="flex-1 overflow-y-auto relative">
         {#if loading}
             <div class="flex items-center justify-center h-full text-gray-500">

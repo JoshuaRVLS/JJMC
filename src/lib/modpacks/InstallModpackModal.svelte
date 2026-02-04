@@ -7,6 +7,7 @@
     import { createId } from "@paralleldrive/cuid2";
 
     export let open = false;
+    /** @type {any} */
     export let modpack = null;
 
     let name = "";
@@ -18,7 +19,7 @@
     }
 
     async function install() {
-        if (!name) return;
+        if (!name || !modpack) return;
 
         loading = true;
         error = "";
@@ -77,7 +78,9 @@
             goto(`/instances/${id}`);
         } catch (e) {
             console.error(e);
-            error = e.toString();
+            /** @type {Error} */
+            const err = /** @type {Error} */ (e);
+            error = err.toString();
         } finally {
             loading = false;
         }

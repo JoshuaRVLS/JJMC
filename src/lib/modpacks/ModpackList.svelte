@@ -2,11 +2,26 @@
     import { Download } from "lucide-svelte";
     import InstallModpackModal from "./InstallModpackModal.svelte";
 
+    /**
+     * @typedef {Object} Modpack
+     * @property {string} project_id
+     * @property {string} title
+     * @property {string} author
+     * @property {string} description
+     * @property {string} icon_url
+     * @property {number} downloads
+     */
+
+    /** @type {Modpack[]} */
     export let results = [];
 
+    /** @type {Modpack | null} */
     let selectedModpack = null;
     let showInstallModal = false;
 
+    /**
+     * @param {Modpack} modpack
+     */
     function handleInstall(modpack) {
         selectedModpack = modpack;
         showInstallModal = true;

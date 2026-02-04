@@ -2,8 +2,10 @@
     import { slide } from "svelte/transition";
     import { createEventDispatcher } from "svelte";
 
+    /** @type {any} */
     export let value;
 
+    /** @type {any[]} */
     export let options = [];
     export let label = "";
     export let placeholder = "Select an option";
@@ -35,17 +37,26 @@
     // Wait, `replace_file_content` is single contiguous block.
     // I'll replace the exports first.
 
+    /**
+     * @param {any} option
+     */
     function select(option) {
         value = typeof option === "object" ? option.value : option;
         isOpen = false;
         dispatch("change", value);
     }
 
+    /**
+     * @param {HTMLElement} node
+     */
     function clickOutside(node) {
+        /**
+         * @param {MouseEvent} event
+         */
         const handleClick = (event) => {
             if (
                 node &&
-                !node.contains(event.target) &&
+                !node.contains(/** @type {Node} */ (event.target)) &&
                 !event.defaultPrevented
             ) {
                 node.dispatchEvent(new CustomEvent("click_outside"));

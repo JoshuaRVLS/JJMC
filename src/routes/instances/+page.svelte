@@ -6,11 +6,37 @@
 
     import { onDestroy } from "svelte";
 
+    /**
+     * @typedef {Object} Instance
+     * @property {string} id
+     * @property {string} name
+     * @property {string} type
+     * @property {string} version
+     * @property {string} status
+     * @property {string} [folderId]
+     * @property {number} [maxMemory]
+     * @property {string} [javaArgs]
+     * @property {string} [jarFile]
+     * @property {string} [javaPath]
+     * @property {string} [webhookUrl]
+     * @property {string} [group]
+     */
+
+    /**
+     * @typedef {Object} Folder
+     * @property {string} id
+     * @property {string} name
+     */
+
+    /** @type {Instance[]} */
     let instances = [];
+    /** @type {Folder[]} */
     let folders = [];
     let loading = true;
 
+    /** @type {ReturnType<typeof setInterval> | undefined} */
     let pollInterval;
+    /** @type {string | null} */
     let draggingInstanceId = null;
 
     async function loadData() {
@@ -59,10 +85,15 @@
                 addToast("Failed to create folder", "error");
             }
         } catch (e) {
-            addToast("Error creating folder: " + e.message, "error");
+            /** @type {Error} */
+            const err = /** @type {Error} */ (e);
+            addToast("Error creating folder: " + err.message, "error");
         }
     }
 
+    /**
+     * @param {string} id
+     */
     async function deleteFolder(id) {
         if (
             !(await askConfirm({
@@ -85,10 +116,16 @@
                 addToast("Failed to delete folder", "error");
             }
         } catch (e) {
-            addToast("Error deleting folder: " + e.message, "error");
+            /** @type {Error} */
+            const err = /** @type {Error} */ (e);
+            addToast("Error deleting folder: " + err.message, "error");
         }
     }
 
+    /**
+     * @param {string} instanceId
+     * @param {string} folderId
+     */
     async function moveInstance(instanceId, folderId) {
         const inst = instances.find((i) => i.id === instanceId);
         if (!inst) return;
@@ -123,27 +160,44 @@
             addToast("Instance moved", "success");
             loadData();
         } catch (e) {
-            addToast("Failed to move instance: " + e.message, "error");
+            /** @type {Error} */
+            const err = /** @type {Error} */ (e);
+            addToast("Failed to move instance: " + err.message, "error");
             loadData(); // Revert
         }
     }
 
+    /**
+     * @param {DragEvent} event
+     * @param {string} id
+     */
     function handleDragStart(event, id) {
         draggingInstanceId = id;
-        event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", id);
+        if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", id);
+        }
     }
 
+    /**
+     * @param {DragEvent} event
+     * @param {string} folderId
+     */
     function handleDrop(event, folderId) {
         event.preventDefault();
-        const id = event.dataTransfer.getData("text/plain");
-        if (id) {
-            moveInstance(id, folderId);
+        if (event.dataTransfer) {
+            const id = event.dataTransfer.getData("text/plain");
+            if (id) {
+                moveInstance(id, folderId);
+            }
         }
         draggingInstanceId = null;
     }
 
     // Instance management functions...
+    /**
+     * @param {string} id
+     */
     async function deleteInstance(id) {
         const confirmed = await askConfirm({
             title: "Delete Instance",
@@ -166,10 +220,16 @@
                 addToast("Failed to delete instance", "error");
             }
         } catch (e) {
-            addToast("Error deleting instance: " + e.message, "error");
+            /** @type {Error} */
+            const err = /** @type {Error} */ (e);
+            addToast("Error deleting instance: " + err.message, "error");
         }
     }
 
+    /**
+     * @param {string} id
+     * @param {string} action
+     */
     async function triggerInstanceAction(id, action) {
         try {
             const res = await fetch(`/api/instances/${id}/${action}`, {
@@ -187,6 +247,7 @@
     }
 
     // Grouping logic
+    /** @type {Record<string, Instance[]>} */
     $: groupedInstances = {
         Uncategorized: instances.filter(
             (i) => !i.folderId || !folders.find((f) => f.id === i.folderId),
@@ -202,6 +263,14 @@
     }
 
     $: sortedGroups = ["Uncategorized", ...folders.map((f) => f.id)];
+
+    /**
+     * @param {string} groupId
+     * @returns {Instance[]}
+     */
+    function getGroupInstances(groupId) {
+        return groupedInstances[groupId] || [];
+    }
 </script>
 
 <div class="h-full flex flex-col p-8">
@@ -299,7 +368,7 @@
                     {@const isFolder = groupId !== "Uncategorized"}
                     {@const folder = folders.find((f) => f.id === groupId)}
                     {@const groupName = folder ? folder.name : "Uncategorized"}
-                    {@const groupInstances = groupedInstances[groupId] || []}
+                    {@const groupInstances = getGroupInstances(groupId)}
 
                     <div
                         class="mb-2 transition-all"
@@ -375,6 +444,8 @@
                                     <div
                                         class="grid grid-cols-12 gap-4 items-center px-4 py-3 rounded-lg hover:bg-white/5 transition-colors group cursor-grab active:cursor-grabbing bg-transparent"
                                         draggable="true"
+                                        role="button"
+                                        tabindex="0"
                                         on:dragstart={(e) =>
                                             handleDragStart(e, inst.id)}
                                     >
