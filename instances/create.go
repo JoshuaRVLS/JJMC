@@ -70,6 +70,7 @@ func (im *InstanceManager) CreateInstance(id, name, serverType, version string) 
 			go func() {
 				if err := instance.InstallFromTemplate(tmpl, version); err != nil {
 					fmt.Printf("Failed to install template for %s: %v\n", id, err)
+					instance.Manager.Broadcast(fmt.Sprintf("Failed to install template: %v", err))
 				}
 			}()
 
