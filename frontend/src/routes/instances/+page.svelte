@@ -11,6 +11,7 @@
     } from "$lib/stores/instances.js";
     import {
         Folder,
+        FolderOpen,
         HardDrive,
         LayoutGrid,
         List,
@@ -167,7 +168,28 @@
         if (id) {
             actions.moveInstance(id, folderId);
             draggingInstanceId = null;
+            dragOverFolderId = null;
         }
+    }
+
+    /** @type {string | null} */
+    let dragOverFolderId = null;
+
+    /**
+     * @param {string} id
+     */
+    function handleDragEnter(id) {
+        dragOverFolderId = id;
+    }
+
+    /**
+     * @param {string} id
+     */
+    function handleDragLeave(id) {
+        // Optional: debounce or check relation if needed,
+        // but for simple grid items, simple set to null (or check if relatedTarget is outside)
+        // For simplicity in this grid layout:
+        if (dragOverFolderId === id) dragOverFolderId = null;
     }
 
     /** @param {DragEvent} event */
@@ -205,6 +227,9 @@
                             ? 'font-semibold text-white'
                             : ''}"
                         on:click={() => (currentFolderId = crumb.id)}
+                        on:dragover|preventDefault
+                        on:drop|stopPropagation={(e) =>
+                            handleDropOnFolder(e, crumb.id || "")}
                     >
                         {crumb.name}
                     </button>
@@ -282,9 +307,14 @@
                     >
                         {#each displayedFolders as folder (folder.id)}
                             <div
-                                class="group bg-gray-800/40 hover:bg-gray-800/80 border border-white/5 hover:border-indigo-500/30 rounded-xl p-4 cursor-pointer transition-all hover:shadow-lg hover:shadow-indigo-500/10 flex flex-col justify-between aspect-square md:aspect-auto md:h-32 relative"
+                                class="group bg-gray-800/40 hover:bg-gray-800/80 border border-white/5 hover:border-indigo-500/30 rounded-xl p-4 cursor-pointer transition-all hover:shadow-lg hover:shadow-indigo-500/10 flex flex-col justify-between aspect-square md:aspect-auto md:h-32 relative
+                                {dragOverFolderId === folder.id
+                                    ? 'scale-105 border-indigo-500/80 bg-gray-800 shadow-xl shadow-indigo-500/20'
+                                    : ''}"
                                 on:click={() => (currentFolderId = folder.id)}
                                 on:dragover|preventDefault
+                                on:dragenter={() => handleDragEnter(folder.id)}
+                                on:dragleave={() => handleDragLeave(folder.id)}
                                 on:drop|stopPropagation={(e) =>
                                     handleDropOnFolder(e, folder.id)}
                                 role="button"
@@ -293,12 +323,26 @@
                                     e.key === "Enter" &&
                                     (currentFolderId = folder.id)}
                             >
-                                <div class="flex justify-between items-start">
-                                    <Folder
-                                        class="w-8 h-8 text-indigo-400 group-hover:text-indigo-300 transition-colors"
-                                    />
+                                <div
+                                    class="flex justify-between items-start {draggingInstanceId !==
+                                    null
+                                        ? 'pointer-events-none'
+                                        : ''}"
+                                >
+                                    {#if dragOverFolderId === folder.id}
+                                        <FolderOpen
+                                            class="w-8 h-8 text-indigo-400 group-hover:text-indigo-300 transition-colors animate-bounce"
+                                        />
+                                    {:else}
+                                        <Folder
+                                            class="w-8 h-8 text-indigo-400 group-hover:text-indigo-300 transition-colors"
+                                        />
+                                    {/if}
                                     <button
-                                        class="p-1 hover:bg-white/10 rounded text-gray-500 hover:text-white transition-colors opacity-0 group-hover:opacity-100"
+                                        class="p-1 hover:bg-white/10 rounded text-gray-500 hover:text-white transition-colors opacity-0 group-hover:opacity-100 {draggingInstanceId !==
+                                        null
+                                            ? 'pointer-events-none'
+                                            : ''}"
                                         on:click|stopPropagation={() =>
                                             deleteFolder(folder.id)}
                                         title="Delete Folder"
@@ -306,7 +350,11 @@
                                         <Trash2 class="w-4 h-4" />
                                     </button>
                                 </div>
-                                <div>
+                                <div
+                                    class={draggingInstanceId !== null
+                                        ? "pointer-events-none"
+                                        : ""}
+                                >
                                     <div
                                         class="font-medium text-gray-200 truncate group-hover:text-white text-sm"
                                     >
