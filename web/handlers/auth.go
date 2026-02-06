@@ -64,9 +64,26 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid payload"})
 	}
 
-	if !h.Manager.VerifyPassword(payload.Password) {
-		return c.Status(401).JSON(fiber.Map{"error": "Invalid password"})
+	ip := c.IP()
+	allowed, waitTime := h.Manager.CheckRateLimit(ip)
+	if !allowed {
+		return c.Status(429).JSON(fiber.Map{
+			"error": "Too many failed attempts. Please try again later.",
+			"wait":  waitTime.String(),
+		})
 	}
+
+	if !h.Manager.VerifyPassword(payload.Password) {
+		h.Manager.RecordLoginAttempt(ip, false)
+		remaining := h.Manager.GetRemainingAttempts(ip)
+		return c.Status(401).JSON(fiber.Map{
+			"error":     "Invalid password",
+			"remaining": remaining,
+		})
+	}
+
+	// Success
+	h.Manager.RecordLoginAttempt(ip, true)
 
 	token := h.Manager.CreateSession()
 	c.Cookie(&fiber.Cookie{
