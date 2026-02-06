@@ -1,6 +1,6 @@
 <script>
     import { fade } from "svelte/transition";
-    import { Cpu, Hammer } from "lucide-svelte";
+    import { Cpu, Hammer, ArrowRight } from "lucide-svelte";
     import Select from "$lib/components/Select.svelte";
     import { createEventDispatcher } from "svelte";
 
@@ -28,33 +28,33 @@
     in:fade={{ duration: 200, delay: 100 }}
     class="flex-1 flex flex-col justify-center max-w-lg mx-auto w-full"
 >
-    <h2 class="text-3xl font-bold text-white mb-2">Select Version</h2>
-    <p class="text-gray-400 mb-8">
-        Which version of Minecraft do you want to install?
-    </p>
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-white mb-2 tracking-tight">
+            Select Version
+        </h2>
+        <p class="text-gray-400 text-sm">Target Minecraft release version.</p>
+    </div>
 
     {#if type === "custom"}
         <div
-            class="bg-gray-800/50 border border-gray-700 rounded-xl p-6 text-center"
+            class="bg-white/5 border border-white/5 rounded-2xl p-8 text-center"
         >
             <div
-                class="inline-flex p-3 rounded-full bg-blue-900/30 text-blue-400 mb-4"
+                class="inline-flex p-4 rounded-full bg-white/5 text-gray-400 mb-4"
             >
                 <Cpu size={32} />
             </div>
-            <h3 class="text-lg font-medium text-white mb-2">
-                Custom Server JAR
-            </h3>
-            <p class="text-sm text-gray-400">
-                You will need to manually upload your server JAR file after
-                creation.
+            <h3 class="text-lg font-bold text-white mb-2">Custom Server JAR</h3>
+            <p class="text-sm text-gray-400 leading-relaxed max-w-xs mx-auto">
+                You will need to manually upload your server JAR file via the
+                file manager after creation.
             </p>
         </div>
     {:else}
         <div class="space-y-4">
             <label
                 for="version-select"
-                class="block text-sm font-medium text-gray-400"
+                class="block text-xs font-bold text-gray-500 uppercase tracking-widest pl-1"
                 >Minecraft Version</label
             >
             <Select
@@ -62,20 +62,20 @@
                 options={versionOptions}
                 bind:value={version}
                 placeholder="Loading versions..."
-                className="w-full text-lg py-3"
+                className="w-full text-lg py-3 bg-black/20 border-white/10"
             />
         </div>
     {/if}
 
-    <div class="mt-8 flex justify-between items-center">
+    <div class="mt-10 flex justify-between items-center">
         <button
             on:click={handleBack}
-            class="text-gray-400 hover:text-white px-4 py-2 font-medium transition-colors"
+            class="text-gray-500 hover:text-white px-2 py-2 font-medium transition-colors text-sm"
             >Back</button
         >
         <button
             on:click={finish}
-            class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-500 transition-colors flex items-center gap-2 shadow-lg shadow-blue-500/20"
+            class="bg-white text-gray-900 px-6 py-3 rounded-xl font-bold hover:bg-gray-200 transition-colors flex items-center gap-2 shadow-lg shadow-white/10 transform active:scale-95"
         >
             <Hammer size={18} /> Create Server
         </button>
