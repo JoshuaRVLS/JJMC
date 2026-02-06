@@ -34,8 +34,8 @@
     let draggingInstanceId = null;
 
     onMount(() => {
-        actions.load();
-        pollInterval = setInterval(actions.load, 2000);
+        actions.load(); // First load is loud (shows spinner)
+        pollInterval = setInterval(() => actions.load(true), 2000); // subsequent are silent
     });
 
     onDestroy(() => {

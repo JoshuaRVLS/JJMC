@@ -26,22 +26,10 @@
 		Calendar,
 	} from "lucide-svelte";
 
-	/** @type {any[]} */
-	let instances = [];
+	import { instances, actions } from "$lib/stores/instances";
 
 	/** @type {ReturnType<typeof setInterval> | null} */
 	let pollInterval;
-
-	async function loadInstances() {
-		try {
-			const res = await fetch("/api/instances");
-			if (res.ok) {
-				instances = await res.json();
-			}
-		} catch (e) {
-			console.error("Failed to load instances", e);
-		}
-	}
 
 	let isAuthChecked = false;
 
@@ -76,13 +64,9 @@
 						await goto("/");
 					}
 
-					loadInstances();
-
-					if (!pollInterval) {
-						pollInterval = setInterval(() => {
-							loadInstances();
-							checkAuth();
-						}, 5000);
+					// Initial load if empty
+					if ($instances.length === 0) {
+						actions.load(true);
 					}
 				}
 			} else {
@@ -115,10 +99,6 @@
 		checkAuth();
 	});
 
-	onDestroy(() => {
-		if (pollInterval) clearInterval(pollInterval);
-	});
-
 	$: instanceMatch = $page.url.pathname.match(/^\/instances\/([^/]+)/);
 	$: currentInstanceId =
 		instanceMatch && instanceMatch[1] !== "create"
@@ -126,7 +106,7 @@
 			: null;
 
 	/** @type {any} */
-	$: currentInstanceObj = instances.find((i) => i.id === currentInstanceId);
+	$: currentInstanceObj = $instances.find((i) => i.id === currentInstanceId);
 	$: currentInstanceName = currentInstanceObj?.name || currentInstanceId;
 	$: currentInstanceType = currentInstanceObj?.type;
 

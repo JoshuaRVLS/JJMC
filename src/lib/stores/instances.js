@@ -32,21 +32,29 @@ export const folders = writable([]);
 export const loading = writable(true);
 
 export const actions = {
-    async load() {
-        loading.set(true);
+    /**
+     * @param {boolean} [silent=false]
+     */
+    async load(silent = false) {
+        if (!silent) loading.set(true);
         try {
             const [instRes, folderRes] = await Promise.all([
                 fetch("/api/instances"),
                 fetch("/api/folders"),
             ]);
 
-            if (instRes.ok) instances.set(await instRes.json());
+            if (instRes.ok) {
+                const newData = await instRes.json();
+                // Simple check to avoid store churn if data is structurally identical?
+                // For now just set it, svelte stores are reasonably efficient.
+                instances.set(newData);
+            }
             if (folderRes.ok) folders.set(await folderRes.json());
         } catch (e) {
             console.error("Failed to load data", e);
-            addToast("Failed to load data", "error");
+            if (!silent) addToast("Failed to load data", "error");
         } finally {
-            loading.set(false);
+            if (!silent) loading.set(false);
         }
     },
 
