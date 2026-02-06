@@ -20,7 +20,6 @@ func GetBackupDir(instanceDir string) string {
 	return filepath.Join("data", "backups", filepath.Base(instanceDir))
 }
 
-// Create creates a zip backup of the instance directory
 func Create(instanceDir string, backupDir string, instanceName string) error {
 	if err := os.MkdirAll(backupDir, os.ModePerm); err != nil {
 		return err
