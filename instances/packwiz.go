@@ -133,7 +133,11 @@ func (inst *Instance) InstallPackwiz(packUrl string) error {
 
 			fileUrl := f.Download.Url
 			if fileUrl == "" {
-				fileUrl, _ = resolveRelativeUrl(packUrl, f.File)
+				var err error
+				fileUrl, err = resolveRelativeUrl(packUrl, f.File)
+				if err != nil {
+					return err
+				}
 			}
 
 			err := dl.DownloadFile(downloader.DownloadOptions{
