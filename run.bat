@@ -64,23 +64,27 @@ goto parse_args
 
 if %SKIP_BUILD% equ 0 (
     echo Checking dependencies...
-    if not exist "node_modules\" (
+    if not exist "frontend\node_modules\" (
         echo Installing frontend dependencies...
+        pushd frontend
         call npm install
+        popd
     )
 
     echo Building frontend...
+    pushd frontend
     call npm run build
+    popd
 ) else (
     echo Skipping frontend build...
 )
 
 echo Starting JJMC...
 if %BUILD_BINARY% equ 1 (
-    go build -o bin\jjmc.exe main.go
+    go build -o bin\jjmc.exe cmd\jjmc\main.go
     bin\jjmc.exe %ARGS%
 ) else (
-    go run main.go %ARGS%
+    go run cmd\jjmc\main.go %ARGS%
 )
 
 if %errorlevel% neq 0 pause

@@ -5,34 +5,21 @@ node_modules
 .vercel
 .netlify
 .wrangler
-/.svelte-kit
+# Frontend
+frontend/.svelte-kit
+frontend/build
+frontend/.env
+frontend/.env.*
+
+# Build Output
 /build
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Env
-.env
-.env.*
-!.env.example
-!.env.test
-
-# Vite
-vite.config.js.timestamp-*
-vite.config.ts.timestamp-*
-
-# JJMC
-/.tools
+# Backend Data & Runtime
+/data
+/runtimes
 /bin
-# /instances (Removed as it is now a Go package)
+/jjmc
+/jjmc.exe
 /jjmc.db
-jjmc
-jjmc.exe
-modpack.mrpack
-eula.txt
-auth.db
+/auth.db
 ssh_host_rsa_key
-servers/
-backups/
-runtimes/

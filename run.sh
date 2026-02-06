@@ -59,21 +59,21 @@ done
 
 if [ "$SKIP_BUILD" = false ]; then
     echo -e "${BLUE}Checking dependencies...${NC}"
-    if [ ! -d "node_modules" ]; then
+    if [ ! -d "frontend/node_modules" ]; then
         echo -e "${YELLOW}Installing frontend dependencies...${NC}"
-        npm install
+        (cd frontend && npm install)
     fi
 
     echo -e "${BLUE}Building frontend...${NC}"
-    npm run build
+    (cd frontend && npm run build)
 else
     echo -e "${YELLOW}Skipping frontend build...${NC}"
 fi
 
 echo -e "${GREEN}Starting JJMC...${NC}"
 if [ "$BUILD_BINARY" = true ]; then
-    go build -o bin/jjmc main.go
+    go build -o bin/jjmc cmd/jjmc/main.go
     ./bin/jjmc "${ARGS[@]}"
 else
-    go run main.go "${ARGS[@]}"
+    go run cmd/jjmc/main.go "${ARGS[@]}"
 fi

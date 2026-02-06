@@ -42,21 +42,25 @@ if (-not (Get-Command npm -ErrorAction SilentlyContinue) -or -not (Get-Command g
 
 if (-not $SkipBuild) {
     Write-Color "Checking dependencies..." "Cyan"
-    if (-not (Test-Path "node_modules")) {
+    if (-not (Test-Path "frontend/node_modules")) {
         Write-Color "Installing frontend dependencies..." "Yellow"
+        Push-Location frontend
         npm install
+        Pop-Location
     }
 
     Write-Color "Building frontend..." "Cyan"
+    Push-Location frontend
     npm run build
+    Pop-Location
 } else {
     Write-Color "Skipping frontend build..." "Yellow"
 }
 
 Write-Color "Starting JJMC..." "Green"
 if ($Build) {
-    go build -o bin/jjmc.exe main.go
+    go build -o bin/jjmc.exe cmd/jjmc/main.go
     .\bin\jjmc.exe $RemainingArgs
 } else {
-    go run main.go $RemainingArgs
+    go run cmd/jjmc/main.go $RemainingArgs
 }
